@@ -21,6 +21,6 @@ assignees: ''
 
 **Additional Information**
 
-- **Qiskit IBM Runtime version**:
+- **Qiskit IBM Experiment version**:
 - **Python version**:
 - **Operating system**:

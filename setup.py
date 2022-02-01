@@ -2,7 +2,7 @@
 
 # This code is part of Qiskit.
 #
-# (C) Copyright IBM 2021.
+# (C) Copyright IBM 2022.
 #
 # This code is licensed under the Apache License, Version 2.0. You may
 # obtain a copy of this license in the LICENSE.txt file in the root directory
@@ -12,7 +12,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""Setup qiskit_ibm_runtime"""
+"""Setup qiskit_ibm_experiment"""
 
 import os
 
@@ -31,7 +31,7 @@ REQUIREMENTS = [
 
 # Handle version.
 VERSION_PATH = os.path.join(
-    os.path.dirname(__file__), "qiskit_ibm_runtime", "VERSION.txt"
+    os.path.dirname(__file__), "qiskit_ibm_experiment", "VERSION.txt"
 )
 with open(VERSION_PATH, "r") as version_file:
     VERSION = version_file.read().strip()
@@ -45,11 +45,11 @@ with open(README_PATH) as readme_file:
 setuptools.setup(
     name="qiskit-ibm-runtime",
     version=VERSION,
-    description="Qiskit IBM Runtime service for accessing the quantum devices and "
-    "simulators at IBM",
+    description="Qiskit IBM Experiment service for accessing the quantum experiment "
+    "interface at IBM",
     long_description=README,
     long_description_content_type="text/markdown",
-    url="https://github.com/Qiskit/qiskit-ibm-runtime",
+    url="https://github.com/Qiskit/qiskit-ibm-experiment",
     author="Qiskit Development Team",
     author_email="hello@qiskit.org",
     license="Apache 2.0",
@@ -67,7 +67,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3.9",
         "Topic :: Scientific/Engineering",
     ],
-    keywords="qiskit sdk quantum api runtime ibm",
+    keywords="qiskit sdk quantum api experiment ibm",
     packages=setuptools.find_packages(exclude=["test*"]),
     install_requires=REQUIREMENTS,
     include_package_data=True,
