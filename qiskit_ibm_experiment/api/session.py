@@ -23,7 +23,7 @@ from requests.adapters import HTTPAdapter
 from requests.auth import AuthBase
 from urllib3.util.retry import Retry
 
-from qiskit_ibm_runtime.utils.utils import filter_data
+from qiskit_ibm_experiment.utils.utils import filter_data
 
 from .exceptions import RequestsApiError
 from ..version import __version__ as ibm_runtime_version
