@@ -1,0 +1,3 @@
+include LICENSE.txt README.md
+include qiskit_ibm_experiment/VERSION.txt
+recursive-include test *.py
