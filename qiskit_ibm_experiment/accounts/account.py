@@ -20,7 +20,7 @@ from requests.auth import AuthBase
 from typing_extensions import Literal
 
 from .exceptions import InvalidAccountError
-from ..api.auth import LegacyAuth, CloudAuth
+from ..api.auth import LegacyAuth
 from ..proxies import ProxyConfiguration
 from ..utils.hgp import from_instance_format
 
@@ -48,7 +48,6 @@ class Account:
         """
         resolved_url = url or (LEGACY_API_URL)
 
-        self.auth = auth
         self.token = token
         self.url = resolved_url
         self.instance = instance
@@ -67,7 +66,6 @@ class Account:
         """Creates an account instance from data saved on disk."""
         proxies = data.get("proxies")
         return cls(
-            auth=data.get("auth"),
             url=data.get("url"),
             token=data.get("token"),
             instance=data.get("instance"),
@@ -77,9 +75,6 @@ class Account:
 
     def get_auth_handler(self) -> AuthBase:
         """Returns the respective authentication handler."""
-        if self.auth == "cloud":
-            return CloudAuth(api_key=self.token, crn=self.instance)
-
         return LegacyAuth(access_token=self.token)
 
     def __eq__(self, other: object) -> bool:
@@ -87,7 +82,6 @@ class Account:
             return False
         return all(
             [
-                self.auth == other.auth,
                 self.token == other.token,
                 self.url == other.url,
                 self.instance == other.instance,
@@ -108,7 +102,6 @@ class Account:
 
         self._assert_valid_token(self.token)
         self._assert_valid_url(self.url)
-        self._assert_valid_instance(self.auth, self.instance)
         self._assert_valid_proxies(self.proxies)
         return self
 

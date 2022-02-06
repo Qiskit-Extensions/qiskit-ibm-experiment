@@ -14,7 +14,7 @@
 Account management functionality related to the IBM Runtime Services.
 """
 
-from .account import Account, AccountType
+from .account import Account
 from .management import AccountManager
 from .exceptions import (
     AccountNotFoundError,
