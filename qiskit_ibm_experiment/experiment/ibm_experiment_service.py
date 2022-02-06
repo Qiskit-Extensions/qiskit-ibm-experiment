@@ -30,7 +30,9 @@ from ..api.clients.experiment import ExperimentClient
 from ..api.exceptions import RequestsApiError
 #from ..ibm_backend import IBMRetiredBackend
 from ..exceptions import IBMApiError
+from ..accounts import AccountManager
 from ..credentials import store_preferences
+from ..proxies import ProxyConfiguration
 
 logger = logging.getLogger(__name__)
 
@@ -88,6 +90,43 @@ class IBMExperimentService:
         self._api_client = ExperimentClient(provider.credentials)
         self._preferences = copy.deepcopy(self._default_preferences)
         self._preferences.update(provider.credentials.preferences.get('experiments', {}))
+
+    @staticmethod
+    def save_account(
+            token: Optional[str] = None,
+            url: Optional[str] = None,
+            instance: Optional[str] = None,
+            name: Optional[str] = None,
+            proxies: Optional[dict] = None,
+            verify: Optional[bool] = None,
+            overwrite: Optional[bool] = False,
+    ) -> None:
+        """Save the account to disk for future use.
+
+        Args:
+            token: IBM Cloud API key or IBM Quantum API token.
+            url: The API URL.
+                Defaults to https://auth.quantum-computing.ibm.com/api
+            instance: The hub/group/project.
+            name: Name of the account to save.
+            proxies: Proxy configuration. Supported optional keys are
+                ``urls`` (a dictionary mapping protocol or protocol and host to the URL of the proxy,
+                documented at https://docs.python-requests.org/en/latest/api/#requests.Session.proxies),
+                ``username_ntlm``, ``password_ntlm`` (username and password to enable NTLM user
+                authentication)
+            verify: Verify the server's TLS certificate.
+            overwrite: ``True`` if the existing account is to be overwritten.
+        """
+
+        AccountManager.save(
+            token=token,
+            url=url,
+            instance=instance,
+            name=name,
+            proxies=ProxyConfiguration(**proxies) if proxies else None,
+            verify=verify,
+            overwrite=overwrite,
+        )
 
     def backends(self) -> List[Dict]:
         """Return a list of backends that can be used for experiments.
