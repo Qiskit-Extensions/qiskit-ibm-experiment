@@ -28,7 +28,7 @@ from .device_component import DeviceComponent
 from ..utils.converters import local_to_utc_str, utc_to_local
 from ..api.clients.experiment import ExperimentClient
 from ..api.exceptions import RequestsApiError
-from ..ibm_backend import IBMRetiredBackend
+#from ..ibm_backend import IBMRetiredBackend
 from ..exceptions import IBMApiError
 from ..credentials import store_preferences
 
