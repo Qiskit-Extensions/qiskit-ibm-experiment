@@ -22,7 +22,7 @@ from qiskit.providers import JobStatus
 from qiskit.test.reference_circuits import ReferenceCircuits
 from qiskit.tools.visualization import HAS_MATPLOTLIB
 
-from qiskit_ibm.experiment import IBMExperimentService, ResultQuality, IBMExperimentEntryNotFound
+from qiskit_ibm_experiment.experiment import IBMExperimentService, ResultQuality, IBMExperimentEntryNotFound
 
 from ...ibm_test_case import IBMTestCase
 from ...decorators import requires_provider, requires_device
