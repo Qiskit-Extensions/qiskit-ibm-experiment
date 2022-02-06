@@ -26,8 +26,8 @@ from .constants import (ExperimentShareLevel, ResultQuality,
 from .utils import map_api_error
 from .device_component import DeviceComponent
 from ..utils.converters import local_to_utc_str, utc_to_local
-from qiskit_ibm.api.clients.experiment import ExperimentClient
-from qiskit_ibm.api.exceptions import RequestsApiError
+from ..api.clients.experiment import ExperimentClient
+from ..api.exceptions import RequestsApiError
 from ..ibm_backend import IBMRetiredBackend
 from ..exceptions import IBMApiError
 from ..credentials import store_preferences
