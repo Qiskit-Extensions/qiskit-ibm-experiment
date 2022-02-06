@@ -126,16 +126,14 @@ class AccountManager:
                 )
             return Account.from_saved_format(saved_account)
 
-        auth_ = _DEFAULT_ACCOUNT_TYPE
-        env_account = cls._from_env_variables(auth_)
+        env_account = cls._from_env_variables()
         if env_account is not None:
             return env_account
 
         all_config = read_config(filename=_DEFAULT_ACCOUNT_CONFIG_JSON_FILE)
-        for account_type in _ACCOUNT_TYPES:
-            account_name = cls._get_default_account_name(account_type)
-            if account_name in all_config:
-                return Account.from_saved_format(all_config[account_name])
+        account_name = cls._get_default_account_name()
+        if account_name in all_config:
+            return Account.from_saved_format(all_config[account_name])
 
         raise AccountNotFoundError("Unable to find account.")
 

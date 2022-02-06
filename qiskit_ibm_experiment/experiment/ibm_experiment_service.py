@@ -33,6 +33,7 @@ from ..exceptions import IBMApiError
 from ..accounts import AccountManager
 from ..credentials import store_preferences
 from ..proxies import ProxyConfiguration
+from ..accounts import Account
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +78,12 @@ class IBMExperimentService:
 
     def __init__(
             self,
-            provider: 'ibm_provider.IBMProvider'
+            token: Optional[str] = None,
+            url: Optional[str] = None,
+            name: Optional[str] = None,
+            instance: Optional[str] = None,
+            proxies: Optional[dict] = None,
+            verify: Optional[bool] = None
     ) -> None:
         """IBMExperimentService constructor.
 
@@ -86,10 +92,51 @@ class IBMExperimentService:
         """
         super().__init__()
 
-        self._provider = provider
-        self._api_client = ExperimentClient(provider.credentials)
-        self._preferences = copy.deepcopy(self._default_preferences)
-        self._preferences.update(provider.credentials.preferences.get('experiments', {}))
+        self._account = self._discover_account(
+            token=token,
+            url=url,
+            instance=instance,
+            name=name,
+            proxies=ProxyConfiguration(**proxies) if proxies else None,
+            verify=verify,
+        )
+
+        # self._client_params = ClientParameters(
+        #     auth_type=self._account.auth,
+        #     token=self._account.token,
+        #     url=self._account.url,
+        #     instance=self._account.instance,
+        #     proxies=self._account.proxies,
+        #     verify=self._account.verify,
+        # )
+        #
+        # self._auth = self._account.auth
+        # self._programs: Dict[str, RuntimeProgram] = {}
+        # self._backends: Dict[str, "ibm_backend.IBMBackend"] = {}
+        #
+        # if self._auth == "cloud":
+        #     self._api_client = RuntimeClient(self._client_params)
+        #     # TODO: We can make the backend discovery lazy
+        #     self._backends = self._discover_cloud_backends()
+        #     return
+        # else:
+        #     auth_client = self._authenticate_legacy_account(self._client_params)
+        #     # Update client parameters to use authenticated values.
+        #     self._client_params.url = \
+        #     auth_client.current_service_urls()["services"][
+        #         "runtime"
+        #     ]
+        #     self._client_params.token = auth_client.current_access_token()
+        #     self._api_client = RuntimeClient(self._client_params)
+        #     self._hgps = self._initialize_hgps(auth_client)
+        #     for hgp in self._hgps.values():
+        #         for backend_name, backend in hgp.backends.items():
+        #             if backend_name not in self._backends:
+        #                 self._backends[backend_name] = backend
+
+        # self._api_client = ExperimentClient(provider.credentials)
+        # self._preferences = copy.deepcopy(self._default_preferences)
+        # self._preferences.update(provider.credentials.preferences.get('experiments', {}))
 
     @staticmethod
     def save_account(
@@ -127,6 +174,48 @@ class IBMExperimentService:
             verify=verify,
             overwrite=overwrite,
         )
+
+    def _discover_account(
+            self,
+            token: Optional[str] = None,
+            url: Optional[str] = None,
+            instance: Optional[str] = None,
+            name: Optional[str] = None,
+            proxies: Optional[ProxyConfiguration] = None,
+            verify: Optional[bool] = None,
+    ) -> Account:
+        """Discover account."""
+        account = None
+        verify_ = verify or True
+        if name:
+            if any([token, url]):
+                logger.warning(
+                    "Loading account with name %s. Any input 'token', 'url' are ignored.",
+                    name,
+                )
+            account = AccountManager.get(name=name)
+        if token:
+            return Account(
+                token=token,
+                url=url,
+                instance=instance,
+                proxies=proxies,
+                verify=verify_,
+            ).validate()
+
+        if account is None:
+            account = AccountManager.get()
+        if instance:
+            account.instance = instance
+        if proxies:
+            account.proxies = proxies
+        if verify is not None:
+            account.verify = verify
+
+        # ensure account is valid, fail early if not
+        account.validate()
+
+        return account
 
     def backends(self) -> List[Dict]:
         """Return a list of backends that can be used for experiments.
