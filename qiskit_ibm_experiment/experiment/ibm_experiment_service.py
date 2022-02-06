@@ -1398,3 +1398,19 @@ class IBMExperimentService:
         if update_cred:
             store_preferences(
                 {self._provider.credentials.unique_id(): {'experiment': self.preferences}})
+
+    @staticmethod
+    def delete_account(name: Optional[str] = None) -> bool:
+        """Delete a saved account from disk.
+
+        Args:
+            name: Name of the saved account to delete.
+            auth: Authentication type of the default account to delete.
+                Ignored if account name is provided.
+
+        Returns:
+            True if the account was deleted.
+            False if no account was found.
+        """
+
+        return AccountManager.delete(name=name)

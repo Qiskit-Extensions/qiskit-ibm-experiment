@@ -34,7 +34,6 @@ def save_config(filename: str, name: str, config: dict, overwrite: bool) -> None
             f"Named account ({name}) already exists. "
             f"Set overwrite=True to overwrite."
         )
-
     with open(filename, mode="w") as json_out:
         data[name] = config
         json.dump(data, json_out, sort_keys=True, indent=4)
