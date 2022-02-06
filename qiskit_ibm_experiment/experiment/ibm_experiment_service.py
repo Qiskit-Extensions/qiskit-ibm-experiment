@@ -21,15 +21,13 @@ from collections import defaultdict
 
 from qiskit.providers.exceptions import QiskitBackendNotFoundError
 
-from qiskit_ibm import ibm_provider  # pylint: disable=unused-import
-
 from .constants import (ExperimentShareLevel, ResultQuality,
                         RESULT_QUALITY_FROM_API, RESULT_QUALITY_TO_API)
 from .utils import map_api_error
 from .device_component import DeviceComponent
 from ..utils.converters import local_to_utc_str, utc_to_local
-from ..api.clients.experiment import ExperimentClient
-from ..api.exceptions import RequestsApiError
+from qiskit_ibm.api.clients.experiment import ExperimentClient
+from qiskit_ibm.api.exceptions import RequestsApiError
 from ..ibm_backend import IBMRetiredBackend
 from ..exceptions import IBMApiError
 from ..credentials import store_preferences
@@ -42,39 +40,33 @@ class IBMExperimentService:
 
     This class is the main interface to invoke IBM Quantum
     experiment service, which allows you to create, delete, update, query, and
-    retrieve experiments, experiment figures, and analysis results. The
-    ``experiment`` attribute of
-    :class:`~qiskit_ibm.ibm_provider.IBMProvider` is an
-    instance of this class, and the main syntax for using the service is
-    ``provider.experiment.<action>``. For example::
+    retrieve experiments, experiment figures, and analysis results.
 
-        from qiskit_ibm import IBMProvider
-        provider = IBMProvider()
 
         # Retrieve all experiments.
-        experiments = provider.experiment.experiments()
+        experiments = experiment_provider.experiments()
 
         # Retrieve experiments with filtering.
-        experiment_filtered = provider.experiment.experiments(backend_name='ibmq_athens')
+        experiment_filtered = experiment_provider.experiments(backend_name='ibmq_athens')
 
         # Retrieve a specific experiment using its ID.
-        experiment = provider.experiment.experiment(EXPERIMENT_ID)
+        experiment = experiment_provider.experiment(EXPERIMENT_ID)
 
         # Upload a new experiment.
-        new_experiment_id = provider.experiment.create_experiment(
+        new_experiment_id = .experiment_provider.create_experiment(
             experiment_type="T1",
             backend_name="ibmq_athens",
             metadata={"qubits": 5}
         )
 
         # Update an experiment.
-        provider.experiment.update_experiment(
+        experiment_provider.update_experiment(
             experiment_id=EXPERIMENT_ID,
             share_level="Group"
         )
 
         # Delete an experiment.
-        provider.experiment.delete_experiment(EXPERIMENT_ID)
+        experiment_provider.delete_experiment(EXPERIMENT_ID)
 
     Similar syntax applies to analysis results and experiment figures.
     """
