@@ -20,44 +20,7 @@ import copy
 from typing import List, Optional, Type, Any, Dict, Union, Tuple
 from threading import Condition
 from queue import Queue
-
-from qiskit.providers.jobstatus import JobStatus
-
-from ..apiconstants import ApiJobStatus
-
-
-API_TO_JOB_STATUS = {
-    ApiJobStatus.CREATING: JobStatus.INITIALIZING,
-    ApiJobStatus.CREATED: JobStatus.INITIALIZING,
-    ApiJobStatus.TRANSPILING: JobStatus.INITIALIZING,
-    ApiJobStatus.TRANSPILED: JobStatus.INITIALIZING,
-    ApiJobStatus.VALIDATING: JobStatus.VALIDATING,
-    ApiJobStatus.VALIDATED: JobStatus.VALIDATING,
-    ApiJobStatus.RUNNING: JobStatus.RUNNING,
-    ApiJobStatus.PENDING_IN_QUEUE: JobStatus.QUEUED,
-    ApiJobStatus.QUEUED: JobStatus.QUEUED,
-    ApiJobStatus.COMPLETED: JobStatus.DONE,
-    ApiJobStatus.CANCELLED: JobStatus.CANCELLED,
-    ApiJobStatus.ERROR_CREATING_JOB: JobStatus.ERROR,
-    ApiJobStatus.ERROR_VALIDATING_JOB: JobStatus.ERROR,
-    ApiJobStatus.ERROR_RUNNING_JOB: JobStatus.ERROR,
-    ApiJobStatus.ERROR_TRANSPILING_JOB: JobStatus.ERROR
-}
-
-
-def api_status_to_job_status(api_status: Union[str, ApiJobStatus]) -> JobStatus:
-    """Return the corresponding job status for the input server job status.
-
-    Args:
-        api_status: Server job status.
-
-    Returns:
-        Job status.
-    """
-    if isinstance(api_status, str):
-        api_status = ApiJobStatus(api_status.upper())
-    return API_TO_JOB_STATUS[api_status]
-
+from urllib.parse import urlparse
 
 def to_python_identifier(name: str) -> str:
     """Convert a name to a valid Python identifier.
@@ -246,3 +209,47 @@ class RefreshQueue(Queue):
         """Wake up all threads waiting for items on the queued."""
         with self.condition:
             self.condition.notifyAll()
+
+def is_crn(locator: str) -> bool:
+    """Check if a given value is a CRN (Cloud Resource Name).
+
+    Args:
+        locator: The value to check.
+
+    Returns:
+        Whether the input is a CRN.
+    """
+    return isinstance(locator, str) and locator.startswith("crn:")
+
+def get_runtime_api_base_url(url: str, instance: str) -> str:
+    """Computes the Runtime API base URL based on the provided input parameters.
+
+    Args:
+        url: The URL.
+        instance: The instance.
+    """
+
+    # legacy: no need to resolve runtime API URL
+    api_host = url
+
+    # cloud: compute runtime API URL based on crn and URL
+    if is_crn(instance):
+        parsed_url = urlparse(url)
+        api_host = (
+            f"{parsed_url.scheme}://{_location_from_crn(instance)}"
+            f".quantum-computing.{parsed_url.hostname}"
+        )
+
+    return api_host
+
+def _location_from_crn(crn: str) -> str:
+    """Computes the location from a given CRN.
+
+    Args:
+        crn: A CRN (format: https://cloud.ibm.com/docs/account?topic=account-crn#format-crn)
+
+    Returns:
+        The location.
+    """
+    pattern = "(.*?):(.*?):(.*?):(.*?):(.*?):(.*?):.*"
+    return re.search(pattern, crn).group(6)

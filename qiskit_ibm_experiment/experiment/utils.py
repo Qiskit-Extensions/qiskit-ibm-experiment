@@ -16,7 +16,7 @@ from typing import Generator
 from contextlib import contextmanager
 
 from .exceptions import IBMExperimentEntryNotFound, IBMExperimentEntryExists
-from ..api.exceptions import RequestsApiError
+from qiskit_ibm_experiment.api.exceptions import RequestsApiError
 from ..exceptions import IBMApiError
 
 

@@ -15,7 +15,7 @@
 import os
 from typing import Optional, Dict
 from .exceptions import AccountNotFoundError
-from .account import Account, AccountType
+from .account import Account
 from ..proxies import ProxyConfiguration
 from .storage import save_config, read_config, delete_config
 
@@ -25,8 +25,8 @@ _DEFAULT_ACCOUNT_CONFIG_JSON_FILE = os.path.join(
 _DEFAULT_ACCOUNT_NAME = "default"
 _DEFAULT_ACCOUNT_NAME_LEGACY = "default-legacy"
 _DEFAULT_ACCOUNT_NAME_CLOUD = "default-cloud"
-_DEFAULT_ACCOUNT_TYPE: AccountType = "cloud"
-_ACCOUNT_TYPES = [_DEFAULT_ACCOUNT_TYPE, "legacy"]
+_DEFAULT_ACCOUNT_TYPE: str = "legacy"
+_ACCOUNT_TYPES = ["legacy"]
 
 
 class AccountManager:
@@ -38,14 +38,13 @@ class AccountManager:
         token: Optional[str] = None,
         url: Optional[str] = None,
         instance: Optional[str] = None,
-        auth: Optional[AccountType] = None,
         name: Optional[str] = _DEFAULT_ACCOUNT_NAME,
         proxies: Optional[ProxyConfiguration] = None,
         verify: Optional[bool] = None,
         overwrite: Optional[bool] = False,
     ) -> None:
         """Save account on disk."""
-        config_key = name or cls._get_default_account_name(auth)
+        config_key = name or cls._get_default_account_name()
         return save_config(
             filename=_DEFAULT_ACCOUNT_CONFIG_JSON_FILE,
             name=config_key,
@@ -54,7 +53,6 @@ class AccountManager:
                 token=token,
                 url=url,
                 instance=instance,
-                auth=auth,
                 proxies=proxies,
                 verify=verify,
             )
@@ -65,7 +63,6 @@ class AccountManager:
     @staticmethod
     def list(
         default: Optional[bool] = None,
-        auth: Optional[str] = None,
         name: Optional[str] = None,
     ) -> Dict[str, Account]:
         """List all accounts saved on disk."""
@@ -73,14 +70,10 @@ class AccountManager:
         def _matching_name(account_name: str) -> bool:
             return name is None or name == account_name
 
-        def _matching_auth(account: Account) -> bool:
-            return auth is None or account.auth == auth
-
         def _matching_default(account_name: str) -> bool:
             default_accounts = [
                 _DEFAULT_ACCOUNT_NAME,
                 _DEFAULT_ACCOUNT_NAME_LEGACY,
-                _DEFAULT_ACCOUNT_NAME_CLOUD,
             ]
             if default is None:
                 return True
@@ -99,8 +92,7 @@ class AccountManager:
         filtered_accounts = dict(
             list(
                 filter(
-                    lambda kv: _matching_auth(kv[1])
-                    and _matching_default(kv[0])
+                    lambda kv: _matching_default(kv[0])
                     and _matching_name(kv[0]),
                     all_accounts,
                 )
@@ -111,13 +103,12 @@ class AccountManager:
 
     @classmethod
     def get(
-        cls, name: Optional[str] = None, auth: Optional[AccountType] = None
+        cls, name: Optional[str] = None
     ) -> Optional[Account]:
         """Read account from disk.
 
         Args:
-            name: Account name. Takes precedence if `auth` is also specified.
-            auth: Account auth type.
+            name: Account name.
 
         Returns:
             Account information.
@@ -135,25 +126,14 @@ class AccountManager:
                 )
             return Account.from_saved_format(saved_account)
 
-        auth_ = auth or _DEFAULT_ACCOUNT_TYPE
-        env_account = cls._from_env_variables(auth_)
+        env_account = cls._from_env_variables()
         if env_account is not None:
             return env_account
 
-        if auth:
-            saved_account = read_config(
-                filename=_DEFAULT_ACCOUNT_CONFIG_JSON_FILE,
-                name=cls._get_default_account_name(auth),
-            )
-            if saved_account is None:
-                raise AccountNotFoundError(f"No default {auth} account saved.")
-            return Account.from_saved_format(saved_account)
-
         all_config = read_config(filename=_DEFAULT_ACCOUNT_CONFIG_JSON_FILE)
-        for account_type in _ACCOUNT_TYPES:
-            account_name = cls._get_default_account_name(account_type)
-            if account_name in all_config:
-                return Account.from_saved_format(all_config[account_name])
+        account_name = cls._get_default_account_name()
+        if account_name in all_config:
+            return Account.from_saved_format(all_config[account_name])
 
         raise AccountNotFoundError("Unable to find account.")
 
@@ -161,30 +141,25 @@ class AccountManager:
     def delete(
         cls,
         name: Optional[str] = None,
-        auth: Optional[str] = None,
     ) -> bool:
         """Delete account from disk."""
 
-        config_key = name or cls._get_default_account_name(auth)
+        config_key = name or cls._get_default_account_name()
         return delete_config(
             name=config_key, filename=_DEFAULT_ACCOUNT_CONFIG_JSON_FILE
         )
 
     @classmethod
-    def _from_env_variables(cls, auth: Optional[AccountType]) -> Optional[Account]:
+    def _from_env_variables(cls) -> Optional[Account]:
         """Read account from environment variable."""
         token = os.getenv("QISKIT_IBM_TOKEN")
         url = os.getenv("QISKIT_IBM_URL")
         if not (token and url):
             return None
         return Account(
-            token=token, url=url, instance=os.getenv("QISKIT_IBM_INSTANCE"), auth=auth
+            token=token, url=url, instance=os.getenv("QISKIT_IBM_INSTANCE")
         )
 
     @classmethod
-    def _get_default_account_name(cls, auth: AccountType) -> str:
-        return (
-            _DEFAULT_ACCOUNT_NAME_LEGACY
-            if auth == "legacy"
-            else _DEFAULT_ACCOUNT_NAME_CLOUD
-        )
+    def _get_default_account_name(cls) -> str:
+        return _DEFAULT_ACCOUNT_NAME_LEGACY

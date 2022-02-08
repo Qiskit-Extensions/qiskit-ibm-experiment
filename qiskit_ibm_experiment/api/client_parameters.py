@@ -14,7 +14,7 @@
 
 from typing import Dict, Optional, Any, Union
 
-from ..utils import get_runtime_api_base_url
+from ..utils.utils import get_runtime_api_base_url
 from ..api.auth import LegacyAuth, CloudAuth
 from ..proxies import ProxyConfiguration
 

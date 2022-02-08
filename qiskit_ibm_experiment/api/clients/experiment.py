@@ -15,11 +15,11 @@
 import logging
 from typing import List, Dict, Optional, Union
 
-from qiskit_ibm.credentials import Credentials
+from qiskit_ibm_experiment.credentials import Credentials
 
-from ..rest import Api
-from ..session import RetrySession
-from .base import BaseClient
+from ...api.rest import Api
+from ...api.session import RetrySession
+from ...api.clients.base import BaseClient
 
 logger = logging.getLogger(__name__)
 

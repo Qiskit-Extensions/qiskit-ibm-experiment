@@ -48,6 +48,8 @@ Classes
 
 import logging
 
+from .experiment import IBMExperimentService
+
 from .exceptions import *
 from .utils.utils import setup_logger
 from .version import __version__

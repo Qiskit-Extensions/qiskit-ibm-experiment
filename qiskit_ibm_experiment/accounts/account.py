@@ -20,22 +20,17 @@ from requests.auth import AuthBase
 from typing_extensions import Literal
 
 from .exceptions import InvalidAccountError
-from ..api.auth import LegacyAuth, CloudAuth
+from ..api.auth import LegacyAuth
 from ..proxies import ProxyConfiguration
 from ..utils.hgp import from_instance_format
 
-AccountType = Optional[Literal["cloud", "legacy"]]
-
 LEGACY_API_URL = "https://auth.quantum-computing.ibm.com/api"
-CLOUD_API_URL = "https://cloud.ibm.com"
-
 
 class Account:
     """Class that represents an account."""
 
     def __init__(
         self,
-        auth: AccountType,
         token: str,
         url: Optional[str] = None,
         instance: Optional[str] = None,
@@ -45,16 +40,14 @@ class Account:
         """Account constructor.
 
         Args:
-            auth: Authentication type, ``cloud`` or ``legacy``.
             token: Account token to use.
             url: Authentication URL.
             instance: Service instance to use.
             proxies: Proxy configuration.
             verify: Whether to verify server's TLS certificate.
         """
-        resolved_url = url or (LEGACY_API_URL if auth == "legacy" else CLOUD_API_URL)
+        resolved_url = url or (LEGACY_API_URL)
 
-        self.auth = auth
         self.token = token
         self.url = resolved_url
         self.instance = instance
@@ -73,7 +66,6 @@ class Account:
         """Creates an account instance from data saved on disk."""
         proxies = data.get("proxies")
         return cls(
-            auth=data.get("auth"),
             url=data.get("url"),
             token=data.get("token"),
             instance=data.get("instance"),
@@ -83,9 +75,6 @@ class Account:
 
     def get_auth_handler(self) -> AuthBase:
         """Returns the respective authentication handler."""
-        if self.auth == "cloud":
-            return CloudAuth(api_key=self.token, crn=self.instance)
-
         return LegacyAuth(access_token=self.token)
 
     def __eq__(self, other: object) -> bool:
@@ -93,7 +82,6 @@ class Account:
             return False
         return all(
             [
-                self.auth == other.auth,
                 self.token == other.token,
                 self.url == other.url,
                 self.instance == other.instance,
@@ -112,20 +100,10 @@ class Account:
             This Account instance.
         """
 
-        self._assert_valid_auth(self.auth)
         self._assert_valid_token(self.token)
         self._assert_valid_url(self.url)
-        self._assert_valid_instance(self.auth, self.instance)
         self._assert_valid_proxies(self.proxies)
         return self
-
-    @staticmethod
-    def _assert_valid_auth(auth: AccountType) -> None:
-        """Assert that the auth parameter is valid."""
-        if not (auth in ["cloud", "legacy"]):
-            raise InvalidAccountError(
-                f"Invalid `auth` value. Expected one of ['cloud', 'legacy'], got '{auth}'."
-            )
 
     @staticmethod
     def _assert_valid_token(token: str) -> None:
@@ -152,18 +130,12 @@ class Account:
             config.validate()
 
     @staticmethod
-    def _assert_valid_instance(auth: AccountType, instance: str) -> None:
-        """Assert that the instance name is valid for the given account type."""
-        if auth == "cloud":
-            if not (isinstance(instance, str) and len(instance) > 0):
+    def _assert_valid_instance(instance: str) -> None:
+        """Assert that the instance name is valid"""
+        if instance is not None:
+            try:
+                from_instance_format(instance)
+            except:
                 raise InvalidAccountError(
-                    f"Invalid `instance` value. Expected a non-empty string, got '{instance}'."
+                    f"Invalid `instance` value. Expected hub/group/project format, got {instance}"
                 )
-        if auth == "legacy":
-            if instance is not None:
-                try:
-                    from_instance_format(instance)
-                except:
-                    raise InvalidAccountError(
-                        f"Invalid `instance` value. Expected hub/group/project format, got {instance}"
-                    )

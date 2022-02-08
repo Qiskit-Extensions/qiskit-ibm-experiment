@@ -21,8 +21,6 @@ from collections import defaultdict
 
 from qiskit.providers.exceptions import QiskitBackendNotFoundError
 
-from qiskit_ibm import ibm_provider  # pylint: disable=unused-import
-
 from .constants import (ExperimentShareLevel, ResultQuality,
                         RESULT_QUALITY_FROM_API, RESULT_QUALITY_TO_API)
 from .utils import map_api_error
@@ -30,9 +28,12 @@ from .device_component import DeviceComponent
 from ..utils.converters import local_to_utc_str, utc_to_local
 from ..api.clients.experiment import ExperimentClient
 from ..api.exceptions import RequestsApiError
-from ..ibm_backend import IBMRetiredBackend
+#from ..ibm_backend import IBMRetiredBackend
 from ..exceptions import IBMApiError
+from ..accounts import AccountManager
 from ..credentials import store_preferences
+from ..proxies import ProxyConfiguration
+from ..accounts import Account
 
 logger = logging.getLogger(__name__)
 
@@ -42,39 +43,33 @@ class IBMExperimentService:
 
     This class is the main interface to invoke IBM Quantum
     experiment service, which allows you to create, delete, update, query, and
-    retrieve experiments, experiment figures, and analysis results. The
-    ``experiment`` attribute of
-    :class:`~qiskit_ibm.ibm_provider.IBMProvider` is an
-    instance of this class, and the main syntax for using the service is
-    ``provider.experiment.<action>``. For example::
+    retrieve experiments, experiment figures, and analysis results.
 
-        from qiskit_ibm import IBMProvider
-        provider = IBMProvider()
 
         # Retrieve all experiments.
-        experiments = provider.experiment.experiments()
+        experiments = experiment_provider.experiments()
 
         # Retrieve experiments with filtering.
-        experiment_filtered = provider.experiment.experiments(backend_name='ibmq_athens')
+        experiment_filtered = experiment_provider.experiments(backend_name='ibmq_athens')
 
         # Retrieve a specific experiment using its ID.
-        experiment = provider.experiment.experiment(EXPERIMENT_ID)
+        experiment = experiment_provider.experiment(EXPERIMENT_ID)
 
         # Upload a new experiment.
-        new_experiment_id = provider.experiment.create_experiment(
+        new_experiment_id = .experiment_provider.create_experiment(
             experiment_type="T1",
             backend_name="ibmq_athens",
             metadata={"qubits": 5}
         )
 
         # Update an experiment.
-        provider.experiment.update_experiment(
+        experiment_provider.update_experiment(
             experiment_id=EXPERIMENT_ID,
             share_level="Group"
         )
 
         # Delete an experiment.
-        provider.experiment.delete_experiment(EXPERIMENT_ID)
+        experiment_provider.delete_experiment(EXPERIMENT_ID)
 
     Similar syntax applies to analysis results and experiment figures.
     """
@@ -83,7 +78,12 @@ class IBMExperimentService:
 
     def __init__(
             self,
-            provider: 'ibm_provider.IBMProvider'
+            token: Optional[str] = None,
+            url: Optional[str] = None,
+            name: Optional[str] = None,
+            instance: Optional[str] = None,
+            proxies: Optional[dict] = None,
+            verify: Optional[bool] = None
     ) -> None:
         """IBMExperimentService constructor.
 
@@ -92,10 +92,130 @@ class IBMExperimentService:
         """
         super().__init__()
 
-        self._provider = provider
-        self._api_client = ExperimentClient(provider.credentials)
-        self._preferences = copy.deepcopy(self._default_preferences)
-        self._preferences.update(provider.credentials.preferences.get('experiments', {}))
+        self._account = self._discover_account(
+            token=token,
+            url=url,
+            instance=instance,
+            name=name,
+            proxies=ProxyConfiguration(**proxies) if proxies else None,
+            verify=verify,
+        )
+
+        # self._client_params = ClientParameters(
+        #     auth_type=self._account.auth,
+        #     token=self._account.token,
+        #     url=self._account.url,
+        #     instance=self._account.instance,
+        #     proxies=self._account.proxies,
+        #     verify=self._account.verify,
+        # )
+        #
+        # self._auth = self._account.auth
+        # self._programs: Dict[str, RuntimeProgram] = {}
+        # self._backends: Dict[str, "ibm_backend.IBMBackend"] = {}
+        #
+        # if self._auth == "cloud":
+        #     self._api_client = RuntimeClient(self._client_params)
+        #     # TODO: We can make the backend discovery lazy
+        #     self._backends = self._discover_cloud_backends()
+        #     return
+        # else:
+        #     auth_client = self._authenticate_legacy_account(self._client_params)
+        #     # Update client parameters to use authenticated values.
+        #     self._client_params.url = \
+        #     auth_client.current_service_urls()["services"][
+        #         "runtime"
+        #     ]
+        #     self._client_params.token = auth_client.current_access_token()
+        #     self._api_client = RuntimeClient(self._client_params)
+        #     self._hgps = self._initialize_hgps(auth_client)
+        #     for hgp in self._hgps.values():
+        #         for backend_name, backend in hgp.backends.items():
+        #             if backend_name not in self._backends:
+        #                 self._backends[backend_name] = backend
+
+        # self._api_client = ExperimentClient(provider.credentials)
+        # self._preferences = copy.deepcopy(self._default_preferences)
+        # self._preferences.update(provider.credentials.preferences.get('experiments', {}))
+
+    @staticmethod
+    def save_account(
+            token: Optional[str] = None,
+            url: Optional[str] = None,
+            instance: Optional[str] = None,
+            name: Optional[str] = None,
+            proxies: Optional[dict] = None,
+            verify: Optional[bool] = None,
+            overwrite: Optional[bool] = False,
+    ) -> None:
+        """Save the account to disk for future use.
+
+        Args:
+            token: IBM Cloud API key or IBM Quantum API token.
+            url: The API URL.
+                Defaults to https://auth.quantum-computing.ibm.com/api
+            instance: The hub/group/project.
+            name: Name of the account to save.
+            proxies: Proxy configuration. Supported optional keys are
+                ``urls`` (a dictionary mapping protocol or protocol and host to the URL of the proxy,
+                documented at https://docs.python-requests.org/en/latest/api/#requests.Session.proxies),
+                ``username_ntlm``, ``password_ntlm`` (username and password to enable NTLM user
+                authentication)
+            verify: Verify the server's TLS certificate.
+            overwrite: ``True`` if the existing account is to be overwritten.
+        """
+
+        AccountManager.save(
+            token=token,
+            url=url,
+            instance=instance,
+            name=name,
+            proxies=ProxyConfiguration(**proxies) if proxies else None,
+            verify=verify,
+            overwrite=overwrite,
+        )
+
+    def _discover_account(
+            self,
+            token: Optional[str] = None,
+            url: Optional[str] = None,
+            instance: Optional[str] = None,
+            name: Optional[str] = None,
+            proxies: Optional[ProxyConfiguration] = None,
+            verify: Optional[bool] = None,
+    ) -> Account:
+        """Discover account."""
+        account = None
+        verify_ = verify or True
+        if name:
+            if any([token, url]):
+                logger.warning(
+                    "Loading account with name %s. Any input 'token', 'url' are ignored.",
+                    name,
+                )
+            account = AccountManager.get(name=name)
+        if token:
+            return Account(
+                token=token,
+                url=url,
+                instance=instance,
+                proxies=proxies,
+                verify=verify_,
+            ).validate()
+
+        if account is None:
+            account = AccountManager.get()
+        if instance:
+            account.instance = instance
+        if proxies:
+            account.proxies = proxies
+        if verify is not None:
+            account.verify = verify
+
+        # ensure account is valid, fail early if not
+        account.validate()
+
+        return account
 
     def backends(self) -> List[Dict]:
         """Return a list of backends that can be used for experiments.
@@ -1278,3 +1398,19 @@ class IBMExperimentService:
         if update_cred:
             store_preferences(
                 {self._provider.credentials.unique_id(): {'experiment': self.preferences}})
+
+    @staticmethod
+    def delete_account(name: Optional[str] = None) -> bool:
+        """Delete a saved account from disk.
+
+        Args:
+            name: Name of the saved account to delete.
+            auth: Authentication type of the default account to delete.
+                Ignored if account name is provided.
+
+        Returns:
+            True if the account was deleted.
+            False if no account was found.
+        """
+
+        return AccountManager.delete(name=name)
