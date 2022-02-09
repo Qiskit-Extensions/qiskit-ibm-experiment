@@ -12,10 +12,9 @@
 
 """Represent IBM Quantum account client parameters."""
 
-from typing import Dict, Optional, Any, Union
+from typing import Dict, Optional, Any
 
-from ..utils.utils import get_runtime_api_base_url
-from ..api.auth import LegacyAuth, CloudAuth
+from ..api.auth import LegacyAuth
 from ..proxies import ProxyConfiguration
 
 TEMPLATE_IBM_HUBS = "{prefix}/Network/{hub}/Groups/{group}/Projects/{project}"
@@ -27,7 +26,6 @@ class ClientParameters:
 
     def __init__(
         self,
-        auth_type: str,
         token: str,
         url: str = None,
         instance: Optional[str] = None,
@@ -44,21 +42,13 @@ class ClientParameters:
         """
         self.token = token
         self.instance = instance
-        self.auth_type = auth_type
         self.url = url
         self.proxies = proxies
         self.verify = verify
 
-    def get_auth_handler(self) -> Union[CloudAuth, LegacyAuth]:
+    def get_auth_handler(self) -> LegacyAuth:
         """Returns the respective authentication handler."""
-        if self.auth_type == "cloud":
-            return CloudAuth(api_key=self.token, crn=self.instance)
-
         return LegacyAuth(access_token=self.token)
-
-    def get_runtime_api_base_url(self) -> str:
-        """Returns the Runtime API base url."""
-        return get_runtime_api_base_url(self.url, self.instance)
 
     def connection_parameters(self) -> Dict[str, Any]:
         """Construct connection related parameters.

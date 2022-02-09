@@ -34,6 +34,7 @@ from ..accounts import AccountManager
 from ..credentials import store_preferences
 from ..proxies import ProxyConfiguration
 from ..accounts import Account
+from ..api.client_parameters import ClientParameters
 
 logger = logging.getLogger(__name__)
 
@@ -101,14 +102,14 @@ class IBMExperimentService:
             verify=verify,
         )
 
-        # self._client_params = ClientParameters(
-        #     auth_type=self._account.auth,
-        #     token=self._account.token,
-        #     url=self._account.url,
-        #     instance=self._account.instance,
-        #     proxies=self._account.proxies,
-        #     verify=self._account.verify,
-        # )
+        self._client_params = ClientParameters(
+            token=self._account.token,
+            url=self._account.url,
+            instance=self._account.instance,
+            proxies=self._account.proxies,
+            verify=self._account.verify,
+        )
+        self._api_client = ExperimentClient(self._client_params)
         #
         # self._auth = self._account.auth
         # self._programs: Dict[str, RuntimeProgram] = {}
@@ -134,7 +135,7 @@ class IBMExperimentService:
         #             if backend_name not in self._backends:
         #                 self._backends[backend_name] = backend
 
-        # self._api_client = ExperimentClient(provider.credentials)
+
         # self._preferences = copy.deepcopy(self._default_preferences)
         # self._preferences.update(provider.credentials.preferences.get('experiments', {}))
 
