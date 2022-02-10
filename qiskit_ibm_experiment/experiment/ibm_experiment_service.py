@@ -16,6 +16,7 @@ import logging
 import json
 import copy
 from typing import Optional, List, Dict, Union, Tuple, Any, Type
+import requests
 from datetime import datetime
 from collections import defaultdict
 
@@ -76,6 +77,8 @@ class IBMExperimentService:
     """
 
     _default_preferences = {"auto_save": False}
+    _DEFAULT_BASE_URL = "https://api.quantum-computing.ibm.com"
+    _DEFAULT_AUTHENTICATION_URL = "/v2/users/loginWithToken"
 
     def __init__(
             self,
@@ -101,6 +104,9 @@ class IBMExperimentService:
             proxies=ProxyConfiguration(**proxies) if proxies else None,
             verify=verify,
         )
+
+        self._access_token = self._get_acccess_token()
+        print("Got access token", self._access_token)
 
         self._client_params = ClientParameters(
             token=self._account.token,
@@ -138,6 +144,26 @@ class IBMExperimentService:
 
         # self._preferences = copy.deepcopy(self._default_preferences)
         # self._preferences.update(provider.credentials.preferences.get('experiments', {}))
+
+    def _get_acccess_token(self, auth_url = None, api_token = None):
+        if auth_url is None:
+            auth_url = self._DEFAULT_BASE_URL + self._DEFAULT_AUTHENTICATION_URL
+        if api_token is None:
+            try:
+                api_token = self._account.token
+            except RuntimeError:
+                raise IBMApiError("No API token; cannot connect to service")
+        headers = {'accept': 'application/json',
+                   'Content-Type': 'application/json'}
+        data = {"apiToken": api_token}
+        print("connect to ", auth_url)
+        try:
+            response = requests.post(url=auth_url, json=data, headers=headers)
+            access_token = response.json()["id"]
+        except KeyError:
+            raise IBMApiError("Did not receive access token (request returned {})".format(response.json()))
+        return access_token
+
 
     @staticmethod
     def save_account(
@@ -224,7 +250,7 @@ class IBMExperimentService:
         Returns:
             A list of backends.
         """
-        return self._api_client.experiment_devices()
+        return self._api_client.devices()
 
     def create_experiment(
             self,
