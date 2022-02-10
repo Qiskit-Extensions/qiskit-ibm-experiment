@@ -139,6 +139,7 @@ class RetrySession(Session):
     def __init__(
         self,
         base_url: str,
+        access_token: str,
         retries_total: int = 5,
         retries_connect: int = 3,
         backoff_factor: float = 0.5,
@@ -151,6 +152,7 @@ class RetrySession(Session):
 
         Args:
             base_url: Base URL for the session's requests.
+            access_token: Access token.
             retries_total: Number of total retries for the requests.
             retries_connect: Number of connect retries for the requests.
             backoff_factor: Backoff factor between retry attempts.
@@ -163,10 +165,26 @@ class RetrySession(Session):
         super().__init__()
 
         self.base_url = base_url
-
+        self.access_token = access_token
         self._initialize_retry(retries_total, retries_connect, backoff_factor)
         self._initialize_session_parameters(verify, proxies or {}, auth)
         self._timeout = timeout
+
+    @property
+    def access_token(self) -> Optional[str]:
+        """Return the session access token."""
+        return self._access_token
+
+    @access_token.setter
+    def access_token(self, value: Optional[str]) -> None:
+        """Set the session access token."""
+        self._access_token = value
+        if value:
+            self.headers.update(
+                {'X-Access-Token': value})  # type: ignore[attr-defined]
+        else:
+            self.headers.pop('X-Access-Token',
+                             None)  # type: ignore[attr-defined]
 
     def __del__(self) -> None:
         """RetrySession destructor. Closes the session."""

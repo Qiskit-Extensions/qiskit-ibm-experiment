@@ -78,7 +78,8 @@ class IBMExperimentService:
 
     _default_preferences = {"auto_save": False}
     _DEFAULT_BASE_URL = "https://api.quantum-computing.ibm.com"
-    _DEFAULT_AUTHENTICATION_URL = "/v2/users/loginWithToken"
+    _DEFAULT_AUTHENTICATION_PREFIX = "/v2/users/loginWithToken"
+    _DEFAULT_EXPERIMENT_PREFIX = "/resultsdb"
 
     def __init__(
             self,
@@ -95,7 +96,8 @@ class IBMExperimentService:
             provider: IBM Quantum account provider.
         """
         super().__init__()
-
+        if url is None:
+            url = self._DEFAULT_BASE_URL + self._DEFAULT_EXPERIMENT_PREFIX
         self._account = self._discover_account(
             token=token,
             url=url,
@@ -106,16 +108,13 @@ class IBMExperimentService:
         )
 
         self._access_token = self._get_acccess_token()
-        print("Got access token", self._access_token)
 
-        self._client_params = ClientParameters(
-            token=self._account.token,
-            url=self._account.url,
-            instance=self._account.instance,
-            proxies=self._account.proxies,
-            verify=self._account.verify,
-        )
-        self._api_client = ExperimentClient(self._client_params)
+        self._additional_params = {
+#            'instance': self._account.instance,
+            'proxies': self._account.proxies.to_request_params() if self._account.proxies is not None else None,
+            'verify': self._account.verify,
+        }
+        self._api_client = ExperimentClient(self._access_token, self._account.url, self._additional_params)
         #
         # self._auth = self._account.auth
         # self._programs: Dict[str, RuntimeProgram] = {}
@@ -147,7 +146,7 @@ class IBMExperimentService:
 
     def _get_acccess_token(self, auth_url = None, api_token = None):
         if auth_url is None:
-            auth_url = self._DEFAULT_BASE_URL + self._DEFAULT_AUTHENTICATION_URL
+            auth_url = self._DEFAULT_BASE_URL + self._DEFAULT_AUTHENTICATION_PREFIX
         if api_token is None:
             try:
                 api_token = self._account.token
@@ -156,7 +155,6 @@ class IBMExperimentService:
         headers = {'accept': 'application/json',
                    'Content-Type': 'application/json'}
         data = {"apiToken": api_token}
-        print("connect to ", auth_url)
         try:
             response = requests.post(url=auth_url, json=data, headers=headers)
             access_token = response.json()["id"]

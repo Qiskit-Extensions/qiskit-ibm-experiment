@@ -24,8 +24,6 @@ from ..api.auth import LegacyAuth
 from ..proxies import ProxyConfiguration
 from ..utils.hgp import from_instance_format
 
-LEGACY_API_URL = "https://auth.quantum-computing.ibm.com/api"
-
 class Account:
     """Class that represents an account."""
 
@@ -46,10 +44,8 @@ class Account:
             proxies: Proxy configuration.
             verify: Whether to verify server's TLS certificate.
         """
-        resolved_url = url or (LEGACY_API_URL)
-
         self.token = token
-        self.url = resolved_url
+        self.url = url
         self.instance = instance
         self.proxies = proxies
         self.verify = verify

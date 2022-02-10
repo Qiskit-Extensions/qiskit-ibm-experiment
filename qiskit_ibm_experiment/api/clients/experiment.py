@@ -15,7 +15,7 @@
 import logging
 from typing import List, Dict, Optional, Union
 
-from ..rest import Api
+from .experiment_rest_adapter import ExperimentRestAdapter
 from ..session import RetrySession
 from .base import BaseClient
 
@@ -24,25 +24,24 @@ from ..client_parameters import ClientParameters
 
 class ExperimentClient(BaseClient):
     """Client for accessing IBM Quantum experiment services."""
-
-
-
     def __init__(
             self,
-            params: ClientParameters
+            access_token,
+            url,
+            additional_params
     ) -> None:
         """ExperimentClient constructor.
 
         Args:
-            credentials: Account credentials.
+            access_token: The session's access token
+            url: The session's base url
+            additional_params: additional session parameters
         """
-        self._session = RetrySession(params.url, params.token,
-                                         **params.connection_parameters())
-        self.base_api = Api(self._session)
+        self._session = RetrySession(url, access_token, **additional_params)
+        self.api = ExperimentRestAdapter(self._session)
 
-
-    def experiment_devices(self) -> Dict:
-        return self.base_api.experiment_devices()['devices']
+    def devices(self) -> Dict:
+        return self.api.devices()['devices']
 
     def experiments(
             self,
