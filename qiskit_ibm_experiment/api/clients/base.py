@@ -23,8 +23,6 @@ import time
 import enum
 
 from websocket import WebSocketApp, STATUS_NORMAL, STATUS_ABNORMAL_CLOSED
-
-from ..client_parameters import ClientParameters
 from ..exceptions import WebsocketError, WebsocketTimeoutError
 
 logger = logging.getLogger(__name__)
@@ -53,14 +51,16 @@ class BaseWebsocketClient(BaseClient, ABC):
 
     def __init__(
         self,
+        access_token: str,
         websocket_url: str,
-        client_params: ClientParameters,
+        client_params: dict,
         job_id: str,
         message_queue: Optional[Queue] = None,
     ) -> None:
         """BaseWebsocketClient constructor.
 
         Args:
+            access_token: token used in communication with the server
             websocket_url: URL for websocket communication with IBM Quantum.
             client_params: Parameters used for server connection.
             job_id: Job ID.
@@ -68,11 +68,11 @@ class BaseWebsocketClient(BaseClient, ABC):
         """
         self._websocket_url = websocket_url.rstrip("/")
         self._proxy_params = (
-            client_params.proxies.to_ws_params(self._websocket_url)
-            if client_params.proxies
+            client_params['proxies'].to_ws_params(self._websocket_url)
+            if client_params['proxies']
             else {}
         )
-        self._access_token = client_params.token
+        self._access_token = access_token
         self._job_id = job_id
         self._message_queue = message_queue
         self._header: Optional[Dict] = None

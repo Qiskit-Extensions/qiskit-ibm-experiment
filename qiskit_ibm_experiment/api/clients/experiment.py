@@ -20,7 +20,6 @@ from ..session import RetrySession
 from .base import BaseClient
 
 logger = logging.getLogger(__name__)
-from ..client_parameters import ClientParameters
 
 class ExperimentClient(BaseClient):
     """Client for accessing IBM Quantum experiment services."""
