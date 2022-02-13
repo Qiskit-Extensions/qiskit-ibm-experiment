@@ -16,6 +16,7 @@ import logging
 import json
 import copy
 from typing import Optional, List, Dict, Union, Tuple, Any, Type
+import requests
 from datetime import datetime
 from collections import defaultdict
 
@@ -34,6 +35,7 @@ from ..accounts import AccountManager
 from ..credentials import store_preferences
 from ..proxies import ProxyConfiguration
 from ..accounts import Account
+from ..api.client_parameters import ClientParameters
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +77,9 @@ class IBMExperimentService:
     """
 
     _default_preferences = {"auto_save": False}
+    _DEFAULT_BASE_URL = "https://api.quantum-computing.ibm.com"
+    _DEFAULT_AUTHENTICATION_PREFIX = "/v2/users/loginWithToken"
+    _DEFAULT_EXPERIMENT_PREFIX = "/resultsdb"
 
     def __init__(
             self,
@@ -91,7 +96,8 @@ class IBMExperimentService:
             provider: IBM Quantum account provider.
         """
         super().__init__()
-
+        if url is None:
+            url = self._DEFAULT_BASE_URL + self._DEFAULT_EXPERIMENT_PREFIX
         self._account = self._discover_account(
             token=token,
             url=url,
@@ -101,14 +107,14 @@ class IBMExperimentService:
             verify=verify,
         )
 
-        # self._client_params = ClientParameters(
-        #     auth_type=self._account.auth,
-        #     token=self._account.token,
-        #     url=self._account.url,
-        #     instance=self._account.instance,
-        #     proxies=self._account.proxies,
-        #     verify=self._account.verify,
-        # )
+        self._access_token = self._get_acccess_token()
+
+        self._additional_params = {
+#            'instance': self._account.instance,
+            'proxies': self._account.proxies.to_request_params() if self._account.proxies is not None else None,
+            'verify': self._account.verify,
+        }
+        self._api_client = ExperimentClient(self._access_token, self._account.url, self._additional_params)
         #
         # self._auth = self._account.auth
         # self._programs: Dict[str, RuntimeProgram] = {}
@@ -134,9 +140,28 @@ class IBMExperimentService:
         #             if backend_name not in self._backends:
         #                 self._backends[backend_name] = backend
 
-        # self._api_client = ExperimentClient(provider.credentials)
+
         # self._preferences = copy.deepcopy(self._default_preferences)
         # self._preferences.update(provider.credentials.preferences.get('experiments', {}))
+
+    def _get_acccess_token(self, auth_url = None, api_token = None):
+        if auth_url is None:
+            auth_url = self._DEFAULT_BASE_URL + self._DEFAULT_AUTHENTICATION_PREFIX
+        if api_token is None:
+            try:
+                api_token = self._account.token
+            except RuntimeError:
+                raise IBMApiError("No API token; cannot connect to service")
+        headers = {'accept': 'application/json',
+                   'Content-Type': 'application/json'}
+        data = {"apiToken": api_token}
+        try:
+            response = requests.post(url=auth_url, json=data, headers=headers)
+            access_token = response.json()["id"]
+        except KeyError:
+            raise IBMApiError("Did not receive access token (request returned {})".format(response.json()))
+        return access_token
+
 
     @staticmethod
     def save_account(
@@ -223,7 +248,7 @@ class IBMExperimentService:
         Returns:
             A list of backends.
         """
-        return self._api_client.experiment_devices()
+        return self._api_client.devices()
 
     def create_experiment(
             self,

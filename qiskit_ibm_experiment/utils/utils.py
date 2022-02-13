@@ -221,27 +221,6 @@ def is_crn(locator: str) -> bool:
     """
     return isinstance(locator, str) and locator.startswith("crn:")
 
-def get_runtime_api_base_url(url: str, instance: str) -> str:
-    """Computes the Runtime API base URL based on the provided input parameters.
-
-    Args:
-        url: The URL.
-        instance: The instance.
-    """
-
-    # legacy: no need to resolve runtime API URL
-    api_host = url
-
-    # cloud: compute runtime API URL based on crn and URL
-    if is_crn(instance):
-        parsed_url = urlparse(url)
-        api_host = (
-            f"{parsed_url.scheme}://{_location_from_crn(instance)}"
-            f".quantum-computing.{parsed_url.hostname}"
-        )
-
-    return api_host
-
 def _location_from_crn(crn: str) -> str:
     """Computes the location from a given CRN.
 

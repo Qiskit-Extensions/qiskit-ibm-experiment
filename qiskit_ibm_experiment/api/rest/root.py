@@ -25,14 +25,23 @@ class Api(RestAdapterBase):
     """Rest adapter for general endpoints."""
 
     URL_MAP = {
-        "login": "/users/loginWithToken",
-        "user_info": "/users/me",
-        "hubs": "/Network",
-        "version": "/version",
-        "bookings": "/Network/bookings/v2",
+        'login': '/users/loginWithToken',
+        'user_info': '/users/me',
+        'hubs': '/Network',
+        'version': '/version',
+        'bookings': '/Network/bookings/v2',
+        'experiments': '/experiments',
+        'experiment_devices': '/devices',
+        'analysis_results': '/analysis_results',
+        'device_components': '/device_components'
     }
 
     # Client functions.
+    def experiment_devices(self) -> Dict:
+        url = self.get_url('experiment_devices')
+        print("experiment_devices: calling url ", url)
+        raw_data = self.session.get(url).json()
+        return raw_data
 
     def hubs(self) -> List[Dict[str, Any]]:
         """Return the list of hub/group/project sets available to the user.

@@ -15,30 +15,33 @@
 import logging
 from typing import List, Dict, Optional, Union
 
-from qiskit_ibm_experiment.credentials import Credentials
-
-from ...api.rest import Api
-from ...api.session import RetrySession
-from ...api.clients.base import BaseClient
+from .experiment_rest_adapter import ExperimentRestAdapter
+from ..session import RetrySession
+from .base import BaseClient
 
 logger = logging.getLogger(__name__)
-
+from ..client_parameters import ClientParameters
 
 class ExperimentClient(BaseClient):
     """Client for accessing IBM Quantum experiment services."""
-
     def __init__(
             self,
-            credentials: Credentials
+            access_token,
+            url,
+            additional_params
     ) -> None:
         """ExperimentClient constructor.
 
         Args:
-            credentials: Account credentials.
+            access_token: The session's access token
+            url: The session's base url
+            additional_params: additional session parameters
         """
-        self._session = RetrySession(credentials.experiment_url, credentials.access_token,
-                                     **credentials.connection_parameters())
-        self.base_api = Api(self._session)
+        self._session = RetrySession(url, access_token, **additional_params)
+        self.api = ExperimentRestAdapter(self._session)
+
+    def devices(self) -> Dict:
+        return self.api.devices()['devices']
 
     def experiments(
             self,
