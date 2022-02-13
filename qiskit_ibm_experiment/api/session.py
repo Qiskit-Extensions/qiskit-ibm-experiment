@@ -25,7 +25,7 @@ from urllib3.util.retry import Retry
 
 from qiskit_ibm_experiment.utils.utils import filter_data
 
-from .exceptions import RequestsApiError
+from ..exceptions import RequestsApiError
 from ..version import __version__ as ibm_runtime_version
 
 STATUS_FORCELIST = (

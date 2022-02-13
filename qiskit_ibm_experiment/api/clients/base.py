@@ -23,7 +23,7 @@ import time
 import enum
 
 from websocket import WebSocketApp, STATUS_NORMAL, STATUS_ABNORMAL_CLOSED
-from ..exceptions import WebsocketError, WebsocketTimeoutError
+from ...exceptions import WebsocketError, WebsocketTimeoutError
 
 logger = logging.getLogger(__name__)
 

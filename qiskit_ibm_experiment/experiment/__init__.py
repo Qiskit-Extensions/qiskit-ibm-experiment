@@ -62,4 +62,3 @@ Exceptions
 from .ibm_experiment_service import IBMExperimentService
 from .constants import ResultQuality
 from .device_component import DeviceComponent
-from .exceptions import IBMExperimentError, IBMExperimentEntryExists, IBMExperimentEntryNotFound

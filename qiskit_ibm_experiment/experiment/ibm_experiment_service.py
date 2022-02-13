@@ -27,8 +27,7 @@ from .utils import map_api_error
 from .device_component import DeviceComponent
 from ..utils.converters import local_to_utc_str, utc_to_local
 from ..api.clients.experiment import ExperimentClient
-from ..api.exceptions import RequestsApiError
-from ..exceptions import IBMApiError
+from ..exceptions import RequestsApiError, IBMApiError
 from ..accounts import AccountManager
 from ..proxies import ProxyConfiguration
 from ..accounts import Account
