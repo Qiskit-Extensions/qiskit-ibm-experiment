@@ -25,11 +25,9 @@ from .constants import (ExperimentShareLevel, ResultQuality,
                         RESULT_QUALITY_FROM_API, RESULT_QUALITY_TO_API)
 from .utils import map_api_error, local_to_utc_str, utc_to_local
 from .device_component import DeviceComponent
-from qiskit_ibm_experiment.client.experiment import ExperimentClient
+from ..client.experiment import ExperimentClient
 from ..exceptions import RequestsApiError, IBMApiError
-from ..accounts import AccountManager
-from ..accounts import ProxyConfiguration
-from ..accounts import Account
+from ..accounts import AccountManager, Account, ProxyConfiguration
 
 logger = logging.getLogger(__name__)
 
