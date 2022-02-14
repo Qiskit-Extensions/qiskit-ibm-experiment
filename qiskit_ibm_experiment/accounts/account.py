@@ -12,16 +12,10 @@
 
 """Account related classes and functions."""
 
-
 from typing import Optional
 from urllib.parse import urlparse
-
-from requests.auth import AuthBase
-from typing_extensions import Literal
-
 from .exceptions import InvalidAccountError
 from .configuration import ProxyConfiguration
-from ..utils.hgp import from_instance_format
 
 class Account:
     """Class that represents an account."""
@@ -119,14 +113,3 @@ class Account:
         """Assert that the proxy configuration is valid."""
         if config is not None:
             config.validate()
-
-    @staticmethod
-    def _assert_valid_instance(instance: str) -> None:
-        """Assert that the instance name is valid"""
-        if instance is not None:
-            try:
-                from_instance_format(instance)
-            except:
-                raise InvalidAccountError(
-                    f"Invalid `instance` value. Expected hub/group/project format, got {instance}"
-                )
