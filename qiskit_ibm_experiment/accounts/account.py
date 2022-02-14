@@ -20,7 +20,6 @@ from requests.auth import AuthBase
 from typing_extensions import Literal
 
 from .exceptions import InvalidAccountError
-from ..api.auth import LegacyAuth
 from ..proxies import ProxyConfiguration
 from ..utils.hgp import from_instance_format
 
@@ -68,10 +67,6 @@ class Account:
             proxies=ProxyConfiguration(**proxies) if proxies else None,
             verify=data.get("verify", True),
         )
-
-    def get_auth_handler(self) -> AuthBase:
-        """Returns the respective authentication handler."""
-        return LegacyAuth(access_token=self.token)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Account):
