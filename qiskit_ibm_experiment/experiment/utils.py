@@ -13,12 +13,16 @@
 """Utilities for working with IBM Quantum experiments."""
 
 import logging
-from typing import Generator
+import os
+from typing import Generator, Union, Optional
 from contextlib import contextmanager
+from datetime import datetime, timedelta, timezone
 
-from ..exceptions import IBMExperimentEntryNotFound, IBMExperimentEntryExists
-from ..exceptions import RequestsApiError
-from ..exceptions import IBMApiError
+from ..exceptions import (IBMExperimentEntryNotFound,
+                          IBMExperimentEntryExists,
+                          RequestsApiError,
+                          IBMApiError,
+                          )
 
 
 @contextmanager

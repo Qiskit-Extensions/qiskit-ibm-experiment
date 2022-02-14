@@ -15,7 +15,7 @@
 import os
 import re
 import logging
-from typing import Dict, Optional, Any, Tuple, Union
+from typing import List, Dict, Optional, Any, Tuple, Union
 import pkg_resources
 
 from requests import Session, RequestException, Response
