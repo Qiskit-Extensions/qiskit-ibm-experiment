@@ -16,6 +16,7 @@ Account management functionality related to the IBM Runtime Services.
 
 from .account import Account
 from .management import AccountManager
+from .configuration import ProxyConfiguration
 from .exceptions import (
     AccountNotFoundError,
     AccountAlreadyExistsError,

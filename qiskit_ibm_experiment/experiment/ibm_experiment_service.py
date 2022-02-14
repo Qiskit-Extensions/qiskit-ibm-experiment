@@ -29,7 +29,7 @@ from ..utils.converters import local_to_utc_str, utc_to_local
 from qiskit_ibm_experiment.client.experiment import ExperimentClient
 from ..exceptions import RequestsApiError, IBMApiError
 from ..accounts import AccountManager
-from ..proxies import ProxyConfiguration
+from ..accounts import ProxyConfiguration
 from ..accounts import Account
 
 logger = logging.getLogger(__name__)

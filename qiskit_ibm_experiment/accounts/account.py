@@ -20,7 +20,7 @@ from requests.auth import AuthBase
 from typing_extensions import Literal
 
 from .exceptions import InvalidAccountError
-from ..proxies import ProxyConfiguration
+from .configuration import ProxyConfiguration
 from ..utils.hgp import from_instance_format
 
 class Account:
