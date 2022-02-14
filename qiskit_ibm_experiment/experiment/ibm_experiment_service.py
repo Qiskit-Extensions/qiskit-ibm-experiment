@@ -23,9 +23,8 @@ from qiskit.providers.exceptions import QiskitBackendNotFoundError
 
 from .constants import (ExperimentShareLevel, ResultQuality,
                         RESULT_QUALITY_FROM_API, RESULT_QUALITY_TO_API)
-from .utils import map_api_error
+from .utils import map_api_error, local_to_utc_str, utc_to_local
 from .device_component import DeviceComponent
-from ..utils.converters import local_to_utc_str, utc_to_local
 from qiskit_ibm_experiment.client.experiment import ExperimentClient
 from ..exceptions import RequestsApiError, IBMApiError
 from ..accounts import AccountManager

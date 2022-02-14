@@ -23,8 +23,6 @@ from requests.adapters import HTTPAdapter
 from requests.auth import AuthBase
 from urllib3.util.retry import Retry
 
-from qiskit_ibm_experiment.utils.utils import filter_data
-
 from ..exceptions import RequestsApiError
 from ..version import __version__ as ibm_runtime_version
 
@@ -389,3 +387,42 @@ class RetrySession(Session):
         state = super().__getstate__()  # type: ignore
         state.update(self.__dict__)
         return state
+
+def filter_data(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Return the data with certain fields filtered.
+
+    Data to be filtered out includes hub/group/project information.
+
+    Args:
+        data: Original data to be filtered.
+
+    Returns:
+        Filtered data.
+    """
+    if not isinstance(data, dict):
+        return data
+
+    data_to_filter = copy.deepcopy(data)
+    keys_to_filter = ['hubInfo']
+    _filter_value(data_to_filter, keys_to_filter)  # type: ignore[arg-type]
+    return data_to_filter
+
+
+def _filter_value(data: Dict[str, Any], filter_keys: List[Union[str, Tuple[str, str]]]) -> None:
+    """Recursive function to filter out the values of the input keys.
+
+    Args:
+        data: Data to be filtered
+        filter_keys: A list of keys whose values are to be filtered out. Each
+            item in the list can be a string or a tuple. A tuple indicates nested
+            keys, such as ``{'backend': {'name': ...}}`` and must have a length
+            of 2.
+    """
+    for key, value in data.items():
+        for filter_key in filter_keys:
+            if isinstance(filter_key, str) and key == filter_key:
+                data[key] = '...'
+            elif key == filter_key[0] and filter_key[1] in value:
+                data[filter_key[0]][filter_key[1]] = '...'
+            elif isinstance(value, dict):
+                _filter_value(value, filter_keys)
