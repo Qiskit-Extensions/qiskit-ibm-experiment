@@ -19,7 +19,7 @@ import json
 logger = logging.getLogger(__name__)
 
 
-from ..session import RetrySession
+from qiskit_ibm_experiment.client.session import RetrySession
 
 
 class ExperimentRestAdapter:
