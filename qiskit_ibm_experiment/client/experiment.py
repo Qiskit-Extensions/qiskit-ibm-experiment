@@ -84,7 +84,7 @@ class ExperimentClient(BaseClient):
         Returns:
             A list of experiments and the marker, if applicable.
         """
-        resp = self.base_api.experiments(
+        resp = self.api.experiments(
             limit=limit,
             marker=marker,
             backend_name=backend_name,
@@ -253,7 +253,7 @@ class ExperimentClient(BaseClient):
         Returns:
             A list of analysis results and the marker, if applicable.
         """
-        resp = self.base_api.analysis_results(
+        resp = self.api.analysis_results(
             limit=limit,
             marker=marker,
             backend_name=backend_name,
@@ -311,7 +311,7 @@ class ExperimentClient(BaseClient):
         Returns:
             Analysis result data.
         """
-        return self.base_api.analysis_result(result_id).get()
+        return self.api.analysis_result(result_id)
 
     def device_components(self, backend_name: Optional[str]) -> List[Dict]:
         """Return device components for the backend.

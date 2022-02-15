@@ -446,7 +446,6 @@ class IBMExperimentService:
         """
         with map_api_error(f"Experiment {experiment_id} not found."):
             raw_data = self._api_client.experiment_get(experiment_id)
-        print("got raw data ", raw_data)
         return self._api_to_experiment_data(json.loads(raw_data, cls=json_decoder))
 
     def experiments(

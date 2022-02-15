@@ -27,7 +27,10 @@ class ExperimentRestAdapter:
 
     URL_MAP = {
         'devices': '/devices',
-        'experiment': '/experiments/{uuid}'
+        'experiment': '/experiments/{uuid}',
+        'experiments': '/experiments',
+        'analysis_results': '/analysis_results',
+        'analysis_result': '/analysis_results/{result_id}',
     }
 
     _HEADER_JSON_CONTENT = {"Content-Type": "application/json"}
@@ -63,6 +66,146 @@ class ExperimentRestAdapter:
         url = self.get_url('experiment')
         url = url.format(uuid = experiment_id)
         # to enable custom JSON decoding request text, not json
-        raw_data = self.session.get(url).text
-        return raw_data
+        return self.session.get(url).text
 
+    def experiments(
+            self,
+            limit: Optional[int],
+            marker: Optional[str],
+            backend_name: Optional[str] = None,
+            experiment_type: Optional[str] = None,
+            start_time: Optional[List] = None,
+            device_components: Optional[List[str]] = None,
+            tags: Optional[List[str]] = None,
+            hub: Optional[str] = None,
+            group: Optional[str] = None,
+            project: Optional[str] = None,
+            exclude_public: Optional[bool] = False,
+            public_only: Optional[bool] = False,
+            exclude_mine: Optional[bool] = False,
+            mine_only: Optional[bool] = False,
+            parent_id: Optional[str] = None,
+            sort_by: Optional[str] = None
+    ) -> str:
+        """Return experiment data.
+
+        Args:
+            limit: Number of experiments to retrieve.
+            marker: Marker used to indicate where to start the next query.
+            backend_name: Name of the backend.
+            experiment_type: Experiment type.
+            start_time: A list of timestamps used to filter by experiment start time.
+            device_components: A list of device components used for filtering.
+            tags: Tags used for filtering.
+            hub: Filter by hub.
+            group: Filter by hub and group.
+            project: Filter by hub, group, and project.
+            exclude_public: Whether or not to exclude experiments with a public share level.
+            public_only: Whether or not to only return experiments with a public share level.
+            exclude_mine: Whether or not to exclude experiments where I am the owner.
+            mine_only: Whether or not to only return experiments where I am the owner.
+            parent_id: Filter by parent experiment ID.
+            sort_by: Sorting order.
+
+        Returns:
+            Response text.
+        """
+        url = self.get_url('experiments')
+        params = {}  # type: Dict[str, Any]
+        if backend_name:
+            params['device_name'] = backend_name
+        if experiment_type:
+            params['type'] = experiment_type
+        if start_time:
+            params['start_time'] = start_time
+        if device_components:
+            params['device_components'] = device_components
+        if tags:
+            params['tags'] = tags
+        if limit:
+            params['limit'] = limit
+        if marker:
+            params['marker'] = marker
+        if hub:
+            params['hub_id'] = hub
+        if group:
+            params['group_id'] = group
+        if project:
+            params['project_id'] = project
+        if parent_id:
+            params['parent_experiment_uuid'] = parent_id
+        if exclude_public:
+            params['visibility'] = '!public'
+        elif public_only:
+            params['visibility'] = 'public'
+        if exclude_mine:
+            params['owner'] = '!me'
+        elif mine_only:
+            params['owner'] = 'me'
+        if sort_by:
+            params['sort'] = sort_by
+
+        return self.session.get(url, params=params).text
+
+    def analysis_results(
+            self,
+            limit: Optional[int],
+            marker: Optional[str],
+            backend_name: Optional[str] = None,
+            device_components: Optional[Union[str, List[str]]] = None,
+            experiment_uuid: Optional[str] = None,
+            result_type: Optional[str] = None,
+            quality: Optional[List[str]] = None,
+            verified: Optional[bool] = None,
+            tags: Optional[List[str]] = None,
+            created_at: Optional[List] = None,
+            sort_by: Optional[str] = None
+    ) -> str:
+        """Return all analysis results.
+
+        Args:
+            limit: Number of analysis results to retrieve.
+            marker: Marker used to indicate where to start the next query.
+            backend_name: Name of the backend.
+            device_components: A list of device components used for filtering.
+            experiment_uuid: Experiment UUID used for filtering.
+            result_type: Analysis result type used for filtering.
+            quality: Quality value used for filtering.
+            verified: Indicates whether this result has been verified.
+            tags: Filter by tags assigned to analysis results.
+            created_at: A list of timestamps used to filter by creation time.
+            sort_by: Indicates how the output should be sorted.
+
+        Returns:
+            Server response.
+        """
+        url = self.get_url('analysis_results')
+        params = {}  # type: Dict[str, Any]
+        if backend_name:
+            params['device_name'] = backend_name
+        if device_components:
+            params['device_components'] = device_components
+        if experiment_uuid:
+            params['experiment_uuid'] = experiment_uuid
+        if quality:
+            params['quality'] = quality
+        if result_type:
+            params['type'] = result_type
+        if limit:
+            params['limit'] = limit
+        if marker:
+            params['marker'] = marker
+        if verified is not None:
+            params["verified"] = "true" if verified else "false"
+        if tags:
+            params['tags'] = tags
+        if created_at:
+            params['created_at'] = created_at
+        if sort_by:
+            params['sort'] = sort_by
+        return self.session.get(url, params=params).text
+
+    def analysis_result(self, result_id):
+        url = self.get_url('analysis_result')
+        url = url.format(result_id=result_id)
+        return self.session.get(url).text
