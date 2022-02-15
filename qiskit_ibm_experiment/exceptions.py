@@ -85,3 +85,82 @@ class RuntimeInvalidStateError(IBMRuntimeError):
     """Errors raised when the state is not valid for the operation."""
 
     pass
+
+class IBMExperimentError(IBMError):
+    """Base class for errors raised by the experiment service modules."""
+    pass
+
+
+class IBMExperimentEntryNotFound(IBMExperimentError):
+    """Errors raised when an experiment entry cannot be found."""
+
+
+class IBMExperimentEntryExists(IBMExperimentError):
+    """Errors raised when an experiment entry already exists."""
+
+class ApiError(IBMError):
+    """Generic IBM Quantum API error."""
+
+    pass
+
+
+class RequestsApiError(ApiError):
+    """Exception re-raising a RequestException."""
+
+    def __init__(self, message: str, status_code: int = -1):
+        """RequestsApiError constructor.
+
+        Args:
+            message: Exception message.
+            status_code: Response status code. -1 for unknown status code.
+        """
+        super().__init__(message)
+        self.status_code = status_code
+
+
+class WebsocketError(ApiError):
+    """Exceptions related to websockets."""
+
+    pass
+
+
+class WebsocketIBMProtocolError(WebsocketError):
+    """Exceptions related to IBM Quantum protocol error."""
+
+    pass
+
+
+class WebsocketAuthenticationError(WebsocketError):
+    """Exception caused during websocket authentication."""
+
+    pass
+
+
+class WebsocketTimeoutError(WebsocketError):
+    """Timeout during websocket communication."""
+
+    pass
+
+
+class WebsocketRetryableError(WebsocketError):
+    """A websocket error that can be retried."""
+
+    pass
+
+
+class AuthenticationLicenseError(ApiError):
+    """Exception due to user not having accepted the license agreement."""
+
+    pass
+
+
+class ApiIBMProtocolError(ApiError):
+    """Exception related to IBM Quantum API protocol error."""
+
+    pass
+
+
+class UserTimeoutExceededError(ApiError):
+    """Exceptions related to exceeding user defined timeout."""
+
+    pass

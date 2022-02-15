@@ -1,6 +1,6 @@
 # This code is part of Qiskit.
 #
-# (C) Copyright IBM 2021.
+# (C) Copyright IBM 2022.
 #
 # This code is licensed under the Apache License, Version 2.0. You may
 # obtain a copy of this license in the LICENSE.txt file in the root directory
@@ -10,21 +10,30 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""Base REST adapter."""
+"""Experiment REST adapter."""
 
-from ..session import RetrySession
+import logging
+from typing import Dict, List, Any, Union, Optional
+import json
+
+logger = logging.getLogger(__name__)
 
 
-class RestAdapterBase:
-    """Base class for REST adapters."""
+from qiskit_ibm_experiment.client.session import RetrySession
 
-    URL_MAP = {}  # type: ignore[var-annotated]
-    """Mapping between the internal name of an endpoint and the actual URL."""
+
+class ExperimentRestAdapter:
+    """REST adapter for experiment result DB"""
+
+    URL_MAP = {
+        'devices': '/devices',
+    }
 
     _HEADER_JSON_CONTENT = {"Content-Type": "application/json"}
+    _DEFAULT_URL_BASE = "https://api.quantum-computing.ibm.com/resultsdb"
 
     def __init__(self, session: RetrySession, prefix_url: str = "") -> None:
-        """RestAdapterBase constructor.
+        """ExperimentRestAdapter constructor.
 
         Args:
             session: Session to be used in the adapter.
@@ -43,3 +52,8 @@ class RestAdapterBase:
             The resolved URL of the endpoint (relative to the session base URL).
         """
         return "{}{}".format(self.prefix_url, self.URL_MAP[identifier])
+
+    def devices(self):
+        url = self.get_url('devices')
+        raw_data = self.session.get(url).json()
+        return raw_data

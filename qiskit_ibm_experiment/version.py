@@ -13,7 +13,7 @@
 """Contains the package version.
 
 Example::
-    from qiskit_ibm_runtime.version import __version__
+    from qiskit_ibm_experiment.version import __version__
     print(__version__)
 """
 

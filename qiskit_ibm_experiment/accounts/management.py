@@ -16,7 +16,7 @@ import os
 from typing import Optional, Dict
 from .exceptions import AccountNotFoundError
 from .account import Account
-from ..proxies import ProxyConfiguration
+from .configuration import ProxyConfiguration
 from .storage import save_config, read_config, delete_config
 
 _DEFAULT_ACCOUNT_CONFIG_JSON_FILE = os.path.join(

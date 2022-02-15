@@ -14,7 +14,6 @@
 
 import logging
 import json
-import copy
 from typing import Optional, List, Dict, Union, Tuple, Any, Type
 import requests
 from datetime import datetime
@@ -24,18 +23,11 @@ from qiskit.providers.exceptions import QiskitBackendNotFoundError
 
 from .constants import (ExperimentShareLevel, ResultQuality,
                         RESULT_QUALITY_FROM_API, RESULT_QUALITY_TO_API)
-from .utils import map_api_error
+from .utils import map_api_error, local_to_utc_str, utc_to_local
 from .device_component import DeviceComponent
-from ..utils.converters import local_to_utc_str, utc_to_local
-from ..api.clients.experiment import ExperimentClient
-from ..api.exceptions import RequestsApiError
-#from ..ibm_backend import IBMRetiredBackend
-from ..exceptions import IBMApiError
-from ..accounts import AccountManager
-from ..credentials import store_preferences
-from ..proxies import ProxyConfiguration
-from ..accounts import Account
-from ..api.client_parameters import ClientParameters
+from ..client.experiment import ExperimentClient
+from ..exceptions import RequestsApiError, IBMApiError
+from ..accounts import AccountManager, Account, ProxyConfiguration
 
 logger = logging.getLogger(__name__)
 
@@ -1420,9 +1412,10 @@ class IBMExperimentService:
             self._preferences['auto_save'] = auto_save
             update_cred = True
 
-        if update_cred:
-            store_preferences(
-                {self._provider.credentials.unique_id(): {'experiment': self.preferences}})
+        # TODO: should be done in JSON
+        # if update_cred:
+            # store_preferences(
+            #     {self._provider.credentials.unique_id(): {'experiment': self.preferences}})
 
     @staticmethod
     def delete_account(name: Optional[str] = None) -> bool:
