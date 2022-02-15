@@ -14,6 +14,7 @@
 
 import logging
 import os
+import dateutil
 from typing import Generator, Union, Optional
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
@@ -104,7 +105,7 @@ def utc_to_local(utc_dt: Union[datetime, str]) -> datetime:
     if not isinstance(utc_dt, datetime):
         raise TypeError('Input `utc_dt` is not string or datetime.')
     utc_dt = utc_dt.replace(tzinfo=timezone.utc)  # type: ignore[arg-type]
-    local_dt = utc_dt.astimezone(tz.tzlocal())  # type: ignore[attr-defined]
+    local_dt = utc_dt.astimezone(dateutil.tz.tzlocal())  # type: ignore[attr-defined]
     return local_dt
 
 

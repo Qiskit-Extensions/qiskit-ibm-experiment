@@ -85,7 +85,8 @@ class IBMExperimentService:
         """IBMExperimentService constructor.
 
         Args:
-            provider: IBM Quantum account provider.
+            token: the API token to use when establishing connection with the result DB
+            url: the url for the result DB API
         """
         super().__init__()
         if url is None:
@@ -445,7 +446,7 @@ class IBMExperimentService:
         """
         with map_api_error(f"Experiment {experiment_id} not found."):
             raw_data = self._api_client.experiment_get(experiment_id)
-
+        print("got raw data ", raw_data)
         return self._api_to_experiment_data(json.loads(raw_data, cls=json_decoder))
 
     def experiments(
@@ -638,13 +639,11 @@ class IBMExperimentService:
             Converted experiment data.
         """
         backend_name = raw_data['device_name']
-        try:
-            backend = self._provider.get_backend(backend_name)
-        except QiskitBackendNotFoundError:
-            backend = IBMRetiredBackend.from_name(backend_name=backend_name,
-                                                  provider=self._provider,
-                                                  credentials=self._provider.credentials,
-                                                  api=None)
+        # should decide whether the wanted functionality is returning
+        # an actual backend (requires a given provider) or simply the name
+        # backend = self._provider.get_backend(backend_name)
+        backend = backend_name
+
         extra_data: Dict[str, Any] = {}
         self._convert_dt(raw_data.get('created_at', None), extra_data, 'creation_datetime')
         self._convert_dt(raw_data.get('start_time', None), extra_data, 'start_datetime')

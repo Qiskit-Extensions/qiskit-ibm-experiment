@@ -108,7 +108,7 @@ class ExperimentClient(BaseClient):
         Returns:
             Experiment data.
         """
-        return self.base_api.experiment(experiment_id).retrieve()
+        return self.api.experiment(experiment_id)
 
     def experiment_upload(self, data: str) -> Dict:
         """Upload an experiment.

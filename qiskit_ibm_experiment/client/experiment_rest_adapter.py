@@ -27,6 +27,7 @@ class ExperimentRestAdapter:
 
     URL_MAP = {
         'devices': '/devices',
+        'experiment': '/experiments/{uuid}'
     }
 
     _HEADER_JSON_CONTENT = {"Content-Type": "application/json"}
@@ -51,9 +52,17 @@ class ExperimentRestAdapter:
         Returns:
             The resolved URL of the endpoint (relative to the session base URL).
         """
-        return "{}{}".format(self.prefix_url, self.URL_MAP[identifier])
+        return self.prefix_url + self.URL_MAP[identifier]
 
     def devices(self):
         url = self.get_url('devices')
         raw_data = self.session.get(url).json()
         return raw_data
+
+    def experiment(self, experiment_id):
+        url = self.get_url('experiment')
+        url = url.format(uuid = experiment_id)
+        # to enable custom JSON decoding request text, not json
+        raw_data = self.session.get(url).text
+        return raw_data
+
