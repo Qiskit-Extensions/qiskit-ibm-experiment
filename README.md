@@ -32,66 +32,44 @@ pip install qiskit-ibm-experiment
    IBMExperimentService.save_account(token='MY_API_TOKEN')
    ```
 
-   The command above stores your credentials locally in a configuration file called `qiskitrc`. By default, this file is located in `$HOME/.qiskit`, where `$HOME` is your home directory.
+   The command above stores your credentials locally in a configuration file called `qiskit-ibm.json`. By default, this file is located in `$HOME/.qiskit`, where `$HOME` is your home directory.
    Once saved you can then instantiate the open access provider (`hub='ibm-q', group='open', project='main'`) like below and access the backends:
 
    ```python
    from qiskit_ibm_experiment import IBMExperimentService
-   provider = IBMExperimentService()
+   service = IBMExperimentService()
 
    # display current supported backends
-   print(provider.backends())
+   print(service.backends())
 
-   # get IBM's simulator backend
-   simulator_backend = provider.get_backend('ibmq_qasm_simulator')
+   # get the latest experiments in the DB
+   experiment_list = service.experiments()
    ```
-
-   To see a list of providers available to your account, use the `IBMProvider.providers()` class method:
-
-   ```python
-   from qiskit_ibm import IBMProvider
-   IBMProvider.providers()
-
-   # [<IBMProvider(hub='ibm-q', group='open', project='main')>,
-   #  <IBMProvider(hub='ibm-q', group='test', project='default')>]
-   ```
-
-   To access a different provider you can do:
-
-   ```python
-   from qiskit_ibm import IBMProvider
-   provider = IBMProvider(hub='ibm-q', group='test', project='default')
-   ```
-
-   where `hub='ibm-q', group='test', project='default'` is a sample premium provider.
 
 ### Load Account from Environment Variables
 Alternatively, the IBM Provider can discover credentials from environment variables:
 ```bash
 export QISKIT_IBM_API_TOKEN='MY_API_TOKEN'
-export QISKIT_IBM_API_URL='https://auth.quantum-computing.ibm.com/api'
-export QISKIT_IBM_HUB='ibm-q'
-export QISKIT_IBM_GROUP='test'
-export QISKIT_IBM_PROJECT='default'
+export QISKIT_IBM_API_URL='https://api.quantum-computing.ibm.com/resultdb'
 ```
 
 Then instantiate the provider without any arguments and access the backends:
 ```python
-from qiskit_ibm import IBMProvider
-provider = IBMProvider()
+from qiskit_ibm_experiment import IBMExperimentService
+service = IBMExperimentService()
 ```
 
 ### Enable Account for Current Session
-As another alternative, you can also enable an account just for the current session by instantiating the provider with the token and hub/group/project.
+As another alternative, you can also enable an account just for the current session by instantiating the service with the token
 
 ```python
-from qiskit_ibm import IBMProvider
-provider = IBMProvider(token='MY_API_TOKEN', hub='ibm-q', group='test', project='default')
+from qiskit_ibm_experiment import IBMExperimentService
+service = IBMExperimentService(token='MY_API_TOKEN')
 ```
 
 ## Contribution Guidelines
 
-If you'd like to contribute to IBM Quantum Provider, please take a look at our
+If you'd like to contribute to IBM Quantum Experiment Service, please take a look at our
 [contribution guidelines]. This project adheres to Qiskit's [code of conduct].
 By participating, you are expect to uphold to this code.
 
@@ -107,7 +85,7 @@ Now you're set up and ready to check out some of the other examples from our
 
 ## Authors and Citation
 
-The Qiskit IBM Quantum Provider is the work of [many people] who contribute to the
+The Qiskit IBM Quantum Experiment Service is the work of [many people] who contribute to the
 project at different levels. If you use Qiskit, please cite as per the included
 [BibTeX file].
 
