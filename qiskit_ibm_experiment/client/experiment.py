@@ -300,7 +300,7 @@ class ExperimentClient(BaseClient):
         Returns:
             Analysis result data.
         """
-        return self.base_api.analysis_result(result_id).delete()
+        return self.api.analysis_result_delete(result_id)
 
     def analysis_result_get(self, result_id: str) -> str:
         """Retrieve an analysis result.

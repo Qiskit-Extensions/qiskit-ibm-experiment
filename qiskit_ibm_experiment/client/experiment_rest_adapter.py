@@ -287,3 +287,15 @@ class ExperimentRestAdapter:
         url = url.format(result_id=result_id)
         return self.session.put(url, data=new_data,
                                 headers=self._HEADER_JSON_CONTENT).json()
+
+    def analysis_result_delete(self, result_id) -> Dict:
+        """Delete the analysis result.
+        Args:
+            result_id: The id of the analysis result to update
+
+        Returns:
+            JSON response.
+        """
+        url = self.get_url('analysis_result')
+        url = url.format(result_id=result_id)
+        return self.session.delete(url).json()
