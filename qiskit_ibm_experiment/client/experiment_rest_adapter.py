@@ -259,3 +259,16 @@ class ExperimentRestAdapter:
         url = url.format(uuid=experiment_id)
         return self.session.put(url, data=new_data,
                                 headers=self._HEADER_JSON_CONTENT).json()
+
+    def analysis_result_create(self, result: str) -> Dict:
+        """Create an analysis result.
+
+            Args:
+                result: The analysis result to upload.
+
+            Returns:
+                JSON response.
+            """
+        url = self.get_url('analysis_results')
+        return self.session.post(url, data=result,
+                                 headers=self._HEADER_JSON_CONTENT).json()

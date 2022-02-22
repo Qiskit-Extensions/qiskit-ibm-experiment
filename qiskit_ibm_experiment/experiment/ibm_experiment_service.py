@@ -780,7 +780,7 @@ class IBMExperimentService:
             chisq=chisq
         )
         with map_api_error(f"Analysis result {result_id} already exists."):
-            response = self._api_client.analysis_result_upload(
+            response = self._api_client.analysis_result_create(
                 json.dumps(request, cls=json_encoder))
         return response['uuid']
 

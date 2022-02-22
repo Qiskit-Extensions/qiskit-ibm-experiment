@@ -268,7 +268,7 @@ class ExperimentClient(BaseClient):
         )
         return resp
 
-    def analysis_result_upload(self, result: str) -> Dict:
+    def analysis_result_create(self, result: str) -> Dict:
         """Upload an analysis result.
 
         Args:
@@ -277,7 +277,7 @@ class ExperimentClient(BaseClient):
         Returns:
             Analysis result data.
         """
-        return self.base_api.analysis_result_upload(result)
+        return self.api.analysis_result_create(result)
 
     def analysis_result_update(self, result_id: str, new_data: str) -> Dict:
         """Update an analysis result.
