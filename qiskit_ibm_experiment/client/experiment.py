@@ -119,7 +119,7 @@ class ExperimentClient(BaseClient):
         Returns:
             Experiment data.
         """
-        return self.base_api.experiment_upload(data)
+        return self.api.experiment_upload(data)
 
     def experiment_update(self, experiment_id: str, new_data: str) -> Dict:
         """Update an experiment.

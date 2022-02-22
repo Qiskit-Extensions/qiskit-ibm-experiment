@@ -247,6 +247,7 @@ class IBMExperimentService:
             self,
             experiment_type: str,
             backend_name: str,
+            provider: 'IBMProvider',
             metadata: Optional[Dict] = None,
             experiment_id: Optional[str] = None,
             parent_id: Optional[str] = None,
@@ -263,6 +264,7 @@ class IBMExperimentService:
         Args:
             experiment_type: Experiment type.
             backend_name: Name of the backend the experiment ran on.
+            provider: The provider used when running the experiment
             metadata: Experiment metadata.
             experiment_id: Experiment ID. It must be in the ``uuid4`` format.
                 One will be generated if not supplied.
@@ -301,9 +303,9 @@ class IBMExperimentService:
         data = {
             'type': experiment_type,
             'device_name': backend_name,
-            'hub_id': self._provider.credentials.hub,
-            'group_id': self._provider.credentials.group,
-            'project_id': self._provider.credentials.project
+            'hub_id': provider.credentials.hub,
+            'group_id': provider.credentials.group,
+            'project_id': provider.credentials.project
         }
         data.update(self._experiment_data_to_api(metadata=metadata,
                                                  experiment_id=experiment_id,
@@ -316,6 +318,7 @@ class IBMExperimentService:
 
         with map_api_error(f"Experiment {experiment_id} already exists."):
             response_data = self._api_client.experiment_upload(json.dumps(data, cls=json_encoder))
+        print("Response data:", response_data)
         return response_data['uuid']
 
     def update_experiment(
