@@ -244,3 +244,18 @@ class ExperimentRestAdapter:
         url = self.get_url('experiment')
         url = url.format(uuid=experiment_id)
         return self.session.delete(url).json()
+
+    def experiment_update(self, experiment_id: str, new_data: str) -> Dict:
+        """Update the experiment.
+
+        Args:
+            experiment_id: Id of the experiment to update.
+            new_data: The data to add to the experiment
+
+        Returns:
+            JSON response.
+        """
+        url = self.get_url('experiment')
+        url = url.format(uuid=experiment_id)
+        return self.session.put(url, data=new_data,
+                                headers=self._HEADER_JSON_CONTENT).json()

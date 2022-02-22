@@ -131,7 +131,7 @@ class ExperimentClient(BaseClient):
         Returns:
             Experiment data.
         """
-        return self.base_api.experiment(experiment_id).update(new_data)
+        return self.api.experiment_update(experiment_id, new_data)
 
     def experiment_delete(self, experiment_id: str) -> Dict:
         """Delete an experiment.
