@@ -231,3 +231,16 @@ class ExperimentRestAdapter:
         raw_data = self.session.post(url, data=experiment,
                                      headers=self._HEADER_JSON_CONTENT).json()
         return raw_data
+
+    def experiment_delete(self, experiment_id: str) -> Dict:
+        """Delete an experiment.
+
+        Args:
+            experiment_id: Experiment UUID.
+
+        Returns:
+            JSON response.
+        """
+        url = self.get_url('experiment')
+        url = url.format(uuid=experiment_id)
+        return self.session.delete(url).json()

@@ -140,9 +140,9 @@ class ExperimentClient(BaseClient):
             experiment_id: Experiment UUID.
 
         Returns:
-            Experiment data.
+            JSON response.
         """
-        return self.base_api.experiment(experiment_id).delete()
+        return self.api.experiment_delete(experiment_id)
 
     def experiment_plot_upload(
             self,
