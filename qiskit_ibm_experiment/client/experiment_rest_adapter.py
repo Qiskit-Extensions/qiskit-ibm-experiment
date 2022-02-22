@@ -272,3 +272,18 @@ class ExperimentRestAdapter:
         url = self.get_url('analysis_results')
         return self.session.post(url, data=result,
                                  headers=self._HEADER_JSON_CONTENT).json()
+
+    def analysis_result_update(self, result_id: str, new_data: str) -> Dict:
+        """Update the analysis result.
+
+        Args:
+            result_id: The id of the analysis result to update
+            new_data: The new data to update in the analysis result
+
+        Returns:
+            JSON response.
+        """
+        url = self.get_url('analysis_result')
+        url = url.format(result_id=result_id)
+        return self.session.put(url, data=new_data,
+                                headers=self._HEADER_JSON_CONTENT).json()

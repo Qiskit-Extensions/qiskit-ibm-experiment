@@ -289,7 +289,7 @@ class ExperimentClient(BaseClient):
         Returns:
             Analysis result data.
         """
-        return self.base_api.analysis_result(result_id).update(new_data)
+        return self.api.analysis_result_update(result_id, new_data)
 
     def analysis_result_delete(self, result_id: str) -> Dict:
         """Delete an analysis result.
