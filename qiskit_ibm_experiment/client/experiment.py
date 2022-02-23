@@ -84,7 +84,7 @@ class ExperimentClient(BaseClient):
         Returns:
             A list of experiments and the marker, if applicable.
         """
-        resp = self.base_api.experiments(
+        resp = self.api.experiments(
             limit=limit,
             marker=marker,
             backend_name=backend_name,
@@ -108,7 +108,7 @@ class ExperimentClient(BaseClient):
         Returns:
             Experiment data.
         """
-        return self.base_api.experiment(experiment_id).retrieve()
+        return self.api.experiment(experiment_id)
 
     def experiment_upload(self, data: str) -> Dict:
         """Upload an experiment.
@@ -119,7 +119,7 @@ class ExperimentClient(BaseClient):
         Returns:
             Experiment data.
         """
-        return self.base_api.experiment_upload(data)
+        return self.api.experiment_upload(data)
 
     def experiment_update(self, experiment_id: str, new_data: str) -> Dict:
         """Update an experiment.
@@ -131,7 +131,7 @@ class ExperimentClient(BaseClient):
         Returns:
             Experiment data.
         """
-        return self.base_api.experiment(experiment_id).update(new_data)
+        return self.api.experiment_update(experiment_id, new_data)
 
     def experiment_delete(self, experiment_id: str) -> Dict:
         """Delete an experiment.
@@ -140,9 +140,9 @@ class ExperimentClient(BaseClient):
             experiment_id: Experiment UUID.
 
         Returns:
-            Experiment data.
+            JSON response.
         """
-        return self.base_api.experiment(experiment_id).delete()
+        return self.api.experiment_delete(experiment_id)
 
     def experiment_plot_upload(
             self,
@@ -164,8 +164,7 @@ class ExperimentClient(BaseClient):
         Returns:
             JSON response.
         """
-        return self.base_api.experiment(
-            experiment_id).upload_plot(
+        return self.api.upload_plot(experiment_id,
                 plot, plot_name, sync_upload=sync_upload)
 
     def experiment_plot_update(
@@ -188,9 +187,8 @@ class ExperimentClient(BaseClient):
         Returns:
             JSON response.
         """
-        return self.base_api.experiment_plot(
-            experiment_id, plot_name).update(
-                plot, sync_upload=sync_upload)
+        return self.api.update_plot(experiment_id,
+                plot, plot_name, sync_upload=sync_upload)
 
     def experiment_plot_get(self, experiment_id: str, plot_name: str) -> bytes:
         """Retrieve an experiment plot.
@@ -202,7 +200,7 @@ class ExperimentClient(BaseClient):
         Returns:
             Retrieved experiment plot.
         """
-        return self.base_api.experiment_plot(experiment_id, plot_name).retrieve()
+        return self.api.get_plot(experiment_id, plot_name)
 
     def experiment_plot_delete(self, experiment_id: str, plot_file_name: str) -> None:
         """Delete an experiment plot.
@@ -211,7 +209,7 @@ class ExperimentClient(BaseClient):
             experiment_id: Experiment UUID.
             plot_file_name: Plot file name.
         """
-        self.base_api.experiment_plot(experiment_id, plot_file_name).delete()
+        self.api.delete_plot(experiment_id, plot_file_name)
 
     def experiment_devices(self) -> List:
         """Return list of experiment devices.
@@ -253,7 +251,7 @@ class ExperimentClient(BaseClient):
         Returns:
             A list of analysis results and the marker, if applicable.
         """
-        resp = self.base_api.analysis_results(
+        resp = self.api.analysis_results(
             limit=limit,
             marker=marker,
             backend_name=backend_name,
@@ -268,7 +266,7 @@ class ExperimentClient(BaseClient):
         )
         return resp
 
-    def analysis_result_upload(self, result: str) -> Dict:
+    def analysis_result_create(self, result: str) -> Dict:
         """Upload an analysis result.
 
         Args:
@@ -277,7 +275,7 @@ class ExperimentClient(BaseClient):
         Returns:
             Analysis result data.
         """
-        return self.base_api.analysis_result_upload(result)
+        return self.api.analysis_result_create(result)
 
     def analysis_result_update(self, result_id: str, new_data: str) -> Dict:
         """Update an analysis result.
@@ -289,7 +287,7 @@ class ExperimentClient(BaseClient):
         Returns:
             Analysis result data.
         """
-        return self.base_api.analysis_result(result_id).update(new_data)
+        return self.api.analysis_result_update(result_id, new_data)
 
     def analysis_result_delete(self, result_id: str) -> Dict:
         """Delete an analysis result.
@@ -300,7 +298,7 @@ class ExperimentClient(BaseClient):
         Returns:
             Analysis result data.
         """
-        return self.base_api.analysis_result(result_id).delete()
+        return self.api.analysis_result_delete(result_id)
 
     def analysis_result_get(self, result_id: str) -> str:
         """Retrieve an analysis result.
@@ -311,7 +309,7 @@ class ExperimentClient(BaseClient):
         Returns:
             Analysis result data.
         """
-        return self.base_api.analysis_result(result_id).get()
+        return self.api.analysis_result(result_id)
 
     def device_components(self, backend_name: Optional[str]) -> List[Dict]:
         """Return device components for the backend.
@@ -322,5 +320,5 @@ class ExperimentClient(BaseClient):
         Returns:
             A list of device components.
         """
-        resp = self.base_api.device_components(backend_name)
+        resp = self.api.device_components(backend_name)
         return resp['device_components']

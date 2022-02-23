@@ -85,7 +85,8 @@ class IBMExperimentService:
         """IBMExperimentService constructor.
 
         Args:
-            provider: IBM Quantum account provider.
+            token: the API token to use when establishing connection with the result DB
+            url: the url for the result DB API
         """
         super().__init__()
         if url is None:
@@ -102,39 +103,10 @@ class IBMExperimentService:
         self._access_token = self._get_acccess_token()
 
         self._additional_params = {
-#            'instance': self._account.instance,
             'proxies': self._account.proxies.to_request_params() if self._account.proxies is not None else None,
             'verify': self._account.verify,
         }
         self._api_client = ExperimentClient(self._access_token, self._account.url, self._additional_params)
-        #
-        # self._auth = self._account.auth
-        # self._programs: Dict[str, RuntimeProgram] = {}
-        # self._backends: Dict[str, "ibm_backend.IBMBackend"] = {}
-        #
-        # if self._auth == "cloud":
-        #     self._api_client = RuntimeClient(self._client_params)
-        #     # TODO: We can make the backend discovery lazy
-        #     self._backends = self._discover_cloud_backends()
-        #     return
-        # else:
-        #     auth_client = self._authenticate_legacy_account(self._client_params)
-        #     # Update client parameters to use authenticated values.
-        #     self._client_params.url = \
-        #     auth_client.current_service_urls()["services"][
-        #         "runtime"
-        #     ]
-        #     self._client_params.token = auth_client.current_access_token()
-        #     self._api_client = RuntimeClient(self._client_params)
-        #     self._hgps = self._initialize_hgps(auth_client)
-        #     for hgp in self._hgps.values():
-        #         for backend_name, backend in hgp.backends.items():
-        #             if backend_name not in self._backends:
-        #                 self._backends[backend_name] = backend
-
-
-        # self._preferences = copy.deepcopy(self._default_preferences)
-        # self._preferences.update(provider.credentials.preferences.get('experiments', {}))
 
     def _get_acccess_token(self, auth_url = None, api_token = None):
         if auth_url is None:
@@ -246,6 +218,7 @@ class IBMExperimentService:
             self,
             experiment_type: str,
             backend_name: str,
+            provider: 'IBMProvider',
             metadata: Optional[Dict] = None,
             experiment_id: Optional[str] = None,
             parent_id: Optional[str] = None,
@@ -262,6 +235,7 @@ class IBMExperimentService:
         Args:
             experiment_type: Experiment type.
             backend_name: Name of the backend the experiment ran on.
+            provider: The provider used when running the experiment
             metadata: Experiment metadata.
             experiment_id: Experiment ID. It must be in the ``uuid4`` format.
                 One will be generated if not supplied.
@@ -300,9 +274,9 @@ class IBMExperimentService:
         data = {
             'type': experiment_type,
             'device_name': backend_name,
-            'hub_id': self._provider.credentials.hub,
-            'group_id': self._provider.credentials.group,
-            'project_id': self._provider.credentials.project
+            'hub_id': provider.credentials.hub,
+            'group_id': provider.credentials.group,
+            'project_id': provider.credentials.project
         }
         data.update(self._experiment_data_to_api(metadata=metadata,
                                                  experiment_id=experiment_id,
@@ -315,6 +289,7 @@ class IBMExperimentService:
 
         with map_api_error(f"Experiment {experiment_id} already exists."):
             response_data = self._api_client.experiment_upload(json.dumps(data, cls=json_encoder))
+        print("Response data:", response_data)
         return response_data['uuid']
 
     def update_experiment(
@@ -445,7 +420,6 @@ class IBMExperimentService:
         """
         with map_api_error(f"Experiment {experiment_id} not found."):
             raw_data = self._api_client.experiment_get(experiment_id)
-
         return self._api_to_experiment_data(json.loads(raw_data, cls=json_decoder))
 
     def experiments(
@@ -638,13 +612,11 @@ class IBMExperimentService:
             Converted experiment data.
         """
         backend_name = raw_data['device_name']
-        try:
-            backend = self._provider.get_backend(backend_name)
-        except QiskitBackendNotFoundError:
-            backend = IBMRetiredBackend.from_name(backend_name=backend_name,
-                                                  provider=self._provider,
-                                                  credentials=self._provider.credentials,
-                                                  api=None)
+        # should decide whether the wanted functionality is returning
+        # an actual backend (requires a given provider) or simply the name
+        # backend = self._provider.get_backend(backend_name)
+        backend = backend_name
+
         extra_data: Dict[str, Any] = {}
         self._convert_dt(raw_data.get('created_at', None), extra_data, 'creation_datetime')
         self._convert_dt(raw_data.get('start_time', None), extra_data, 'start_datetime')
@@ -779,7 +751,7 @@ class IBMExperimentService:
             chisq=chisq
         )
         with map_api_error(f"Analysis result {result_id} already exists."):
-            response = self._api_client.analysis_result_upload(
+            response = self._api_client.analysis_result_create(
                 json.dumps(request, cls=json_encoder))
         return response['uuid']
 
@@ -1252,6 +1224,8 @@ class IBMExperimentService:
                 figure_name = figure
             else:
                 figure_name = "figure_{}.svg".format(datetime.now().isoformat())
+
+        # currently the resultdb enforces files to end with .svg
         if not figure_name.endswith(".svg"):
             figure_name += ".svg"
 
