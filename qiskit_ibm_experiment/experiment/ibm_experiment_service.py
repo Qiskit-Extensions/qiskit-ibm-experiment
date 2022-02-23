@@ -1253,6 +1253,8 @@ class IBMExperimentService:
                 figure_name = figure
             else:
                 figure_name = "figure_{}.svg".format(datetime.now().isoformat())
+
+        # currently the resultdb enforces files to end with .svg
         if not figure_name.endswith(".svg"):
             figure_name += ".svg"
 

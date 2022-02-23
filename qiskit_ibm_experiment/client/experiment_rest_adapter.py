@@ -30,7 +30,9 @@ class ExperimentRestAdapter:
         'experiment': '/experiments/{uuid}',
         'experiments': '/experiments',
         'analysis_results': '/analysis_results',
-        'analysis_result': '/analysis_results/{result_id}',
+        'analysis_result': '/analysis_results/{uuid}',
+        'plots': '/experiments/{uuid}/plots',
+        'plot': '/experiments/{uuid}/plots/{name}'
     }
 
     _HEADER_JSON_CONTENT = {"Content-Type": "application/json"}
@@ -215,7 +217,7 @@ class ExperimentRestAdapter:
             The analysis result .
         """
         url = self.get_url('analysis_result')
-        url = url.format(result_id=result_id)
+        url = url.format(uuid=result_id)
         return self.session.get(url).text
 
     def experiment_upload(self, experiment: str) -> Dict:
@@ -284,7 +286,7 @@ class ExperimentRestAdapter:
             JSON response.
         """
         url = self.get_url('analysis_result')
-        url = url.format(result_id=result_id)
+        url = url.format(uuid=result_id)
         return self.session.put(url, data=new_data,
                                 headers=self._HEADER_JSON_CONTENT).json()
 
@@ -297,5 +299,103 @@ class ExperimentRestAdapter:
             JSON response.
         """
         url = self.get_url('analysis_result')
-        url = url.format(result_id=result_id)
+        url = url.format(uuid=result_id)
         return self.session.delete(url).json()
+
+    def upload_plot(
+            self,
+            experiment_id: str,
+            plot: Union[bytes, str],
+            plot_name: str,
+            sync_upload: bool = True
+    ) -> Dict:
+        """Upload a plot for the experiment.
+
+        Args:
+            experiment_id: The experiment the plot belongs to.
+            plot: Plot file name or data to upload.
+            plot_name: Name of the plot.
+            sync_upload: By default the server will upload the plot file
+                to backend storage asynchronously. Set this to False to use
+                that behavior and not block the upload.
+
+        Returns:
+            JSON response.
+        """
+        url = self.get_url('plots')
+        url = url.format(uuid=experiment_id)
+        headers = {
+            'x-sync-upload': str(sync_upload)
+        }
+        if isinstance(plot, str):
+            with open(plot, 'rb') as file:
+                data = {'plot': (plot_name, file)}
+                print("posting to url", url)
+                print("image data", data)
+                response = self.session.post(url, files=data, headers=headers).json()
+        else:
+            data = {'plot': (plot_name, plot)}  # type: ignore[dict-item]
+            response = self.session.post(url, files=data, headers=headers).json()
+
+        return response
+
+
+    def update_plot(
+            self,
+            experiment_id: str,
+            plot: Union[bytes, str],
+            plot_name: str,
+            sync_upload: bool = True
+    ) -> Dict:
+        """Update an experiment plot.
+
+        Args:
+            experiment_id: The experiment the plot belongs to.
+            plot: Plot file name or data to upload.
+            plot_name: Name of the plot to be updated.
+            sync_upload: By default the server will upload the plot file
+                to backend storage asynchronously. Set this to False to use
+                that behavior and not block the upload.
+
+        Returns:
+            JSON response.
+        """
+        url = self.get_url('plot')
+        url = url.format(uuid=experiment_id, name=plot_name)
+        headers = {
+            'x-sync-upload': str(sync_upload)
+        }
+        if isinstance(plot, str):
+            with open(plot, 'rb') as file:
+                data = {'plot': (plot_name, file)}
+                response = self.session.put(url, files=data, headers=headers).json()
+        else:
+            data = {'plot': (plot_name, plot)}  # type: ignore[dict-item]
+            response = self.session.put(url, files=data, headers=headers).json()
+
+        return response
+
+    def get_plot(self, experiment_id: str, plot_name: str) -> bytes:
+        """Retrieve the specific experiment plot.
+
+        Args:
+            experiment_id: The experiment the plot belongs to.
+            plot_name: Name of the plot to be retrieved.
+        Returns:
+            Plot content.
+        """
+        url = self.get_url('plot')
+        url = url.format(uuid=experiment_id, name=plot_name)
+        response = self.session.get(url)
+        return response.content
+
+    def delete_plot(self, experiment_id: str, plot_name: str) -> None:
+        """Delete this experiment plot.
+        Args:
+            experiment_id: The experiment the plot belongs to.
+            plot_name: Name of the plot to be retrieved.
+        """
+        url = self.get_url('plot')
+        url = url.format(uuid=experiment_id, name=plot_name)
+        self.session.delete(url)
+

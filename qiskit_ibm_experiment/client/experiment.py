@@ -164,8 +164,7 @@ class ExperimentClient(BaseClient):
         Returns:
             JSON response.
         """
-        return self.base_api.experiment(
-            experiment_id).upload_plot(
+        return self.api.upload_plot(experiment_id,
                 plot, plot_name, sync_upload=sync_upload)
 
     def experiment_plot_update(
@@ -188,9 +187,8 @@ class ExperimentClient(BaseClient):
         Returns:
             JSON response.
         """
-        return self.base_api.experiment_plot(
-            experiment_id, plot_name).update(
-                plot, sync_upload=sync_upload)
+        return self.api.update_plot(experiment_id,
+                plot, plot_name, sync_upload=sync_upload)
 
     def experiment_plot_get(self, experiment_id: str, plot_name: str) -> bytes:
         """Retrieve an experiment plot.
@@ -202,7 +200,7 @@ class ExperimentClient(BaseClient):
         Returns:
             Retrieved experiment plot.
         """
-        return self.base_api.experiment_plot(experiment_id, plot_name).retrieve()
+        return self.api.get_plot(experiment_id, plot_name)
 
     def experiment_plot_delete(self, experiment_id: str, plot_file_name: str) -> None:
         """Delete an experiment plot.
@@ -211,7 +209,7 @@ class ExperimentClient(BaseClient):
             experiment_id: Experiment UUID.
             plot_file_name: Plot file name.
         """
-        self.base_api.experiment_plot(experiment_id, plot_file_name).delete()
+        self.api.delete_plot(experiment_id, plot_file_name)
 
     def experiment_devices(self) -> List:
         """Return list of experiment devices.
