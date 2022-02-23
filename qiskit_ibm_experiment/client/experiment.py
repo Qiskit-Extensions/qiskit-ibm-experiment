@@ -320,5 +320,5 @@ class ExperimentClient(BaseClient):
         Returns:
             A list of device components.
         """
-        resp = self.base_api.device_components(backend_name)
+        resp = self.api.device_components(backend_name)
         return resp['device_components']

@@ -27,6 +27,7 @@ class ExperimentRestAdapter:
 
     URL_MAP = {
         'devices': '/devices',
+        'device_components': '/device_components',
         'experiment': '/experiments/{uuid}',
         'experiments': '/experiments',
         'analysis_results': '/analysis_results',
@@ -399,3 +400,17 @@ class ExperimentRestAdapter:
         url = url.format(uuid=experiment_id, name=plot_name)
         self.session.delete(url)
 
+    def device_components(self, backend_name: Optional[str] = None) -> Dict:
+        """Return a list of device components for the backend.
+
+        Args:
+            backend_name: Name of the backend.
+
+        Returns:
+            JSON response.
+        """
+        params = {}
+        if backend_name:
+            params['device_name'] = backend_name
+        url = self.get_url('device_components')
+        return self.session.get(url, params=params).json()
