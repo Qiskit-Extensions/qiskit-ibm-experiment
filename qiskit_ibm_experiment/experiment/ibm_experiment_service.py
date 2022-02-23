@@ -103,39 +103,10 @@ class IBMExperimentService:
         self._access_token = self._get_acccess_token()
 
         self._additional_params = {
-#            'instance': self._account.instance,
             'proxies': self._account.proxies.to_request_params() if self._account.proxies is not None else None,
             'verify': self._account.verify,
         }
         self._api_client = ExperimentClient(self._access_token, self._account.url, self._additional_params)
-        #
-        # self._auth = self._account.auth
-        # self._programs: Dict[str, RuntimeProgram] = {}
-        # self._backends: Dict[str, "ibm_backend.IBMBackend"] = {}
-        #
-        # if self._auth == "cloud":
-        #     self._api_client = RuntimeClient(self._client_params)
-        #     # TODO: We can make the backend discovery lazy
-        #     self._backends = self._discover_cloud_backends()
-        #     return
-        # else:
-        #     auth_client = self._authenticate_legacy_account(self._client_params)
-        #     # Update client parameters to use authenticated values.
-        #     self._client_params.url = \
-        #     auth_client.current_service_urls()["services"][
-        #         "runtime"
-        #     ]
-        #     self._client_params.token = auth_client.current_access_token()
-        #     self._api_client = RuntimeClient(self._client_params)
-        #     self._hgps = self._initialize_hgps(auth_client)
-        #     for hgp in self._hgps.values():
-        #         for backend_name, backend in hgp.backends.items():
-        #             if backend_name not in self._backends:
-        #                 self._backends[backend_name] = backend
-
-
-        # self._preferences = copy.deepcopy(self._default_preferences)
-        # self._preferences.update(provider.credentials.preferences.get('experiments', {}))
 
     def _get_acccess_token(self, auth_url = None, api_token = None):
         if auth_url is None:
