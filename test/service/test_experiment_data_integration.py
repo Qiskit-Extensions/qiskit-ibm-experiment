@@ -26,6 +26,10 @@ from qiskit.providers.ibmq import IBMQ, least_busy
 from qiskit.test.base import BaseQiskitTestCase
 from qiskit_ibm_experiment.service import ResultQuality, ExperimentShareLevel
 from qiskit_ibm_experiment import IBMExperimentService
+from qiskit_experiments.database_service.db_experiment_data import (
+    AnalysisStatus,
+    ExperimentStatus,
+)
 
 from qiskit_ibm_experiment.exceptions import IBMExperimentEntryNotFound
 #from ...ibm_test_case import IBMTestCase
@@ -106,7 +110,7 @@ class TestExperimentDataIntegration(BaseQiskitTestCase):
         transpiled = transpile(ReferenceCircuits.bell(), self.backend)
         transpiled.metadata = {"foo": "bar"}
         job = self._run_circuit(transpiled)
-        exp_data.add_data(job)
+        exp_data.add_jobs(job)
         self.assertEqual([job.job_id()], exp_data.job_ids)
         result = job.result()
         exp_data.block_for_results()
@@ -123,12 +127,13 @@ class TestExperimentDataIntegration(BaseQiskitTestCase):
                                     tags=["foo", "bar"],
                                     share_level="hub",
                                     metadata=metadata,
-                                    notes="some notes")
+                                    notes="some notes",
+                                    service=self.service)
 
         job_ids = []
         for _ in range(2):
             job = self._run_circuit()
-            exp_data.add_data(job)
+            exp_data.add_jobs(job)
             job_ids.append(job.job_id())
 
         exp_data.save()
@@ -147,7 +152,7 @@ class TestExperimentDataIntegration(BaseQiskitTestCase):
 
         for _ in range(2):
             job = self._run_circuit()
-            exp_data.add_data(job)
+            exp_data.add_jobs(job)
         exp_data.tags = ["foo", "bar"]
         exp_data.share_level = "hub"
         exp_data.notes = "some notes"
@@ -333,9 +338,9 @@ class TestExperimentDataIntegration(BaseQiskitTestCase):
 
     def test_set_service_job(self):
         """Test setting service with a job."""
-        exp_data = DbExperimentData(experiment_type="qiskit_test")
+        exp_data = DbExperimentData(experiment_type="qiskit_test", service=self.service)
         job = self._run_circuit()
-        exp_data.add_data(job)
+        exp_data.add_jobs(job)
         exp_data.save()
         self.experiments_to_delete.append(exp_data.experiment_id)
 
@@ -445,15 +450,15 @@ class TestExperimentDataIntegration(BaseQiskitTestCase):
         jobs = []
         for _ in range(2):
             job = self._run_circuit()
-            exp_data.add_data(job)
+            exp_data.add_jobs(job)
             jobs.append(job)
         exp_data.block_for_results()
         self.assertTrue(all(job.status() == JobStatus.DONE for job in jobs))
-        self.assertEqual("DONE", exp_data.status())
+        self.assertEqual(ExperimentStatus.DONE, exp_data.status())
 
     def _create_experiment_data(self):
         """Create an experiment data."""
-        exp_data = DbExperimentData(backend=self.backend, experiment_type="qiskit_test")
+        exp_data = DbExperimentData(backend=self.backend, experiment_type="qiskit_test", service=self.service)
         exp_data.save()
         self.experiments_to_delete.append(exp_data.experiment_id)
         return exp_data
@@ -477,9 +482,9 @@ class TestExperimentDataIntegration(BaseQiskitTestCase):
         return job
 
 if __name__ == "__main__":
-    #unittest.main()
-    suite = unittest.TestSuite()
-    suite.addTest(TestExperimentDataIntegration("test_new_experiment_data"))
-    runner = unittest.TextTestRunner()
-    runner.run(suite)
+    unittest.main()
+    # suite = unittest.TestSuite()
+    # suite.addTest(TestExperimentDataIntegration("test_add_analysis_results"))
+    # runner = unittest.TextTestRunner()
+    # runner.run(suite)
 
