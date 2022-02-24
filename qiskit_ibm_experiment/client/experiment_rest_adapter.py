@@ -331,8 +331,6 @@ class ExperimentRestAdapter:
         if isinstance(plot, str):
             with open(plot, 'rb') as file:
                 data = {'plot': (plot_name, file)}
-                print("posting to url", url)
-                print("image data", data)
                 response = self.session.post(url, files=data, headers=headers).json()
         else:
             data = {'plot': (plot_name, plot)}  # type: ignore[dict-item]

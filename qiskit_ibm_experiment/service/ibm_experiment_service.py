@@ -294,7 +294,6 @@ class IBMExperimentService:
 
         with map_api_error(f"Experiment {experiment_id} already exists."):
             response_data = self._api_client.experiment_upload(json.dumps(data, cls=json_encoder))
-        print("Response data:", response_data)
         return response_data['uuid']
 
     def update_experiment(

@@ -128,8 +128,8 @@ def local_to_utc(local_dt: Union[datetime, str]) -> datetime:
 
     # Input is considered local if it's ``utcoffset()`` is ``None`` or none-zero.
     if local_dt.utcoffset() is None or local_dt.utcoffset() != timedelta(0):
-        local_dt = local_dt.replace(tzinfo=tz.tzlocal())
-        return local_dt.astimezone(tz.UTC)
+        local_dt = local_dt.replace(tzinfo=dateutil.tz.tzlocal())
+        return local_dt.astimezone(dateutil.tz.UTC)
     return local_dt  # Already in UTC.
 
 

@@ -23,13 +23,13 @@ import re
 from dateutil import tz
 import numpy as np
 
-from qiskit.providers.ibmq import IBMQ
+from qiskit.providers.ibmq import IBMQ, least_busy
 # from qiskit_ibm.exceptions import IBMNotAuthorizedError
 from qiskit_ibm_experiment.service import ResultQuality, ExperimentShareLevel
 from qiskit_ibm_experiment import IBMExperimentEntryNotFound
 from qiskit.test.base import BaseQiskitTestCase
 #from .ibm_test_case import IBMTestCase
-import ibm_test_case
+#import ibm_test_case
 #from ..utils import ExperimentEncoder, ExperimentDecoder
 from qiskit_ibm_experiment import IBMExperimentService
 
@@ -43,14 +43,15 @@ class TestExperimentServerIntegration(BaseQiskitTestCase):
         """Initial class level setup."""
         super().setUpClass()
         try:
-            cls.service = cls._setup_service()
+            cls._setup_service()
+            cls._setup_provider()
         except Exception:
             raise SkipTest("Not authorized to use experiment service.")
 
     @classmethod
     def _setup_service(cls):
         """Get the service for the class."""
-        return IBMExperimentService(token=os.getenv('QISKIT_IBM_STAGING_API_TOKEN'),
+        cls.service = IBMExperimentService(token=os.getenv('QISKIT_IBM_STAGING_API_TOKEN'),
                                     url=os.getenv('QISKIT_IBM_STAGING_API_URL'),
                                     )
 
@@ -59,6 +60,9 @@ class TestExperimentServerIntegration(BaseQiskitTestCase):
         """Get the provider for the class."""
         cls.provider = IBMQ.enable_account(token=os.getenv('QISKIT_IBM_STAGING_API_TOKEN'),
                                             url=os.getenv('QISKIT_IBM_STAGING_API_URL') + "/v2")
+        cls.backend = least_busy(cls.provider.backends(
+            simulator=False, min_num_qubits=5))
+        cls.device_components = cls.service.device_components(cls.backend.name())
 
 
     def setUp(self) -> None:
@@ -73,7 +77,8 @@ class TestExperimentServerIntegration(BaseQiskitTestCase):
                 with mock.patch('builtins.input', lambda _: 'y'):
                     self.service.delete_experiment(expr_uuid)
             except Exception as err:    # pylint: disable=broad-except
-                self.log.info("Unable to delete experiment %s: %s", expr_uuid, err)
+                print("Unable to delete experiment %s: %s", expr_uuid, err)
+                # self.log.info("Unable to delete experiment %s: %s", expr_uuid, err)
         super().tearDown()
 
     def test_unauthorized(self):
@@ -112,7 +117,7 @@ class TestExperimentServerIntegration(BaseQiskitTestCase):
 
         found = False
         for exp in backend_experiments:
-            self.assertEqual(self.backend.name(), exp["backend"].name())
+            self.assertEqual(self.backend.name(), exp["backend"])
             if exp["experiment_id"] == exp_id:
                 found = True
         self.assertTrue(found, "Experiment {} not found when filter by backend name {}.".format(
@@ -507,7 +512,7 @@ class TestExperimentServerIntegration(BaseQiskitTestCase):
         self.assertEqual(credentials.group, new_exp["group"])  # pylint: disable=no-member
         self.assertEqual(credentials.project, new_exp["project"])  # pylint: disable=no-member
         self.assertEqual("qiskit_test", new_exp["experiment_type"])
-        self.assertEqual(self.backend.name(), new_exp["backend"].name())
+        self.assertEqual(self.backend.name(), new_exp["backend"])
         self.assertEqual({"foo": "bar"}, new_exp["metadata"])
         self.assertEqual(["job1", "job2"], new_exp["job_ids"])
         self.assertEqual(["qiskit_test"], new_exp["tags"])
@@ -872,8 +877,8 @@ class TestExperimentServerIntegration(BaseQiskitTestCase):
         cdt1 = result1['creation_datetime']
         # Assert that the UTC timestamp was converted to the local time.
         self.assertIsNotNone(cdt1.tzinfo)
-        self.log.debug('Created first analysis result %s with creation_datetime %s',
-                       result1_id, cdt1.isoformat())
+        # self.log.debug('Created first analysis result %s with creation_datetime %s',
+        #                result1_id, cdt1.isoformat())
         # Get the analysis result back using the exact creation timestamp
         # using both ge and le prefixes.
         results = self.service.analysis_results(
@@ -889,8 +894,8 @@ class TestExperimentServerIntegration(BaseQiskitTestCase):
         result2_id = self._create_analysis_result(exp_id=result1['experiment_id'])
         result2 = self.service.analysis_result(result2_id)
         cdt2 = result2['creation_datetime']
-        self.log.debug('Created second analysis result %s with creation_datetime %s',
-                       result2_id, cdt2.isoformat())
+        # self.log.debug('Created second analysis result %s with creation_datetime %s',
+        #                result2_id, cdt2.isoformat())
         # Get both results using their creation timestamps as a range.
         results = self.service.analysis_results(
             creation_datetime_after=cdt1,
