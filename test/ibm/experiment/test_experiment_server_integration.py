@@ -21,13 +21,13 @@ import re
 from dateutil import tz
 import numpy as np
 
-from qiskit_ibm_experiment.experiment import ExperimentShareLevel
-from qiskit_ibm.exceptions import IBMNotAuthorizedError
-from qiskit_ibm_experiment.experiment import ResultQuality, IBMExperimentEntryNotFound
+# from qiskit_ibm.exceptions import IBMNotAuthorizedError
+from qiskit_ibm_experiment.service import ResultQuality, ExperimentShareLevel
+from qiskit_ibm_experiment import IBMExperimentEntryNotFound
 
-from ...ibm_test_case import IBMTestCase
-from ...decorators import requires_provider, requires_device
+from ..ibm_test_case import IBMTestCase
 from .utils import ExperimentEncoder, ExperimentDecoder
+from qiskit_ibm_experiment import IBMExperimentService
 
 
 @skipIf(not os.environ.get('QISKIT_IBM_USE_STAGING_CREDENTIALS', ''), "Only runs on staging")
@@ -37,26 +37,22 @@ class TestExperimentServerIntegration(IBMTestCase):
     @classmethod
     def setUpClass(cls):
         """Initial class level setup."""
-        # pylint: disable=arguments-differ
         super().setUpClass()
-        cls.provider = cls._setup_provider()  # pylint: disable=no-value-for-parameter
-        cls.backend = cls._setup_backend()  # pylint: disable=no-value-for-parameter
         try:
-            cls.device_components = cls.provider.experiment.device_components(cls.backend.name())
+            cls.service = cls._setup_service()
         except Exception:
             raise SkipTest("Not authorized to use experiment service.")
 
     @classmethod
-    @requires_provider
-    def _setup_provider(cls, provider):
-        """Get the provider for the class."""
-        return provider
-
-    @classmethod
-    @requires_device
-    def _setup_backend(cls, backend):
-        """Get a backend for the class."""
-        return backend
+    def _setup_service(cls):
+        """Get the service for the class."""
+        if os.getenv('QISKIT_IBM_USE_STAGING_CREDENTIALS', ''):
+            return IBMExperimentService(token=os.getenv('QISKIT_IBM_STAGING_API_TOKEN'),
+                                        url=os.getenv('QISKIT_IBM_STAGING_API_URL'),
+                                        auth_url=os.getenv('QISKIT_IBM_STAGING_API_AUTH_URL'),
+                                        )
+        else:
+            return IBMExperimentService()
 
     def setUp(self) -> None:
         """Test level setup."""
@@ -68,26 +64,26 @@ class TestExperimentServerIntegration(IBMTestCase):
         for expr_uuid in self.experiments_to_delete:
             try:
                 with mock.patch('builtins.input', lambda _: 'y'):
-                    self.provider.experiment.delete_experiment(expr_uuid)
+                    self.service.delete_experiment(expr_uuid)
             except Exception as err:    # pylint: disable=broad-except
                 self.log.info("Unable to delete experiment %s: %s", expr_uuid, err)
         super().tearDown()
 
     def test_unauthorized(self):
         """Test unauthorized access."""
-        saved_experiment = self.provider._experiment
-        try:
-            self.provider._experiment = None
-            with self.assertRaises(IBMNotAuthorizedError) as context_manager:
-                self.provider.experiment.experiments()
-            self.assertIn("experiment service", str(context_manager.exception))
-        finally:
-            self.provider._experiment = saved_experiment
+        # saved_experiment = self.provider._experiment
+        # try:
+        #     self.provider._experiment = None
+        #     with self.assertRaises(IBMNotAuthorizedError) as context_manager:
+        #         self.service.experiments()
+        #     self.assertIn("experiment service", str(context_manager.exception))
+        # finally:
+        #     self.provider._experiment = saved_experiment
 
     def test_experiments(self):
         """Test retrieving experiments."""
         exp_id = self._create_experiment()
-        experiments = self.provider.experiment.experiments()
+        experiments = self.service.experiments()
         self.assertTrue(experiments, "No experiments found.")
 
         found = False
@@ -104,7 +100,7 @@ class TestExperimentServerIntegration(IBMTestCase):
     def test_experiments_with_backend(self):
         """Test retrieving all experiments for a specific backend."""
         exp_id = self._create_experiment()
-        backend_experiments = self.provider.experiment.experiments(
+        backend_experiments = self.service.experiments(
             backend_name=self.backend.name())
 
         found = False
@@ -119,7 +115,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         """Test retrieving all experiments for a specific type."""
         exp_type = 'qiskit_test'
         exp_id = self._create_experiment(experiment_type=exp_type)
-        backend_experiments = self.provider.experiment.experiments(
+        backend_experiments = self.service.experiments(
             experiment_type=exp_type)
 
         found = False
@@ -134,7 +130,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         """Test retrieving all experiments for a specific parent id."""
         parent_id = self._create_experiment()
         child_id = self._create_experiment(parent_id=parent_id)
-        experiments = self.provider.experiment.experiments(
+        experiments = self.service.experiments(
             parent_id=parent_id)
 
         found = False
@@ -150,14 +146,14 @@ class TestExperimentServerIntegration(IBMTestCase):
         exp_type = 'qiskit_test'
         exp_id = self._create_experiment(experiment_type=exp_type)
 
-        experiments = self.provider.experiment.experiments(
+        experiments = self.service.experiments(
             experiment_type="foo", experiment_type_operator="like")
         self.assertNotIn(exp_id, [exp["experiment_id"] for exp in experiments])
 
         subtests = ["qiskit", "test"]
         for filter_type in subtests:
             with self.subTest(filter_type=filter_type):
-                experiments = self.provider.experiment.experiments(
+                experiments = self.service.experiments(
                     experiment_type=exp_type, experiment_type_operator="like")
                 found = False
                 for exp in experiments:
@@ -170,7 +166,7 @@ class TestExperimentServerIntegration(IBMTestCase):
     def test_experiments_with_bad_type_operator(self):
         """Test retrieving all experiments with a bad type operator."""
         with self.assertRaises(ValueError):
-            self.provider.experiment.experiments(
+            self.service.experiments(
                 experiment_type="foo", experiment_type_operator="bad")
 
     def test_experiments_with_start_time(self):
@@ -191,7 +187,7 @@ class TestExperimentServerIntegration(IBMTestCase):
 
         for start_dt, end_dt, expected, title in sub_tests:
             with self.subTest(title=title):
-                backend_experiments = self.provider.experiment.experiments(
+                backend_experiments = self.service.experiments(
                     start_datetime_after=start_dt, start_datetime_before=end_dt,
                     experiment_type='qiskit_test')
                 found = False
@@ -223,7 +219,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         ]
         for tags, operator, found in sub_tests:
             with self.subTest(tags=tags, operator=operator):
-                experiments = self.provider.experiment.experiments(
+                experiments = self.service.experiments(
                     tags=tags, tags_operator=operator)
                 ref_expr_found = False
                 for expr in experiments:
@@ -251,7 +247,7 @@ class TestExperimentServerIntegration(IBMTestCase):
 
         for hgp_kwargs in sub_tests:
             with self.subTest(kwargs=hgp_kwargs.keys()):
-                hgp_experiments = self.provider.experiment.experiments(**hgp_kwargs)
+                hgp_experiments = self.service.experiments(**hgp_kwargs)
                 ref_expr_found = False
                 for expr in hgp_experiments:
                     for hgp_key, hgp_val in hgp_kwargs.items():
@@ -272,7 +268,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         for hgp_kwargs, missing_keys in sub_tests:
             with self.subTest(kwargs=hgp_kwargs.keys()):
                 with self.assertRaises(ValueError) as ex_cm:
-                    self.provider.experiment.experiments(**hgp_kwargs)
+                    self.service.experiments(**hgp_kwargs)
                 for key in missing_keys:
                     self.assertIn(key, str(ex_cm.exception))
 
@@ -283,7 +279,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         public_exp_id = self._create_experiment(share_level=ExperimentShareLevel.PUBLIC)
         private_exp_id = self._create_experiment(share_level=ExperimentShareLevel.PRIVATE)
 
-        experiments = self.provider.experiment.experiments(exclude_public=True)
+        experiments = self.service.experiments(exclude_public=True)
         # The public experiment we just created should not be in the set.
         non_public_experiment_uuids = []
         for experiment in experiments:
@@ -308,7 +304,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         public_exp_id = self._create_experiment(share_level=ExperimentShareLevel.PUBLIC)
         private_exp_id = self._create_experiment(share_level=ExperimentShareLevel.PRIVATE)
 
-        experiments = self.provider.experiment.experiments(public_only=True)
+        experiments = self.service.experiments(public_only=True)
         public_experiment_uuids = []
         for experiment in experiments:
             self.assertEqual(
@@ -330,7 +326,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         with self.assertRaisesRegex(
                 ValueError,
                 'exclude_public and public_only cannot both be True'):
-            self.provider.experiment.experiments(exclude_public=True, public_only=True)
+            self.service.experiments(exclude_public=True, public_only=True)
 
     def test_experiments_with_exclude_mine(self):
         """Tests retrieving experiments with exclude_mine filter."""
@@ -340,9 +336,9 @@ class TestExperimentServerIntegration(IBMTestCase):
         # there is at least one experiment owned by another user in the integration test
         # environment though.
         exp_id = self._create_experiment()
-        exp_owner = self.provider.experiment.experiment(exp_id)["owner"]
+        exp_owner = self.service.experiment(exp_id)["owner"]
 
-        not_my_experiments = self.provider.experiment.experiments(exclude_mine=True)
+        not_my_experiments = self.service.experiments(exclude_mine=True)
         # The experiment we just created should not be in the set.
         not_mine_experiment_uuids = []
         for experiment in not_my_experiments:
@@ -364,8 +360,8 @@ class TestExperimentServerIntegration(IBMTestCase):
         # there is at least one experiment owned by another user in the integration test
         # environment though.
         exp_id = self._create_experiment()
-        exp_owner = self.provider.experiment.experiment(exp_id)["owner"]
-        my_experiments = self.provider.experiment.experiments(mine_only=True)
+        exp_owner = self.service.experiment(exp_id)["owner"]
+        my_experiments = self.service.experiments(mine_only=True)
         my_experiment_uuids = []
         for experiment in my_experiments:
             self.assertEqual(
@@ -383,19 +379,19 @@ class TestExperimentServerIntegration(IBMTestCase):
         with self.assertRaisesRegex(
                 ValueError,
                 'exclude_mine and mine_only cannot both be True'):
-            self.provider.experiment.experiments(exclude_mine=True, mine_only=True)
+            self.service.experiments(exclude_mine=True, mine_only=True)
 
     def test_experiments_with_limit(self):
         """Test retrieving experiments with limit."""
         self._create_experiment()
-        experiments = self.provider.experiment.experiments(limit=1)
+        experiments = self.service.experiments(limit=1)
         self.assertEqual(1, len(experiments))
 
     def test_experiments_with_no_limit(self):
         """Test retrieving experiments with no limit."""
         tags = [str(uuid.uuid4())]
         exp_id = self._create_experiment(tags=tags)
-        experiments = self.provider.experiment.experiments(limit=None, tags=tags)
+        experiments = self.service.experiments(limit=None, tags=tags)
         self.assertEqual(1, len(experiments))
         self.assertEqual(exp_id, experiments[0]["experiment_id"])
 
@@ -425,7 +421,7 @@ class TestExperimentServerIntegration(IBMTestCase):
 
         for sort_by, expected in subtests:
             with self.subTest(sort_by=sort_by):
-                experiments = self.provider.experiment.experiments(tags=tags, sort_by=sort_by)
+                experiments = self.service.experiments(tags=tags, sort_by=sort_by)
                 self.assertEqual(expected, [exp["experiment_id"] for exp in experiments])
 
     def test_experiments_with_bad_sort_by(self):
@@ -435,14 +431,14 @@ class TestExperimentServerIntegration(IBMTestCase):
         for sort_by in subtests:
             with self.subTest(sort_by=sort_by):
                 with self.assertRaises(ValueError):
-                    self.provider.experiment.experiments(sort_by=sort_by)
+                    self.service.experiments(sort_by=sort_by)
 
     def test_experiments_with_device_components(self):
         """Test filtering experiments with device components."""
         expr_id = self._create_experiment()
         self._create_analysis_result(exp_id=expr_id,
                                      device_components=self.device_components)
-        experiments = self.provider.experiment.experiments(
+        experiments = self.service.experiments(
             device_components=self.device_components)
         self.assertIn(expr_id, [expr["experiment_id"] for expr in experiments],
                       f"Experiment {expr_id} not found when filtering with "
@@ -457,7 +453,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         expr_id = self._create_experiment(backend_name=backend_name)
         self._create_analysis_result(exp_id=expr_id,
                                      device_components=device_components)
-        experiments = self.provider.experiment.experiments(
+        experiments = self.service.experiments(
             device_components=device_components[:2],
             device_components_operator="contains")
 
@@ -468,14 +464,14 @@ class TestExperimentServerIntegration(IBMTestCase):
     def test_experiments_with_bad_components_operator(self):
         """Test filtering experiments with bad device components operator."""
         with self.assertRaises(ValueError):
-            self.provider.experiment.experiments(
+            self.service.experiments(
                 device_components=["Q1"],
                 device_components_operator="foo")
 
     def test_retrieve_experiment(self):
         """Test retrieving an experiment by its ID."""
         exp_id = self._create_experiment()
-        rexp = self.provider.experiment.experiment(exp_id)
+        rexp = self.service.experiment(exp_id)
         self.assertEqual(exp_id, rexp["experiment_id"])
         for attr in ['hub', 'group', 'project', 'owner', 'share_level']:
             self.assertIsNotNone(rexp[attr], "{} does not have a {}".format(rexp, attr))
@@ -483,7 +479,7 @@ class TestExperimentServerIntegration(IBMTestCase):
     def test_upload_experiment(self):
         """Test uploading an experiment."""
         exp_id = str(uuid.uuid4())
-        new_exp_id = self.provider.experiment.create_experiment(
+        new_exp_id = self.service.create_experiment(
             experiment_type="qiskit_test",
             backend_name=self.backend.name(),
             metadata={"foo": "bar"},
@@ -496,7 +492,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         )
         self.experiments_to_delete.append(new_exp_id)
         self.assertEqual(exp_id, new_exp_id)
-        new_exp = self.provider.experiment.experiment(new_exp_id)
+        new_exp = self.service.experiment(new_exp_id)
 
         credentials = self.provider.credentials
         self.assertEqual(credentials.hub, new_exp["hub"])  # pylint: disable=no-member
@@ -520,7 +516,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         """Test updating an experiment."""
         new_exp_id = self._create_experiment()
 
-        self.provider.experiment.update_experiment(
+        self.service.update_experiment(
             experiment_id=new_exp_id,
             metadata={"foo": "bar"},
             job_ids=["job1", "job2"],
@@ -530,7 +526,7 @@ class TestExperimentServerIntegration(IBMTestCase):
             end_datetime=datetime.now()
         )
 
-        rexp = self.provider.experiment.experiment(new_exp_id)
+        rexp = self.service.experiment(new_exp_id)
         self.assertEqual({"foo": "bar"}, rexp["metadata"])
         self.assertEqual(["job1", "job2"], rexp["job_ids"])
         self.assertEqual(["qiskit_test"], rexp["tags"])
@@ -543,10 +539,10 @@ class TestExperimentServerIntegration(IBMTestCase):
         new_exp_id = self._create_experiment(notes='delete me')
 
         with mock.patch('builtins.input', lambda _: 'y'):
-            self.provider.experiment.delete_experiment(new_exp_id)
+            self.service.delete_experiment(new_exp_id)
 
         with self.assertRaises(IBMExperimentEntryNotFound) as ex_cm:
-            self.provider.experiment.experiment(new_exp_id)
+            self.service.experiment(new_exp_id)
         self.assertIn("Not Found for url", ex_cm.exception.message)
 
     def test_upload_analysis_result(self):
@@ -555,7 +551,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         fit = dict(value=41.456, variance=4.051)
         result_id = str(uuid.uuid4())
         chisq = 1.3253
-        aresult_id = self.provider.experiment.create_analysis_result(
+        aresult_id = self.service.create_analysis_result(
             experiment_id=exp_id,
             result_type="qiskit_test",
             result_data=fit,
@@ -567,7 +563,7 @@ class TestExperimentServerIntegration(IBMTestCase):
             chisq=chisq
         )
 
-        rresult = self.provider.experiment.analysis_result(aresult_id)
+        rresult = self.service.analysis_result(aresult_id)
         self.assertEqual(exp_id, rresult["experiment_id"])
         self.assertEqual("qiskit_test", rresult["result_type"])
         self.assertEqual(fit, rresult["result_data"])
@@ -585,7 +581,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         fit = dict(value=41.456, variance=4.051)
         chisq = 1.3253
 
-        self.provider.experiment.update_analysis_result(
+        self.service.update_analysis_result(
             result_id=result_id,
             result_data=fit,
             tags=["qiskit_test"],
@@ -594,7 +590,7 @@ class TestExperimentServerIntegration(IBMTestCase):
             chisq=chisq
         )
 
-        rresult = self.provider.experiment.analysis_result(result_id)
+        rresult = self.service.analysis_result(result_id)
         self.assertEqual(result_id, rresult["result_id"])
         self.assertEqual(fit, rresult["result_data"])
         self.assertEqual(["qiskit_test"], rresult["tags"])
@@ -605,7 +601,7 @@ class TestExperimentServerIntegration(IBMTestCase):
     def test_analysis_results(self):
         """Test retrieving all analysis results."""
         result_id = self._create_analysis_result()
-        results = self.provider.experiment.analysis_results()
+        results = self.service.analysis_results()
         found = False
         for res in results:
             self.assertIsInstance(res["verified"], bool)
@@ -621,7 +617,7 @@ class TestExperimentServerIntegration(IBMTestCase):
     def test_analysis_results_device_components(self):
         """Test filtering analysis results with device components."""
         result_id = self._create_analysis_result(device_components=self.device_components)
-        results = self.provider.experiment.analysis_results(
+        results = self.service.analysis_results(
             device_components=self.device_components)
 
         found = False
@@ -642,7 +638,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         expr_id = self._create_experiment(backend_name=backend_name)
         result_id = self._create_analysis_result(exp_id=expr_id,
                                                  device_components=device_components)
-        results = self.provider.experiment.analysis_results(
+        results = self.service.analysis_results(
             device_components=device_components[:2], device_components_operator="contains")
 
         found = False
@@ -660,7 +656,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         result_id1 = self._create_analysis_result(exp_id=expr_id)
         result_id2 = self._create_analysis_result(exp_id=expr_id)
 
-        results = self.provider.experiment.analysis_results(experiment_id=expr_id)
+        results = self.service.analysis_results(experiment_id=expr_id)
         self.assertEqual(2, len(results))
         self.assertEqual({result_id1, result_id2}, {res["result_id"] for res in results})
 
@@ -668,7 +664,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         """Test filtering analysis results with type."""
         result_type = "qiskit_test"
         result_id = self._create_analysis_result(result_type=result_type)
-        results = self.provider.experiment.analysis_results(result_type=result_type)
+        results = self.service.analysis_results(result_type=result_type)
         found = False
         for res in results:
             self.assertEqual(result_type, res["result_type"])
@@ -682,14 +678,14 @@ class TestExperimentServerIntegration(IBMTestCase):
         result_type = "qiskit_test_1234"
         result_id = self._create_analysis_result(result_type=result_type)
 
-        results = self.provider.experiment.analysis_results(
+        results = self.service.analysis_results(
             result_type="foo", result_type_operator="like")
         self.assertNotIn(result_id, [res["result_id"] for res in results])
 
         subtests = ["qiskit_test", "test_1234"]
         for filter_type in subtests:
             with self.subTest(filter_type=filter_type):
-                results = self.provider.experiment.analysis_results(
+                results = self.service.analysis_results(
                     result_type=filter_type,
                     result_type_operator="like")
 
@@ -704,7 +700,7 @@ class TestExperimentServerIntegration(IBMTestCase):
     def test_analysis_results_bad_type_operator(self):
         """Test retrieving all experiments with a bad type operator."""
         with self.assertRaises(ValueError):
-            self.provider.experiment.analysis_results(
+            self.service.analysis_results(
                 result_type="foo", result_type_operator="bad")
 
     def test_analysis_results_quality(self):
@@ -727,7 +723,7 @@ class TestExperimentServerIntegration(IBMTestCase):
 
         for quality, expected in subtests:
             with self.subTest(quality=quality):
-                results = self.provider.experiment.analysis_results(quality=quality)
+                results = self.service.analysis_results(quality=quality)
                 if not isinstance(quality, list):
                     quality = [quality]
                 qual_set = []
@@ -746,13 +742,13 @@ class TestExperimentServerIntegration(IBMTestCase):
     def test_analysis_results_backend_name(self):
         """Test filtering analysis results with backend name."""
         result_id = self._create_analysis_result()
-        results = self.provider.experiment.analysis_results(backend_name=self.backend.name())
+        results = self.service.analysis_results(backend_name=self.backend.name())
         self.assertIn(result_id, [res["result_id"] for res in results])
 
     def test_analysis_results_verified(self):
         """Test filtering analysis results with verified."""
         result_id = self._create_analysis_result(verified=True)
-        results = self.provider.experiment.analysis_results(verified=True)
+        results = self.service.analysis_results(verified=True)
         found = False
         for res in results:
             self.assertTrue(res["verified"])
@@ -777,7 +773,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         ]
         for tags, operator, found in sub_tests:
             with self.subTest(tags=tags, operator=operator):
-                results = self.provider.experiment.analysis_results(
+                results = self.service.analysis_results(
                     tags=tags, tags_operator=operator)
                 res_found = False
                 for res in results:
@@ -795,14 +791,14 @@ class TestExperimentServerIntegration(IBMTestCase):
     def test_analysis_results_with_limit(self):
         """Test retrieving analysis results with limit."""
         self._create_analysis_result()
-        results = self.provider.experiment.analysis_results(limit=1)
+        results = self.service.analysis_results(limit=1)
         self.assertEqual(1, len(results))
 
     def test_analysis_results_with_no_limit(self):
         """Test retrieving analysis results with no limit."""
         tags = [str(uuid.uuid4())]
         result_id = self._create_analysis_result(tags=tags)
-        results = self.provider.experiment.analysis_results(limit=None, tags=tags)
+        results = self.service.analysis_results(limit=None, tags=tags)
         self.assertEqual(1, len(results))
         self.assertEqual(result_id, results[0]["result_id"])
 
@@ -846,7 +842,7 @@ class TestExperimentServerIntegration(IBMTestCase):
 
         for sort_by, expected in subtests:
             with self.subTest(sort_by=sort_by):
-                results = self.provider.experiment.analysis_results(tags=tags, sort_by=sort_by)
+                results = self.service.analysis_results(tags=tags, sort_by=sort_by)
                 self.assertEqual(expected, [res["result_id"] for res in results])
 
     def test_analysis_results_with_bad_sort_by(self):
@@ -856,13 +852,13 @@ class TestExperimentServerIntegration(IBMTestCase):
         for sort_by in subtests:
             with self.subTest(sort_by=sort_by):
                 with self.assertRaises(ValueError):
-                    self.provider.experiment.analysis_results(sort_by=sort_by)
+                    self.service.analysis_results(sort_by=sort_by)
 
     def test_analysis_results_with_creation_datetime(self):
         """Test retrieving analysis_results with creation_datetime"""
         # Create an analysis_result and get it back to get its creation_datetime value.
         result1_id = self._create_analysis_result()
-        result1 = self.provider.experiment.analysis_result(result1_id)
+        result1 = self.service.analysis_result(result1_id)
         self.assertIn('creation_datetime', result1)
         self.assertIsNotNone(result1['creation_datetime'])
         cdt1 = result1['creation_datetime']
@@ -872,7 +868,7 @@ class TestExperimentServerIntegration(IBMTestCase):
                        result1_id, cdt1.isoformat())
         # Get the analysis result back using the exact creation timestamp
         # using both ge and le prefixes.
-        results = self.provider.experiment.analysis_results(
+        results = self.service.analysis_results(
             creation_datetime_after=cdt1,
             creation_datetime_before=cdt1
         )
@@ -883,12 +879,12 @@ class TestExperimentServerIntegration(IBMTestCase):
         self.assertIn(result1_id, result_ids)
         # Create another analysis result on the same experiment.
         result2_id = self._create_analysis_result(exp_id=result1['experiment_id'])
-        result2 = self.provider.experiment.analysis_result(result2_id)
+        result2 = self.service.analysis_result(result2_id)
         cdt2 = result2['creation_datetime']
         self.log.debug('Created second analysis result %s with creation_datetime %s',
                        result2_id, cdt2.isoformat())
         # Get both results using their creation timestamps as a range.
-        results = self.provider.experiment.analysis_results(
+        results = self.service.analysis_results(
             creation_datetime_after=cdt1,
             creation_datetime_before=cdt2
         )
@@ -901,26 +897,26 @@ class TestExperimentServerIntegration(IBMTestCase):
         """Test deleting an analysis result."""
         result_id = self._create_analysis_result()
         with mock.patch('builtins.input', lambda _: 'y'):
-            self.provider.experiment.delete_analysis_result(result_id)
+            self.service.delete_analysis_result(result_id)
 
         with self.assertRaises(IBMExperimentEntryNotFound):
-            self.provider.experiment.analysis_result(result_id)
+            self.service.analysis_result(result_id)
 
     def test_backend_components(self):
         """Test retrieving all device components."""
-        device_components = self.provider.experiment.device_components()
+        device_components = self.service.device_components()
         self.assertTrue(device_components)
 
     def test_backend_components_backend_name(self):
         """Test retrieving device components for a specific backend."""
-        device_components = self.provider.experiment.device_components()
+        device_components = self.service.device_components()
         backend = list(device_components.keys())[0]
-        backend_components = self.provider.experiment.device_components(backend)
+        backend_components = self.service.device_components(backend)
         self.assertEqual(device_components[backend], backend_components)
 
     def test_retrieve_backends(self):
         """Test retrieving all backends."""
-        backends = self.provider.experiment.backends()
+        backends = self.service.backends()
         self.assertIn(self.backend.name(), [b['name'] for b in backends])
 
     def test_create_figure(self):
@@ -943,7 +939,7 @@ class TestExperimentServerIntegration(IBMTestCase):
             title = f"figure_name={figure_name}" if figure_name else f"figure={figure}"
             with self.subTest(title=title):
                 expr_id = self._create_experiment()
-                name, _ = self.provider.experiment.create_figure(
+                name, _ = self.service.create_figure(
                     experiment_id=expr_id,
                     figure=figure,
                     figure_name=figure_name
@@ -952,7 +948,7 @@ class TestExperimentServerIntegration(IBMTestCase):
                     self.assertEqual(figure_name, name)
                 elif isinstance(figure, str):
                     self.assertEqual(figure, name)
-                expr = self.provider.experiment.experiment(expr_id)
+                expr = self.service.experiment(expr_id)
                 self.assertIn(name, expr["figure_names"])
 
     def test_figure(self):
@@ -960,7 +956,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         hello_bytes = str.encode("hello world")
         figure_name = "hello.svg"
         expr_id = self._create_experiment()
-        self.provider.experiment.create_figure(
+        self.service.create_figure(
             experiment_id=expr_id,
             figure=hello_bytes,
             figure_name=figure_name
@@ -975,7 +971,7 @@ class TestExperimentServerIntegration(IBMTestCase):
 
         for figure_name, file_name in subtests:
             with self.subTest(file_name=file_name):
-                fig = self.provider.experiment.figure(expr_id, figure_name, file_name)
+                fig = self.service.figure(expr_id, figure_name, file_name)
                 if file_name:
                     with open(file_name, 'rb') as file:
                         self.assertEqual(hello_bytes, file.read())
@@ -986,48 +982,48 @@ class TestExperimentServerIntegration(IBMTestCase):
         """Test uploading and updating plot data."""
         figure_name = "hello.svg"
         expr_id = self._create_experiment()
-        self.provider.experiment.create_figure(
+        self.service.create_figure(
             experiment_id=expr_id,
             figure=str.encode("hello world"),
             figure_name=figure_name
         )
         friend_bytes = str.encode("hello friend!")
-        name, _ = self.provider.experiment.update_figure(
+        name, _ = self.service.update_figure(
             experiment_id=expr_id,
             figure=friend_bytes,
             figure_name=figure_name
         )
         self.assertEqual(name, figure_name)
-        rplot = self.provider.experiment.figure(expr_id, figure_name)
+        rplot = self.service.figure(expr_id, figure_name)
         self.assertEqual(rplot, friend_bytes, "Retrieved plot not equal updated plot.")
 
     def test_delete_figure(self):
         """Test deleting a figure."""
         figure_name = "hello.svg"
         expr_id = self._create_experiment()
-        self.provider.experiment.create_figure(
+        self.service.create_figure(
             experiment_id=expr_id,
             figure=str.encode("hello world"),
             figure_name=figure_name
         )
         with mock.patch('builtins.input', lambda _: 'y'):
-            self.provider.experiment.delete_figure(expr_id, figure_name)
+            self.service.delete_figure(expr_id, figure_name)
         self.assertRaises(IBMExperimentEntryNotFound,
-                          self.provider.experiment.figure, expr_id, figure_name)
+                          self.service.figure, expr_id, figure_name)
 
     def test_experiment_coders(self):
         """Test custom encoder and decoder for an experiment."""
         metadata = {"complex": 2 + 3j, "numpy": np.zeros(2)}
         expr_id = self._create_experiment(metadata=metadata, json_encoder=ExperimentEncoder)
-        rexp = self.provider.experiment.experiment(expr_id, json_decoder=ExperimentDecoder)
+        rexp = self.service.experiment(expr_id, json_decoder=ExperimentDecoder)
         rmetadata = rexp["metadata"]
         self.assertEqual(metadata["complex"], rmetadata["complex"])
         self.assertTrue((metadata["numpy"] == rmetadata["numpy"]).all())
 
         new_metadata = {"complex": 4 + 5j, "numpy": np.ones(3)}
-        self.provider.experiment.update_experiment(
+        self.service.update_experiment(
             expr_id, metadata=new_metadata, json_encoder=ExperimentEncoder)
-        rexp = self.provider.experiment.experiment(expr_id, json_decoder=ExperimentDecoder)
+        rexp = self.service.experiment(expr_id, json_decoder=ExperimentDecoder)
         rmetadata = rexp["metadata"]
         self.assertEqual(new_metadata["complex"], rmetadata["complex"])
         self.assertTrue((new_metadata["numpy"] == rmetadata["numpy"]).all())
@@ -1037,16 +1033,16 @@ class TestExperimentServerIntegration(IBMTestCase):
         data = {"complex": 2 + 3j, "numpy": np.zeros(2)}
         result_id = self._create_analysis_result(
             result_data=data, json_encoder=ExperimentEncoder)
-        rresult = self.provider.experiment.analysis_result(
+        rresult = self.service.analysis_result(
             result_id, json_decoder=ExperimentDecoder)
         rdata = rresult["result_data"]
         self.assertEqual(data["complex"], rdata["complex"])
         self.assertTrue((data["numpy"] == rdata["numpy"]).all())
 
         new_data = {"complex": 4 + 5j, "numpy": np.ones(3)}
-        self.provider.experiment.update_analysis_result(
+        self.service.update_analysis_result(
             result_id, result_data=new_data, json_encoder=ExperimentEncoder)
-        rresult = self.provider.experiment.analysis_result(
+        rresult = self.service.analysis_result(
             result_id, json_decoder=ExperimentDecoder)
         rdata = rresult["result_data"]
         self.assertEqual(new_data["complex"], rdata["complex"])
@@ -1061,7 +1057,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         """Create a new experiment."""
         experiment_type = experiment_type or 'qiskit_test'
         backend_name = backend_name or self.backend.name()
-        exp_id = self.provider.experiment.create_experiment(
+        exp_id = self.service.create_experiment(
             experiment_type=experiment_type,
             backend_name=backend_name,
             **kwargs
@@ -1079,7 +1075,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         experiment_id = exp_id or self._create_experiment()
         result_type = result_type or "qiskit_test"
         result_data = result_data or {}
-        aresult_id = self.provider.experiment.create_analysis_result(
+        aresult_id = self.service.create_analysis_result(
             experiment_id=experiment_id,
             result_data=result_data,
             result_type=result_type,
@@ -1092,7 +1088,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         backend_name = self.backend.name()
         device_components = self.device_components
         if len(device_components) < min_components:
-            all_components = self.provider.experiment.device_components()
+            all_components = self.service.device_components()
             for key, val in all_components.items():
                 if len(val) >= min_components:
                     backend_name = key

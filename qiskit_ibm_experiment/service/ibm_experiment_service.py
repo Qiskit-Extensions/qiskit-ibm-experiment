@@ -77,6 +77,8 @@ class IBMExperimentService:
             self,
             token: Optional[str] = None,
             url: Optional[str] = None,
+            auth_url: Optional[str] = None,
+            db_url: Optional[str] = None,
             name: Optional[str] = None,
             instance: Optional[str] = None,
             proxies: Optional[dict] = None,
@@ -90,7 +92,7 @@ class IBMExperimentService:
         """
         super().__init__()
         if url is None:
-            url = self._DEFAULT_BASE_URL + self._DEFAULT_EXPERIMENT_PREFIX
+            url = self._DEFAULT_BASE_URL
         self._account = self._discover_account(
             token=token,
             url=url,
@@ -99,18 +101,21 @@ class IBMExperimentService:
             proxies=ProxyConfiguration(**proxies) if proxies else None,
             verify=verify,
         )
+        if db_url is None:
+            db_url = self._account.url + self._DEFAULT_EXPERIMENT_PREFIX
+        if auth_url is None:
+            auth_url = self._account.url + self._DEFAULT_AUTHENTICATION_PREFIX
 
-        self._access_token = self._get_acccess_token()
+
+        self._access_token = self._get_acccess_token(auth_url)
 
         self._additional_params = {
             'proxies': self._account.proxies.to_request_params() if self._account.proxies is not None else None,
             'verify': self._account.verify,
         }
-        self._api_client = ExperimentClient(self._access_token, self._account.url, self._additional_params)
+        self._api_client = ExperimentClient(self._access_token, db_url, self._additional_params)
 
-    def _get_acccess_token(self, auth_url = None, api_token = None):
-        if auth_url is None:
-            auth_url = self._DEFAULT_BASE_URL + self._DEFAULT_AUTHENTICATION_PREFIX
+    def _get_acccess_token(self, auth_url, api_token = None):
         if api_token is None:
             try:
                 api_token = self._account.token

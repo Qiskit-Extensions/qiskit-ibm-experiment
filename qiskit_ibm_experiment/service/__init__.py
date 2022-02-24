@@ -60,5 +60,5 @@ Exceptions
 """
 
 from .ibm_experiment_service import IBMExperimentService
-from .constants import ResultQuality
+from .constants import ResultQuality, ExperimentShareLevel
 from .device_component import DeviceComponent
