@@ -17,8 +17,8 @@ from unittest import SkipTest
 from qiskit_ibm.exceptions import IBMNotAuthorizedError
 from qiskit_ibm.credentials import read_credentials_from_qiskitrc
 
-from ...ibm_test_case import IBMTestCase
-from ...decorators import requires_provider
+from test.service import IBMTestCase
+from ..decorators import requires_provider
 from ...contextmanagers import no_envs, custom_qiskitrc, CREDENTIAL_ENV_VARS
 
 

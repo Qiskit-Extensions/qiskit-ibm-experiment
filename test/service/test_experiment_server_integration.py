@@ -14,6 +14,8 @@
 
 import os
 import uuid
+import unittest
+import json
 from unittest import mock, SkipTest, skipIf
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
@@ -21,17 +23,19 @@ import re
 from dateutil import tz
 import numpy as np
 
+from qiskit.providers.ibmq import IBMQ
 # from qiskit_ibm.exceptions import IBMNotAuthorizedError
 from qiskit_ibm_experiment.service import ResultQuality, ExperimentShareLevel
 from qiskit_ibm_experiment import IBMExperimentEntryNotFound
-
-from ..ibm_test_case import IBMTestCase
-from .utils import ExperimentEncoder, ExperimentDecoder
+from qiskit.test.base import BaseQiskitTestCase
+#from .ibm_test_case import IBMTestCase
+import ibm_test_case
+#from ..utils import ExperimentEncoder, ExperimentDecoder
 from qiskit_ibm_experiment import IBMExperimentService
 
 
 @skipIf(not os.environ.get('QISKIT_IBM_USE_STAGING_CREDENTIALS', ''), "Only runs on staging")
-class TestExperimentServerIntegration(IBMTestCase):
+class TestExperimentServerIntegration(BaseQiskitTestCase):
     """Test experiment modules."""
 
     @classmethod
@@ -46,13 +50,16 @@ class TestExperimentServerIntegration(IBMTestCase):
     @classmethod
     def _setup_service(cls):
         """Get the service for the class."""
-        if os.getenv('QISKIT_IBM_USE_STAGING_CREDENTIALS', ''):
-            return IBMExperimentService(token=os.getenv('QISKIT_IBM_STAGING_API_TOKEN'),
-                                        url=os.getenv('QISKIT_IBM_STAGING_API_URL'),
-                                        auth_url=os.getenv('QISKIT_IBM_STAGING_API_AUTH_URL'),
-                                        )
-        else:
-            return IBMExperimentService()
+        return IBMExperimentService(token=os.getenv('QISKIT_IBM_STAGING_API_TOKEN'),
+                                    url=os.getenv('QISKIT_IBM_STAGING_API_URL'),
+                                    )
+
+    @classmethod
+    def _setup_provider(cls):
+        """Get the provider for the class."""
+        cls.provider = IBMQ.enable_account(token=os.getenv('QISKIT_IBM_STAGING_API_TOKEN'),
+                                            url=os.getenv('QISKIT_IBM_STAGING_API_URL') + "/v2")
+
 
     def setUp(self) -> None:
         """Test level setup."""
@@ -482,6 +489,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         new_exp_id = self.service.create_experiment(
             experiment_type="qiskit_test",
             backend_name=self.backend.name(),
+            provider=self.provider,
             metadata={"foo": "bar"},
             experiment_id=exp_id,
             job_ids=["job1", "job2"],
@@ -1060,6 +1068,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         exp_id = self.service.create_experiment(
             experiment_type=experiment_type,
             backend_name=backend_name,
+            provider=self.provider,
             **kwargs
         )
         self.experiments_to_delete.append(exp_id)
@@ -1098,3 +1107,37 @@ class TestExperimentServerIntegration(IBMTestCase):
             return None, None
 
         return backend_name, device_components
+
+
+
+class ExperimentEncoder(json.JSONEncoder):
+    """A test json encoder for experiments"""
+
+    def default(self, obj: Any) -> Any:
+        if isinstance(obj, complex):
+            return {'__type__': 'complex', '__value__': [obj.real, obj.imag]}
+        if hasattr(obj, 'tolist'):
+            return {'__type__': 'array', '__value__': obj.tolist()}
+
+        return json.JSONEncoder.default(self, obj)
+
+
+class ExperimentDecoder(json.JSONDecoder):
+    """JSON Decoder for Numpy arrays and complex numbers."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(object_hook=self.object_hook, *args, **kwargs)
+
+    def object_hook(self, obj):
+        """Object hook."""
+        if "__type__" in obj:
+            if obj["__type__"] == "complex":
+                val = obj["__value__"]
+                return val[0] + 1j * val[1]
+            if obj["__type__"] == "array":
+                return np.array(obj["__value__"])
+        return obj
+
+
+if __name__ == "__main__":
+    unittest.main()
