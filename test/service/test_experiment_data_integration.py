@@ -1,6 +1,6 @@
 # This code is part of Qiskit.
 #
-# (C) Copyright IBM 2021
+# (C) Copyright IBM 2021-2022.
 #
 # This code is licensed under the Apache License, Version 2.0. You may
 # obtain a copy of this license in the LICENSE.txt file in the root directory
@@ -23,10 +23,9 @@ from qiskit.providers import JobStatus
 from qiskit.test.reference_circuits import ReferenceCircuits
 from qiskit.tools.visualization import HAS_MATPLOTLIB
 from qiskit.providers.ibmq import IBMQ, least_busy
-from qiskit_ibm_experiment.service import ResultQuality, ExperimentShareLevel
+from qiskit_ibm_experiment.service import ResultQuality
 from qiskit_ibm_experiment import IBMExperimentService
 from qiskit_experiments.database_service.db_experiment_data import (
-    AnalysisStatus,
     ExperimentStatus,
 )
 from qiskit_ibm_experiment.exceptions import IBMExperimentEntryNotFound
@@ -56,7 +55,6 @@ class TestExperimentDataIntegration(IBMTestCase):
             cls._setup_provider()
             cls.circuit = transpile(ReferenceCircuits.bell(), cls.backend)
         except Exception:
-            print("BAD")
             raise SkipTest("Not authorized to use experiment service.")
 
     @classmethod

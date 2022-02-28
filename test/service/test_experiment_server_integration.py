@@ -1,6 +1,6 @@
 # This code is part of Qiskit.
 #
-# (C) Copyright IBM 2021.
+# (C) Copyright IBM 2021-2022.
 #
 # This code is licensed under the Apache License, Version 2.0. You may
 # obtain a copy of this license in the LICENSE.txt file in the root directory
@@ -15,7 +15,6 @@
 import os
 import uuid
 import unittest
-import json
 from unittest import mock, SkipTest, skipIf
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
@@ -24,12 +23,8 @@ from dateutil import tz
 import numpy as np
 
 from qiskit.providers.ibmq import IBMQ, least_busy
-# from qiskit_ibm.exceptions import IBMNotAuthorizedError
 from qiskit_ibm_experiment.service import ResultQuality, ExperimentShareLevel
 from qiskit_ibm_experiment import IBMExperimentEntryNotFound
-from qiskit.test.base import BaseQiskitTestCase
-#from .ibm_test_case import IBMTestCase
-#import ibm_test_case
 from qiskit_ibm_experiment import IBMExperimentService
 from test.service.ibm_test_case import IBMTestCase
 from test.utils.utils import ExperimentEncoder, ExperimentDecoder
@@ -80,17 +75,6 @@ class TestExperimentServerIntegration(IBMTestCase):
                 print("Unable to delete experiment %s: %s", expr_uuid, err)
                 # self.log.info("Unable to delete experiment %s: %s", expr_uuid, err)
         super().tearDown()
-
-    def test_unauthorized(self):
-        """Test unauthorized access."""
-        # saved_experiment = self.provider._experiment
-        # try:
-        #     self.provider._experiment = None
-        #     with self.assertRaises(IBMNotAuthorizedError) as context_manager:
-        #         self.service.experiments()
-        #     self.assertIn("experiment service", str(context_manager.exception))
-        # finally:
-        #     self.provider._experiment = saved_experiment
 
     def test_experiments(self):
         """Test retrieving experiments."""
