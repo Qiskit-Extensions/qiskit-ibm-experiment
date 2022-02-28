@@ -30,12 +30,12 @@ from qiskit_ibm_experiment import IBMExperimentEntryNotFound
 from qiskit.test.base import BaseQiskitTestCase
 #from .ibm_test_case import IBMTestCase
 #import ibm_test_case
-#from ..utils import ExperimentEncoder, ExperimentDecoder
 from qiskit_ibm_experiment import IBMExperimentService
-
+from test.service.ibm_test_case import IBMTestCase
+from test.utils.utils import ExperimentEncoder, ExperimentDecoder
 
 @skipIf(not os.environ.get('QISKIT_IBM_USE_STAGING_CREDENTIALS', ''), "Only runs on staging")
-class TestExperimentServerIntegration(BaseQiskitTestCase):
+class TestExperimentServerIntegration(IBMTestCase):
     """Test experiment modules."""
 
     @classmethod
@@ -1112,37 +1112,6 @@ class TestExperimentServerIntegration(BaseQiskitTestCase):
             return None, None
 
         return backend_name, device_components
-
-
-
-class ExperimentEncoder(json.JSONEncoder):
-    """A test json encoder for experiments"""
-
-    def default(self, obj: Any) -> Any:
-        if isinstance(obj, complex):
-            return {'__type__': 'complex', '__value__': [obj.real, obj.imag]}
-        if hasattr(obj, 'tolist'):
-            return {'__type__': 'array', '__value__': obj.tolist()}
-
-        return json.JSONEncoder.default(self, obj)
-
-
-class ExperimentDecoder(json.JSONDecoder):
-    """JSON Decoder for Numpy arrays and complex numbers."""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(object_hook=self.object_hook, *args, **kwargs)
-
-    def object_hook(self, obj):
-        """Object hook."""
-        if "__type__" in obj:
-            if obj["__type__"] == "complex":
-                val = obj["__value__"]
-                return val[0] + 1j * val[1]
-            if obj["__type__"] == "array":
-                return np.array(obj["__value__"])
-        return obj
-
 
 if __name__ == "__main__":
     unittest.main()

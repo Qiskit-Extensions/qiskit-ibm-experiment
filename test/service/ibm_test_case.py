@@ -25,7 +25,7 @@ from qiskit.test.base import BaseQiskitTestCase
 # from qiskit_ibm.apiconstants import ApiJobStatus, API_JOB_FINAL_STATES
 # from qiskit_ibm.job.exceptions import IBMJobNotFoundError
 #
-# from .utils import setup_test_logging
+from test.utils import setup_test_logging
 
 
 class IBMTestCase(BaseQiskitTestCase):

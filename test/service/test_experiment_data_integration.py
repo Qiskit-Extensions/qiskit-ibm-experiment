@@ -23,16 +23,14 @@ from qiskit.providers import JobStatus
 from qiskit.test.reference_circuits import ReferenceCircuits
 from qiskit.tools.visualization import HAS_MATPLOTLIB
 from qiskit.providers.ibmq import IBMQ, least_busy
-from qiskit.test.base import BaseQiskitTestCase
 from qiskit_ibm_experiment.service import ResultQuality, ExperimentShareLevel
 from qiskit_ibm_experiment import IBMExperimentService
 from qiskit_experiments.database_service.db_experiment_data import (
     AnalysisStatus,
     ExperimentStatus,
 )
-
 from qiskit_ibm_experiment.exceptions import IBMExperimentEntryNotFound
-#from ...ibm_test_case import IBMTestCase
+from test.service.ibm_test_case import IBMTestCase
 
 
 try:
@@ -46,7 +44,7 @@ except ImportError:
 
 @skipIf(not os.environ.get('QISKIT_IBM_USE_STAGING_CREDENTIALS', ''), "Only runs on staging")
 @skipIf(not HAS_QISKIT_EXPERIMENTS, "Requires qiskit-experiments")
-class TestExperimentDataIntegration(BaseQiskitTestCase):
+class TestExperimentDataIntegration(IBMTestCase):
     """Test experiment service with experiment data."""
 
     @classmethod
@@ -483,8 +481,5 @@ class TestExperimentDataIntegration(BaseQiskitTestCase):
 
 if __name__ == "__main__":
     unittest.main()
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestExperimentDataIntegration("test_add_analysis_results"))
-    # runner = unittest.TextTestRunner()
-    # runner.run(suite)
+
 
