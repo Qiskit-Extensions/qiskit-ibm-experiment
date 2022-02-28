@@ -23,8 +23,6 @@ _DEFAULT_ACCOUNT_CONFIG_JSON_FILE = os.path.join(
     os.path.expanduser("~"), ".qiskit", "qiskit-ibm.json"
 )
 _DEFAULT_ACCOUNT_NAME = "default"
-_DEFAULT_ACCOUNT_NAME_LEGACY = "default-legacy"
-_DEFAULT_ACCOUNT_NAME_CLOUD = "default-cloud"
 _DEFAULT_ACCOUNT_TYPE: str = "legacy"
 _ACCOUNT_TYPES = ["legacy"]
 
@@ -73,7 +71,6 @@ class AccountManager:
         def _matching_default(account_name: str) -> bool:
             default_accounts = [
                 _DEFAULT_ACCOUNT_NAME,
-                _DEFAULT_ACCOUNT_NAME_LEGACY,
             ]
             if default is None:
                 return True
@@ -162,4 +159,4 @@ class AccountManager:
 
     @classmethod
     def _get_default_account_name(cls) -> str:
-        return _DEFAULT_ACCOUNT_NAME_LEGACY
+        return _DEFAULT_ACCOUNT_NAME

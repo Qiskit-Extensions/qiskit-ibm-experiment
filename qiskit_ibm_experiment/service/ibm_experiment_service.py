@@ -14,6 +14,7 @@
 
 import logging
 import json
+import copy
 from typing import Optional, List, Dict, Union, Tuple, Any, Type
 import requests
 from datetime import datetime
@@ -82,7 +83,7 @@ class IBMExperimentService:
             name: Optional[str] = None,
             instance: Optional[str] = None,
             proxies: Optional[dict] = None,
-            verify: Optional[bool] = None
+            verify: Optional[bool] = None,
     ) -> None:
         """IBMExperimentService constructor.
 
@@ -91,6 +92,7 @@ class IBMExperimentService:
             url: the url for the result DB API
         """
         super().__init__()
+        self._preferences = copy.deepcopy(self._default_preferences)
         if url is None:
             url = self._DEFAULT_BASE_URL
         self._account = self._discover_account(
@@ -106,8 +108,7 @@ class IBMExperimentService:
         if auth_url is None:
             auth_url = self._account.url + self._DEFAULT_AUTHENTICATION_PREFIX
 
-
-        self._access_token = self._get_acccess_token(auth_url)
+        self.get_access_token(auth_url)
 
         self._additional_params = {
             'proxies': self._account.proxies.to_request_params() if self._account.proxies is not None else None,
@@ -115,7 +116,7 @@ class IBMExperimentService:
         }
         self._api_client = ExperimentClient(self._access_token, db_url, self._additional_params)
 
-    def _get_acccess_token(self, auth_url, api_token = None):
+    def get_access_token(self, auth_url, api_token = None):
         if api_token is None:
             try:
                 api_token = self._account.token
@@ -129,6 +130,7 @@ class IBMExperimentService:
             access_token = response.json()["id"]
         except KeyError:
             raise IBMApiError("Did not receive access token (request returned {})".format(response.json()))
+        self._access_token = access_token
         return access_token
 
 
@@ -1385,13 +1387,13 @@ class IBMExperimentService:
         Args:
             auto_save: Automatically save the experiment.
         """
-        update_cred = False
+        update_saved_preferences = False
         if auto_save is not None and auto_save != self._preferences["auto_save"]:
             self._preferences['auto_save'] = auto_save
             update_cred = True
 
         # TODO: should be done in JSON
-        # if update_cred:
+        # if uupdate_saved_preferences:
             # store_preferences(
             #     {self._provider.credentials.unique_id(): {'experiment': self.preferences}})
 
