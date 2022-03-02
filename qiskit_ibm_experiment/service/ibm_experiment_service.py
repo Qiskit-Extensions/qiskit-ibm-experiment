@@ -79,7 +79,6 @@ class IBMExperimentService:
             token: Optional[str] = None,
             url: Optional[str] = None,
             name: Optional[str] = None,
-            instance: Optional[str] = None,
             proxies: Optional[dict] = None,
             verify: Optional[bool] = None,
     ) -> None:
@@ -95,7 +94,6 @@ class IBMExperimentService:
         self._account = self._discover_account(
             token=token,
             url=url,
-            instance=instance,
             name=name,
             proxies=ProxyConfiguration(**proxies) if proxies else None,
             verify=verify,
@@ -136,7 +134,6 @@ class IBMExperimentService:
             cls,
             token: Optional[str] = None,
             url: Optional[str] = None,
-            instance: Optional[str] = None,
             name: Optional[str] = None,
             proxies: Optional[dict] = None,
             verify: Optional[bool] = None,
@@ -148,7 +145,6 @@ class IBMExperimentService:
             token: IBM Cloud API key or IBM Quantum API token.
             url: The API URL.
                 Defaults to https://api.quantum-computing.ibm.com
-            instance: The hub/group/project.
             name: Name of the account to save.
             proxies: Proxy configuration. Supported optional keys are
                 ``urls`` (a dictionary mapping protocol or protocol and host to the URL of the proxy,
@@ -163,7 +159,6 @@ class IBMExperimentService:
         AccountManager.save(
             token=token,
             url=url,
-            instance=instance,
             name=name,
             proxies=ProxyConfiguration(**proxies) if proxies else None,
             verify=verify,
@@ -174,7 +169,6 @@ class IBMExperimentService:
             self,
             token: Optional[str] = None,
             url: Optional[str] = None,
-            instance: Optional[str] = None,
             name: Optional[str] = None,
             proxies: Optional[ProxyConfiguration] = None,
             verify: Optional[bool] = None,
@@ -193,15 +187,12 @@ class IBMExperimentService:
             return Account(
                 token=token,
                 url=url,
-                instance=instance,
                 proxies=proxies,
                 verify=verify_,
             ).validate()
 
         if account is None:
             account = AccountManager.get()
-        if instance:
-            account.instance = instance
         if proxies:
             account.proxies = proxies
         if verify is not None:

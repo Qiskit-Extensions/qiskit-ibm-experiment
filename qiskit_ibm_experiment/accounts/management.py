@@ -35,7 +35,6 @@ class AccountManager:
         cls,
         token: Optional[str] = None,
         url: Optional[str] = None,
-        instance: Optional[str] = None,
         name: Optional[str] = _DEFAULT_ACCOUNT_NAME,
         proxies: Optional[ProxyConfiguration] = None,
         verify: Optional[bool] = None,
@@ -50,7 +49,6 @@ class AccountManager:
             config=Account(
                 token=token,
                 url=url,
-                instance=instance,
                 proxies=proxies,
                 verify=verify,
             )
@@ -154,7 +152,7 @@ class AccountManager:
         if not (token and url):
             return None
         return Account(
-            token=token, url=url, instance=os.getenv("QISKIT_IBM_INSTANCE")
+            token=token, url=url
         )
 
     @classmethod
