@@ -92,7 +92,6 @@ class IBMExperimentService:
             url: the url for the result DB API
         """
         super().__init__()
-        self._preferences = copy.deepcopy(self._default_preferences)
         if url is None:
             url = self._DEFAULT_BASE_URL
         self._account = self._discover_account(
@@ -103,6 +102,8 @@ class IBMExperimentService:
             proxies=ProxyConfiguration(**proxies) if proxies else None,
             verify=verify,
         )
+        if self._account.preferences is None:
+            self._account.preferences = copy.deepcopy(self._default_preferences)
         if db_url is None:
             db_url = self._account.url + self._DEFAULT_EXPERIMENT_PREFIX
         if auth_url is None:
@@ -1371,31 +1372,7 @@ class IBMExperimentService:
         Returns:
             Dict: The experiment preferences.
         """
-        return self._preferences
-
-    def save_preferences(self, auto_save: bool = None) -> None:
-        """Stores experiment preferences on disk.
-
-        Note:
-            These are preferences passed to the applications that use this service
-            and have no effect on the service itself.
-
-            For example, if ``auto_save`` is set to ``True``, it tells the application,
-            such as ``qiskit-experiments``, that you prefer changes to be
-            automatically saved. It is up to the application to implement the preferences.
-
-        Args:
-            auto_save: Automatically save the experiment.
-        """
-        update_saved_preferences = False
-        if auto_save is not None and auto_save != self._preferences["auto_save"]:
-            self._preferences['auto_save'] = auto_save
-            update_cred = True
-
-        # TODO: should be done in JSON
-        # if uupdate_saved_preferences:
-            # store_preferences(
-            #     {self._provider.credentials.unique_id(): {'experiment': self.preferences}})
+        return self._account.preferences
 
     @staticmethod
     def delete_account(name: Optional[str] = None) -> bool:
