@@ -4,13 +4,10 @@
 
 This project contains a service that allows accessing the **[IBM Quantum]**
 experiment database.
-## Work in progress
-
-This package is still under initial development; do not attempt to use it at this stage.
 
 ## Installation
-
-You can install the provider using pip:
+The package is not yet available. After it is ready, 
+you'll be able to install the provider using pip:
 
 ```bash
 pip install qiskit-ibm-experiment
@@ -33,7 +30,8 @@ pip install qiskit-ibm-experiment
    ```
 
    The command above stores your credentials locally in a configuration file called `qiskit-ibm.json`. By default, this file is located in `$HOME/.qiskit`, where `$HOME` is your home directory.
-   Once saved you can then instantiate the open access provider (`hub='ibm-q', group='open', project='main'`) like below and access the backends:
+   
+   Once saved you can then instantiate the experiment service without using the API token:
 
    ```python
    from qiskit_ibm_experiment import IBMExperimentService
@@ -49,8 +47,8 @@ pip install qiskit-ibm-experiment
 ### Load Account from Environment Variables
 Alternatively, the IBM Provider can discover credentials from environment variables:
 ```bash
-export QISKIT_IBM_API_TOKEN='MY_API_TOKEN'
-export QISKIT_IBM_API_URL='https://api.quantum-computing.ibm.com/resultdb'
+export QISKIT_IBM_EXPERIMENT_TOKEN='MY_API_TOKEN'
+export QISKIT_IBM_EXPERIMENT_URL='https://api.quantum-computing.ibm.com'
 ```
 
 Then instantiate the provider without any arguments and access the backends:
@@ -67,6 +65,7 @@ from qiskit_ibm_experiment import IBMExperimentService
 service = IBMExperimentService(token='MY_API_TOKEN')
 ```
 
+Once saved you can then instantiate the open access provider (`hub='ibm-q', group='open', project='main'`) like below and access the backends:
 ## Contribution Guidelines
 
 If you'd like to contribute to IBM Quantum Experiment Service, please take a look at our

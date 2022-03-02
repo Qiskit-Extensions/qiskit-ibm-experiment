@@ -78,8 +78,6 @@ class IBMExperimentService:
             self,
             token: Optional[str] = None,
             url: Optional[str] = None,
-            auth_url: Optional[str] = None,
-            db_url: Optional[str] = None,
             name: Optional[str] = None,
             instance: Optional[str] = None,
             proxies: Optional[dict] = None,
@@ -104,10 +102,8 @@ class IBMExperimentService:
         )
         if self._account.preferences is None:
             self._account.preferences = copy.deepcopy(self._default_preferences)
-        if db_url is None:
-            db_url = self._account.url + self._DEFAULT_EXPERIMENT_PREFIX
-        if auth_url is None:
-            auth_url = self._account.url + self._DEFAULT_AUTHENTICATION_PREFIX
+        db_url = self._account.url + self._DEFAULT_EXPERIMENT_PREFIX
+        auth_url = self._account.url + self._DEFAULT_AUTHENTICATION_PREFIX
 
         self.get_access_token(auth_url)
 
@@ -135,8 +131,9 @@ class IBMExperimentService:
         return access_token
 
 
-    @staticmethod
+    @classmethod
     def save_account(
+            cls,
             token: Optional[str] = None,
             url: Optional[str] = None,
             instance: Optional[str] = None,
@@ -150,7 +147,7 @@ class IBMExperimentService:
         Args:
             token: IBM Cloud API key or IBM Quantum API token.
             url: The API URL.
-                Defaults to https://auth.quantum-computing.ibm.com/api
+                Defaults to https://api.quantum-computing.ibm.com
             instance: The hub/group/project.
             name: Name of the account to save.
             proxies: Proxy configuration. Supported optional keys are
@@ -161,7 +158,8 @@ class IBMExperimentService:
             verify: Verify the server's TLS certificate.
             overwrite: ``True`` if the existing account is to be overwritten.
         """
-
+        if url is None:
+            url = cls._DEFAULT_BASE_URL
         AccountManager.save(
             token=token,
             url=url,
