@@ -14,6 +14,7 @@
 
 import logging
 import json
+import copy
 from typing import Optional, List, Dict, Union, Tuple, Any, Type
 import requests
 from datetime import datetime
@@ -77,10 +78,12 @@ class IBMExperimentService:
             self,
             token: Optional[str] = None,
             url: Optional[str] = None,
+            auth_url: Optional[str] = None,
+            db_url: Optional[str] = None,
             name: Optional[str] = None,
             instance: Optional[str] = None,
             proxies: Optional[dict] = None,
-            verify: Optional[bool] = None
+            verify: Optional[bool] = None,
     ) -> None:
         """IBMExperimentService constructor.
 
@@ -90,7 +93,7 @@ class IBMExperimentService:
         """
         super().__init__()
         if url is None:
-            url = self._DEFAULT_BASE_URL + self._DEFAULT_EXPERIMENT_PREFIX
+            url = self._DEFAULT_BASE_URL
         self._account = self._discover_account(
             token=token,
             url=url,
@@ -99,18 +102,22 @@ class IBMExperimentService:
             proxies=ProxyConfiguration(**proxies) if proxies else None,
             verify=verify,
         )
+        if self._account.preferences is None:
+            self._account.preferences = copy.deepcopy(self._default_preferences)
+        if db_url is None:
+            db_url = self._account.url + self._DEFAULT_EXPERIMENT_PREFIX
+        if auth_url is None:
+            auth_url = self._account.url + self._DEFAULT_AUTHENTICATION_PREFIX
 
-        self._access_token = self._get_acccess_token()
+        self.get_access_token(auth_url)
 
         self._additional_params = {
             'proxies': self._account.proxies.to_request_params() if self._account.proxies is not None else None,
             'verify': self._account.verify,
         }
-        self._api_client = ExperimentClient(self._access_token, self._account.url, self._additional_params)
+        self._api_client = ExperimentClient(self._access_token, db_url, self._additional_params)
 
-    def _get_acccess_token(self, auth_url = None, api_token = None):
-        if auth_url is None:
-            auth_url = self._DEFAULT_BASE_URL + self._DEFAULT_AUTHENTICATION_PREFIX
+    def get_access_token(self, auth_url, api_token = None):
         if api_token is None:
             try:
                 api_token = self._account.token
@@ -124,6 +131,7 @@ class IBMExperimentService:
             access_token = response.json()["id"]
         except KeyError:
             raise IBMApiError("Did not receive access token (request returned {})".format(response.json()))
+        self._access_token = access_token
         return access_token
 
 
@@ -289,7 +297,6 @@ class IBMExperimentService:
 
         with map_api_error(f"Experiment {experiment_id} already exists."):
             response_data = self._api_client.experiment_upload(json.dumps(data, cls=json_encoder))
-        print("Response data:", response_data)
         return response_data['uuid']
 
     def update_experiment(
@@ -1365,31 +1372,7 @@ class IBMExperimentService:
         Returns:
             Dict: The experiment preferences.
         """
-        return self._preferences
-
-    def save_preferences(self, auto_save: bool = None) -> None:
-        """Stores experiment preferences on disk.
-
-        Note:
-            These are preferences passed to the applications that use this service
-            and have no effect on the service itself.
-
-            For example, if ``auto_save`` is set to ``True``, it tells the application,
-            such as ``qiskit-experiments``, that you prefer changes to be
-            automatically saved. It is up to the application to implement the preferences.
-
-        Args:
-            auto_save: Automatically save the experiment.
-        """
-        update_cred = False
-        if auto_save is not None and auto_save != self._preferences["auto_save"]:
-            self._preferences['auto_save'] = auto_save
-            update_cred = True
-
-        # TODO: should be done in JSON
-        # if update_cred:
-            # store_preferences(
-            #     {self._provider.credentials.unique_id(): {'experiment': self.preferences}})
+        return self._account.preferences
 
     @staticmethod
     def delete_account(name: Optional[str] = None) -> bool:

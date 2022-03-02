@@ -12,16 +12,16 @@
 
 """Experiment tests."""
 
-from unittest import SkipTest
+import os
+import unittest
+from unittest import skipIf
 
-from qiskit_ibm.exceptions import IBMNotAuthorizedError
-from qiskit_ibm.credentials import read_credentials_from_qiskitrc
-
-from ...ibm_test_case import IBMTestCase
-from ...decorators import requires_provider
-from ...contextmanagers import no_envs, custom_qiskitrc, CREDENTIAL_ENV_VARS
+from qiskit_ibm_experiment.exceptions import IBMNotAuthorizedError
+from qiskit_ibm_experiment import IBMExperimentService
+from test.service.ibm_test_case import IBMTestCase
 
 
+@skipIf(not os.environ.get('QISKIT_IBM_USE_STAGING_CREDENTIALS', ''), "Only runs on staging")
 class TestExperimentPreferences(IBMTestCase):
     """Test experiment preferences."""
 
@@ -30,17 +30,18 @@ class TestExperimentPreferences(IBMTestCase):
         """Initial class level setup."""
         # pylint: disable=arguments-differ
         super().setUpClass()
-        cls.provider = cls._setup_provider()  # pylint: disable=no-value-for-parameter
         try:
-            cls.service = cls.provider.service('experiment')
+            cls._setup_service()
         except IBMNotAuthorizedError:
             raise SkipTest("Not authorized to use experiment service.")
 
     @classmethod
-    @requires_provider
-    def _setup_provider(cls, provider):
-        """Get the provider for the class."""
-        return provider
+    def _setup_service(cls):
+        """Get the service for the class."""
+        cls.service = IBMExperimentService(
+            token=os.getenv('QISKIT_IBM_STAGING_API_TOKEN'),
+            url=os.getenv('QISKIT_IBM_STAGING_API_URL'),
+        )
 
     def test_default_preferences(self):
         """Test getting default preferences."""
@@ -48,11 +49,10 @@ class TestExperimentPreferences(IBMTestCase):
 
     def test_set_preferences(self):
         """Test setting preferences."""
-        with custom_qiskitrc(), no_envs(CREDENTIAL_ENV_VARS):
-            self.service.save_preferences(auto_save=True)
-            self.assertTrue(self.service.preferences['auto_save'])
+        self.service.preferences['auto_save'] = True
+        self.assertTrue(self.service.preferences['auto_save'])
 
-            # Read back from qiskitrc.
-            _, stored_pref = read_credentials_from_qiskitrc()
-            self.assertTrue(
-                stored_pref[self.provider.credentials.unique_id()]['experiment']['auto_save'])
+if __name__ == "__main__":
+    unittest.main()
+
+

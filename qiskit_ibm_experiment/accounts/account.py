@@ -12,7 +12,7 @@
 
 """Account related classes and functions."""
 
-from typing import Optional
+from typing import Optional, Dict
 from urllib.parse import urlparse
 from .exceptions import InvalidAccountError
 from .configuration import ProxyConfiguration
@@ -27,6 +27,7 @@ class Account:
         instance: Optional[str] = None,
         proxies: Optional[ProxyConfiguration] = None,
         verify: Optional[bool] = True,
+        preferences: Optional[Dict] = None
     ):
         """Account constructor.
 
@@ -42,6 +43,7 @@ class Account:
         self.instance = instance
         self.proxies = proxies
         self.verify = verify
+        self.preferences = preferences
 
     def to_saved_format(self) -> dict:
         """Returns a dictionary that represents how the account is saved on disk."""
@@ -60,6 +62,7 @@ class Account:
             instance=data.get("instance"),
             proxies=ProxyConfiguration(**proxies) if proxies else None,
             verify=data.get("verify", True),
+            preferences = data.get("preferences")
         )
 
     def __eq__(self, other: object) -> bool:
@@ -72,6 +75,7 @@ class Account:
                 self.instance == other.instance,
                 self.proxies == other.proxies,
                 self.verify == other.verify,
+                self.preferences == other.preferences,
             ]
         )
 
