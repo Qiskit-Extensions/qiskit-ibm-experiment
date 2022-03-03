@@ -24,7 +24,6 @@ class Account:
         self,
         token: str,
         url: Optional[str] = None,
-        instance: Optional[str] = None,
         proxies: Optional[ProxyConfiguration] = None,
         verify: Optional[bool] = True,
         preferences: Optional[Dict] = None
@@ -34,13 +33,11 @@ class Account:
         Args:
             token: Account token to use.
             url: Authentication URL.
-            instance: Service instance to use.
             proxies: Proxy configuration.
             verify: Whether to verify server's TLS certificate.
         """
         self.token = token
         self.url = url
-        self.instance = instance
         self.proxies = proxies
         self.verify = verify
         self.preferences = preferences
@@ -59,7 +56,6 @@ class Account:
         return cls(
             url=data.get("url"),
             token=data.get("token"),
-            instance=data.get("instance"),
             proxies=ProxyConfiguration(**proxies) if proxies else None,
             verify=data.get("verify", True),
             preferences = data.get("preferences")
@@ -72,7 +68,6 @@ class Account:
             [
                 self.token == other.token,
                 self.url == other.url,
-                self.instance == other.instance,
                 self.proxies == other.proxies,
                 self.verify == other.verify,
                 self.preferences == other.preferences,

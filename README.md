@@ -4,13 +4,10 @@
 
 This project contains a service that allows accessing the **[IBM Quantum]**
 experiment database.
-## Work in progress
-
-This package is still under initial development; do not attempt to use it at this stage.
 
 ## Installation
-
-You can install the provider using pip:
+The package is not yet available. After it is ready, 
+you'll be able to install the provider using pip:
 
 ```bash
 pip install qiskit-ibm-experiment
@@ -33,7 +30,8 @@ pip install qiskit-ibm-experiment
    ```
 
    The command above stores your credentials locally in a configuration file called `qiskit-ibm.json`. By default, this file is located in `$HOME/.qiskit`, where `$HOME` is your home directory.
-   Once saved you can then instantiate the open access provider (`hub='ibm-q', group='open', project='main'`) like below and access the backends:
+   
+   Once saved you can then instantiate the experiment service without using the API token:
 
    ```python
    from qiskit_ibm_experiment import IBMExperimentService
@@ -45,12 +43,27 @@ pip install qiskit-ibm-experiment
    # get the latest experiments in the DB
    experiment_list = service.experiments()
    ```
+   
+   You can also save specific configuration under a given name:
+   
+   ```python
+   from qiskit_ibm_experiment import IBMExperimentService
+   IBMExperimentService.save_account(name='my_config', token='MY_API_TOKEN')
+   ```
+   
+   And explicitly load it:
+   ```python
+   from qiskit_ibm_experiment import IBMExperimentService
+   service = IBMExperimentService(name='my_config')
+
+   # display current supported backends
+   print(service.backends())
 
 ### Load Account from Environment Variables
 Alternatively, the IBM Provider can discover credentials from environment variables:
 ```bash
-export QISKIT_IBM_API_TOKEN='MY_API_TOKEN'
-export QISKIT_IBM_API_URL='https://api.quantum-computing.ibm.com/resultdb'
+export QISKIT_IBM_EXPERIMENT_TOKEN='MY_API_TOKEN'
+export QISKIT_IBM_EXPERIMENT_URL='https://api.quantum-computing.ibm.com'
 ```
 
 Then instantiate the provider without any arguments and access the backends:
@@ -58,6 +71,9 @@ Then instantiate the provider without any arguments and access the backends:
 from qiskit_ibm_experiment import IBMExperimentService
 service = IBMExperimentService()
 ```
+
+Environment variable take precedence over the default account saved to disk via `save_account`,
+if one exists; but if the `name` parameter is given, the environment variables are ignored.
 
 ### Enable Account for Current Session
 As another alternative, you can also enable an account just for the current session by instantiating the service with the token
@@ -92,7 +108,6 @@ project at different levels. If you use Qiskit, please cite as per the included
 ## License
 
 [Apache License 2.0].
-
 
 [IBM Quantum]: https://www.ibm.com/quantum-computing/
 [IBM Quantum login page]:  https://quantum-computing.ibm.com/login

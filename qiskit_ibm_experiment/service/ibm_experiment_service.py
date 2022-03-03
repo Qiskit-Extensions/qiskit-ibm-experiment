@@ -78,10 +78,7 @@ class IBMExperimentService:
             self,
             token: Optional[str] = None,
             url: Optional[str] = None,
-            auth_url: Optional[str] = None,
-            db_url: Optional[str] = None,
             name: Optional[str] = None,
-            instance: Optional[str] = None,
             proxies: Optional[dict] = None,
             verify: Optional[bool] = None,
     ) -> None:
@@ -97,17 +94,14 @@ class IBMExperimentService:
         self._account = self._discover_account(
             token=token,
             url=url,
-            instance=instance,
             name=name,
             proxies=ProxyConfiguration(**proxies) if proxies else None,
             verify=verify,
         )
         if self._account.preferences is None:
             self._account.preferences = copy.deepcopy(self._default_preferences)
-        if db_url is None:
-            db_url = self._account.url + self._DEFAULT_EXPERIMENT_PREFIX
-        if auth_url is None:
-            auth_url = self._account.url + self._DEFAULT_AUTHENTICATION_PREFIX
+        db_url = self._account.url + self._DEFAULT_EXPERIMENT_PREFIX
+        auth_url = self._account.url + self._DEFAULT_AUTHENTICATION_PREFIX
 
         self.get_access_token(auth_url)
 
@@ -135,11 +129,11 @@ class IBMExperimentService:
         return access_token
 
 
-    @staticmethod
+    @classmethod
     def save_account(
+            cls,
             token: Optional[str] = None,
             url: Optional[str] = None,
-            instance: Optional[str] = None,
             name: Optional[str] = None,
             proxies: Optional[dict] = None,
             verify: Optional[bool] = None,
@@ -150,8 +144,7 @@ class IBMExperimentService:
         Args:
             token: IBM Cloud API key or IBM Quantum API token.
             url: The API URL.
-                Defaults to https://auth.quantum-computing.ibm.com/api
-            instance: The hub/group/project.
+                Defaults to https://api.quantum-computing.ibm.com
             name: Name of the account to save.
             proxies: Proxy configuration. Supported optional keys are
                 ``urls`` (a dictionary mapping protocol or protocol and host to the URL of the proxy,
@@ -161,11 +154,11 @@ class IBMExperimentService:
             verify: Verify the server's TLS certificate.
             overwrite: ``True`` if the existing account is to be overwritten.
         """
-
+        if url is None:
+            url = cls._DEFAULT_BASE_URL
         AccountManager.save(
             token=token,
             url=url,
-            instance=instance,
             name=name,
             proxies=ProxyConfiguration(**proxies) if proxies else None,
             verify=verify,
@@ -176,7 +169,6 @@ class IBMExperimentService:
             self,
             token: Optional[str] = None,
             url: Optional[str] = None,
-            instance: Optional[str] = None,
             name: Optional[str] = None,
             proxies: Optional[ProxyConfiguration] = None,
             verify: Optional[bool] = None,
@@ -195,15 +187,12 @@ class IBMExperimentService:
             return Account(
                 token=token,
                 url=url,
-                instance=instance,
                 proxies=proxies,
                 verify=verify_,
             ).validate()
 
         if account is None:
             account = AccountManager.get()
-        if instance:
-            account.instance = instance
         if proxies:
             account.proxies = proxies
         if verify is not None:
