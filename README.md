@@ -43,6 +43,21 @@ pip install qiskit-ibm-experiment
    # get the latest experiments in the DB
    experiment_list = service.experiments()
    ```
+   
+   You can also save specific configuration under a given name:
+   
+   ```python
+   from qiskit_ibm_experiment import IBMExperimentService
+   IBMExperimentService.save_account(name='my_config', token='MY_API_TOKEN')
+   ```
+   
+   And explicitly load it:
+   ```python
+   from qiskit_ibm_experiment import IBMExperimentService
+   service = IBMExperimentService(name='my_config')
+
+   # display current supported backends
+   print(service.backends())
 
 ### Load Account from Environment Variables
 Alternatively, the IBM Provider can discover credentials from environment variables:
@@ -57,6 +72,9 @@ from qiskit_ibm_experiment import IBMExperimentService
 service = IBMExperimentService()
 ```
 
+Environment variable take precedence over the default account saved to disk via `save_account`,
+if one exists; but if the `name` parameter is given, the environment variables are ignored.
+
 ### Enable Account for Current Session
 As another alternative, you can also enable an account just for the current session by instantiating the service with the token
 
@@ -65,7 +83,6 @@ from qiskit_ibm_experiment import IBMExperimentService
 service = IBMExperimentService(token='MY_API_TOKEN')
 ```
 
-Once saved you can then instantiate the open access provider (`hub='ibm-q', group='open', project='main'`) like below and access the backends:
 ## Contribution Guidelines
 
 If you'd like to contribute to IBM Quantum Experiment Service, please take a look at our
@@ -91,7 +108,6 @@ project at different levels. If you use Qiskit, please cite as per the included
 ## License
 
 [Apache License 2.0].
-
 
 [IBM Quantum]: https://www.ibm.com/quantum-computing/
 [IBM Quantum login page]:  https://quantum-computing.ibm.com/login
