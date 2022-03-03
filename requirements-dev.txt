@@ -1,6 +1,7 @@
 mypy==0.812
 pylint==2.12.1
 vcrpy
+stestr
 pproxy==2.1.8
 Sphinx>=1.8.3
 sphinx-rtd-theme>=0.4.0
