@@ -28,9 +28,9 @@ class ExperimentEncoder(json.JSONEncoder):
 
     def default(self, obj: Any) -> Any:
         if isinstance(obj, complex):
-            return {'__type__': 'complex', '__value__': [obj.real, obj.imag]}
-        if hasattr(obj, 'tolist'):
-            return {'__type__': 'array', '__value__': obj.tolist()}
+            return {"__type__": "complex", "__value__": [obj.real, obj.imag]}
+        if hasattr(obj, "tolist"):
+            return {"__type__": "array", "__value__": obj.tolist()}
 
         return json.JSONEncoder.default(self, obj)
 
@@ -51,6 +51,7 @@ class ExperimentDecoder(json.JSONDecoder):
                 return np.array(obj["__value__"])
         return obj
 
+
 def setup_test_logging(logger: logging.Logger, filename: str):
     """Set logging to file and stdout for a logger.
 
@@ -59,19 +60,20 @@ def setup_test_logging(logger: logging.Logger, filename: str):
         filename: Name of the output file, if log to file is enabled.
     """
     # Set up formatter.
-    log_fmt = ('{}.%(funcName)s:%(levelname)s:%(asctime)s:'
-               ' %(message)s'.format(logger.name))
+    log_fmt = "{}.%(funcName)s:%(levelname)s:%(asctime)s:" " %(message)s".format(
+        logger.name
+    )
     formatter = logging.Formatter(log_fmt)
 
-    if os.getenv('STREAM_LOG', 'true'):
+    if os.getenv("STREAM_LOG", "true"):
         # Set up the stream handler.
         stream_handler = logging.StreamHandler()
         stream_handler.setFormatter(formatter)
         logger.addHandler(stream_handler)
 
-    if os.getenv('FILE_LOG', 'false'):
+    if os.getenv("FILE_LOG", "false"):
         file_handler = logging.FileHandler(filename)
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
 
-    logger.setLevel(os.getenv('LOG_LEVEL', 'DEBUG'))
+    logger.setLevel(os.getenv("LOG_LEVEL", "DEBUG"))

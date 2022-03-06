@@ -16,14 +16,15 @@ import logging
 import json
 import copy
 from typing import Optional, List, Dict, Union, Tuple, Any, Type
-import requests
 from datetime import datetime
 from collections import defaultdict
-
-from qiskit.providers.exceptions import QiskitBackendNotFoundError
-
-from .constants import (ExperimentShareLevel, ResultQuality,
-                        RESULT_QUALITY_FROM_API, RESULT_QUALITY_TO_API)
+import requests
+from .constants import (
+    ExperimentShareLevel,
+    ResultQuality,
+    RESULT_QUALITY_FROM_API,
+    RESULT_QUALITY_TO_API,
+)
 from .utils import map_api_error, local_to_utc_str, utc_to_local
 from .device_component import DeviceComponent
 from ..client.experiment import ExperimentClient
@@ -75,12 +76,12 @@ class IBMExperimentService:
     _DEFAULT_EXPERIMENT_PREFIX = "/resultsdb"
 
     def __init__(
-            self,
-            token: Optional[str] = None,
-            url: Optional[str] = None,
-            name: Optional[str] = None,
-            proxies: Optional[dict] = None,
-            verify: Optional[bool] = None,
+        self,
+        token: Optional[str] = None,
+        url: Optional[str] = None,
+        name: Optional[str] = None,
+        proxies: Optional[dict] = None,
+        verify: Optional[bool] = None,
     ) -> None:
         """IBMExperimentService constructor.
 
@@ -106,38 +107,46 @@ class IBMExperimentService:
         self.get_access_token(auth_url)
 
         self._additional_params = {
-            'proxies': self._account.proxies.to_request_params() if self._account.proxies is not None else None,
-            'verify': self._account.verify,
+            "proxies": self._account.proxies.to_request_params()
+            if self._account.proxies is not None
+            else None,
+            "verify": self._account.verify,
         }
-        self._api_client = ExperimentClient(self._access_token, db_url, self._additional_params)
+        self._api_client = ExperimentClient(
+            self._access_token, db_url, self._additional_params
+        )
 
-    def get_access_token(self, auth_url, api_token = None):
+    def get_access_token(self, auth_url, api_token=None):
+        """Authenticates to the server with the API token, receiving access token
+        for the current session"""
         if api_token is None:
             try:
                 api_token = self._account.token
             except RuntimeError:
                 raise IBMApiError("No API token; cannot connect to service")
-        headers = {'accept': 'application/json',
-                   'Content-Type': 'application/json'}
+        headers = {"accept": "application/json", "Content-Type": "application/json"}
         data = {"apiToken": api_token}
         try:
             response = requests.post(url=auth_url, json=data, headers=headers)
             access_token = response.json()["id"]
         except KeyError:
-            raise IBMApiError("Did not receive access token (request returned {})".format(response.json()))
+            raise IBMApiError(
+                "Did not receive access token (request returned {})".format(
+                    response.json()
+                )
+            )
         self._access_token = access_token
         return access_token
 
-
     @classmethod
     def save_account(
-            cls,
-            token: Optional[str] = None,
-            url: Optional[str] = None,
-            name: Optional[str] = None,
-            proxies: Optional[dict] = None,
-            verify: Optional[bool] = None,
-            overwrite: Optional[bool] = False,
+        cls,
+        token: Optional[str] = None,
+        url: Optional[str] = None,
+        name: Optional[str] = None,
+        proxies: Optional[dict] = None,
+        verify: Optional[bool] = None,
+        overwrite: Optional[bool] = False,
     ) -> None:
         """Save the account to disk for future use.
 
@@ -166,12 +175,12 @@ class IBMExperimentService:
         )
 
     def _discover_account(
-            self,
-            token: Optional[str] = None,
-            url: Optional[str] = None,
-            name: Optional[str] = None,
-            proxies: Optional[ProxyConfiguration] = None,
-            verify: Optional[bool] = None,
+        self,
+        token: Optional[str] = None,
+        url: Optional[str] = None,
+        name: Optional[str] = None,
+        proxies: Optional[ProxyConfiguration] = None,
+        verify: Optional[bool] = None,
     ) -> Account:
         """Discover account."""
         account = None
@@ -212,20 +221,20 @@ class IBMExperimentService:
         return self._api_client.devices()
 
     def create_experiment(
-            self,
-            experiment_type: str,
-            backend_name: str,
-            provider: 'IBMProvider',
-            metadata: Optional[Dict] = None,
-            experiment_id: Optional[str] = None,
-            parent_id: Optional[str] = None,
-            job_ids: Optional[List[str]] = None,
-            tags: Optional[List[str]] = None,
-            notes: Optional[str] = None,
-            share_level: Optional[Union[str, ExperimentShareLevel]] = None,
-            start_datetime: Optional[Union[str, datetime]] = None,
-            json_encoder: Type[json.JSONEncoder] = json.JSONEncoder,
-            **kwargs: Any
+        self,
+        experiment_type: str,
+        backend_name: str,
+        provider: "IBMProvider",
+        metadata: Optional[Dict] = None,
+        experiment_id: Optional[str] = None,
+        parent_id: Optional[str] = None,
+        job_ids: Optional[List[str]] = None,
+        tags: Optional[List[str]] = None,
+        notes: Optional[str] = None,
+        share_level: Optional[Union[str, ExperimentShareLevel]] = None,
+        start_datetime: Optional[Union[str, datetime]] = None,
+        json_encoder: Type[json.JSONEncoder] = json.JSONEncoder,
+        **kwargs: Any,
     ) -> str:
         """Create a new experiment in the database.
 
@@ -264,41 +273,49 @@ class IBMExperimentService:
         """
         # pylint: disable=arguments-differ
         if kwargs:
-            logger.info("Keywords %s are not supported by IBM Quantum experiment service "
-                        "and will be ignored.",
-                        kwargs.keys())
+            logger.info(
+                "Keywords %s are not supported by IBM Quantum experiment service "
+                "and will be ignored.",
+                kwargs.keys(),
+            )
 
         data = {
-            'type': experiment_type,
-            'device_name': backend_name,
-            'hub_id': provider.credentials.hub,
-            'group_id': provider.credentials.group,
-            'project_id': provider.credentials.project
+            "type": experiment_type,
+            "device_name": backend_name,
+            "hub_id": provider.credentials.hub,
+            "group_id": provider.credentials.group,
+            "project_id": provider.credentials.project,
         }
-        data.update(self._experiment_data_to_api(metadata=metadata,
-                                                 experiment_id=experiment_id,
-                                                 parent_id=parent_id,
-                                                 job_ids=job_ids,
-                                                 tags=tags,
-                                                 notes=notes,
-                                                 share_level=share_level,
-                                                 start_dt=start_datetime))
+        data.update(
+            self._experiment_data_to_api(
+                metadata=metadata,
+                experiment_id=experiment_id,
+                parent_id=parent_id,
+                job_ids=job_ids,
+                tags=tags,
+                notes=notes,
+                share_level=share_level,
+                start_dt=start_datetime,
+            )
+        )
 
         with map_api_error(f"Experiment {experiment_id} already exists."):
-            response_data = self._api_client.experiment_upload(json.dumps(data, cls=json_encoder))
-        return response_data['uuid']
+            response_data = self._api_client.experiment_upload(
+                json.dumps(data, cls=json_encoder)
+            )
+        return response_data["uuid"]
 
     def update_experiment(
-            self,
-            experiment_id: str,
-            metadata: Optional[Dict] = None,
-            job_ids: Optional[List[str]] = None,
-            notes: Optional[str] = None,
-            tags: Optional[List[str]] = None,
-            share_level: Optional[Union[str, ExperimentShareLevel]] = None,
-            end_datetime: Optional[Union[str, datetime]] = None,
-            json_encoder: Type[json.JSONEncoder] = json.JSONEncoder,
-            **kwargs: Any,
+        self,
+        experiment_id: str,
+        metadata: Optional[Dict] = None,
+        job_ids: Optional[List[str]] = None,
+        notes: Optional[str] = None,
+        tags: Optional[List[str]] = None,
+        share_level: Optional[Union[str, ExperimentShareLevel]] = None,
+        end_datetime: Optional[Union[str, datetime]] = None,
+        json_encoder: Type[json.JSONEncoder] = json.JSONEncoder,
+        **kwargs: Any,
     ) -> None:
         """Update an existing experiment.
 
@@ -328,34 +345,40 @@ class IBMExperimentService:
         """
         # pylint: disable=arguments-differ
         if kwargs:
-            logger.info("Keywords %s are not supported by IBM Quantum experiment service "
-                        "and will be ignored.",
-                        kwargs.keys())
+            logger.info(
+                "Keywords %s are not supported by IBM Quantum experiment service "
+                "and will be ignored.",
+                kwargs.keys(),
+            )
 
-        data = self._experiment_data_to_api(metadata=metadata,
-                                            job_ids=job_ids,
-                                            tags=tags,
-                                            notes=notes,
-                                            share_level=share_level,
-                                            end_dt=end_datetime)
+        data = self._experiment_data_to_api(
+            metadata=metadata,
+            job_ids=job_ids,
+            tags=tags,
+            notes=notes,
+            share_level=share_level,
+            end_dt=end_datetime,
+        )
         if not data:
             logger.warning("update_experiment() called with nothing to update.")
             return
 
         with map_api_error(f"Experiment {experiment_id} not found."):
-            self._api_client.experiment_update(experiment_id, json.dumps(data, cls=json_encoder))
+            self._api_client.experiment_update(
+                experiment_id, json.dumps(data, cls=json_encoder)
+            )
 
     def _experiment_data_to_api(
-            self,
-            metadata: Optional[Dict] = None,
-            experiment_id: Optional[str] = None,
-            parent_id: Optional[str] = None,
-            job_ids: Optional[List[str]] = None,
-            tags: Optional[List[str]] = None,
-            notes: Optional[str] = None,
-            share_level: Optional[Union[str, ExperimentShareLevel]] = None,
-            start_dt: Optional[Union[str, datetime]] = None,
-            end_dt: Optional[Union[str, datetime]] = None,
+        self,
+        metadata: Optional[Dict] = None,
+        experiment_id: Optional[str] = None,
+        parent_id: Optional[str] = None,
+        job_ids: Optional[List[str]] = None,
+        tags: Optional[List[str]] = None,
+        notes: Optional[str] = None,
+        share_level: Optional[Union[str, ExperimentShareLevel]] = None,
+        start_dt: Optional[Union[str, datetime]] = None,
+        end_dt: Optional[Union[str, datetime]] = None,
     ) -> Dict:
         """Convert experiment data to API request data.
 
@@ -375,31 +398,31 @@ class IBMExperimentService:
         """
         data = {}  # type: Dict[str, Any]
         if metadata:
-            data['extra'] = metadata
+            data["extra"] = metadata
         if experiment_id:
-            data['uuid'] = experiment_id
+            data["uuid"] = experiment_id
         if parent_id:
-            data['parent_experiment_uuid'] = parent_id
+            data["parent_experiment_uuid"] = parent_id
         if share_level:
             if isinstance(share_level, str):
                 share_level = ExperimentShareLevel(share_level.lower())
-            data['visibility'] = share_level.value
+            data["visibility"] = share_level.value
         if tags:
-            data['tags'] = tags
+            data["tags"] = tags
         if job_ids:
-            data['jobs'] = job_ids
+            data["jobs"] = job_ids
         if notes:
-            data['notes'] = notes
+            data["notes"] = notes
         if start_dt:
-            data['start_time'] = local_to_utc_str(start_dt)
+            data["start_time"] = local_to_utc_str(start_dt)
         if end_dt:
-            data['end_time'] = local_to_utc_str(end_dt)
+            data["end_time"] = local_to_utc_str(end_dt)
         return data
 
     def experiment(
-            self,
-            experiment_id: str,
-            json_decoder: Type[json.JSONDecoder] = json.JSONDecoder
+        self,
+        experiment_id: str,
+        json_decoder: Type[json.JSONDecoder] = json.JSONDecoder,
     ) -> Dict:
         """Retrieve a previously stored experiment.
 
@@ -419,28 +442,28 @@ class IBMExperimentService:
         return self._api_to_experiment_data(json.loads(raw_data, cls=json_decoder))
 
     def experiments(
-            self,
-            limit: Optional[int] = 10,
-            json_decoder: Type[json.JSONDecoder] = json.JSONDecoder,
-            device_components: Optional[List[Union[str, DeviceComponent]]] = None,
-            device_components_operator: Optional[str] = None,
-            experiment_type: Optional[str] = None,
-            experiment_type_operator: Optional[str] = None,
-            backend_name: Optional[str] = None,
-            tags: Optional[List[str]] = None,
-            tags_operator: Optional[str] = "OR",
-            start_datetime_after: Optional[datetime] = None,
-            start_datetime_before: Optional[datetime] = None,
-            hub: Optional[str] = None,
-            group: Optional[str] = None,
-            project: Optional[str] = None,
-            exclude_public: Optional[bool] = False,
-            public_only: Optional[bool] = False,
-            exclude_mine: Optional[bool] = False,
-            mine_only: Optional[bool] = False,
-            parent_id: Optional[str] = None,
-            sort_by: Optional[Union[str, List[str]]] = None,
-            **filters: Any
+        self,
+        limit: Optional[int] = 10,
+        json_decoder: Type[json.JSONDecoder] = json.JSONDecoder,
+        device_components: Optional[List[Union[str, DeviceComponent]]] = None,
+        device_components_operator: Optional[str] = None,
+        experiment_type: Optional[str] = None,
+        experiment_type_operator: Optional[str] = None,
+        backend_name: Optional[str] = None,
+        tags: Optional[List[str]] = None,
+        tags_operator: Optional[str] = "OR",
+        start_datetime_after: Optional[datetime] = None,
+        start_datetime_before: Optional[datetime] = None,
+        hub: Optional[str] = None,
+        group: Optional[str] = None,
+        project: Optional[str] = None,
+        exclude_public: Optional[bool] = False,
+        public_only: Optional[bool] = False,
+        exclude_mine: Optional[bool] = False,
+        mine_only: Optional[bool] = False,
+        parent_id: Optional[str] = None,
+        sort_by: Optional[Union[str, List[str]]] = None,
+        **filters: Any,
     ) -> List[Dict]:
         """Retrieve all experiments, with optional filtering.
 
@@ -526,44 +549,49 @@ class IBMExperimentService:
         """
         # pylint: disable=arguments-differ
         if filters:
-            logger.info("Keywords %s are not supported by IBM Quantum experiment service "
-                        "and will be ignored.",
-                        filters.keys())
+            logger.info(
+                "Keywords %s are not supported by IBM Quantum experiment service "
+                "and will be ignored.",
+                filters.keys(),
+            )
 
         if limit is not None and (not isinstance(limit, int) or limit <= 0):  # type: ignore
-            raise ValueError(f"{limit} is not a valid `limit`, which has to be a positive integer.")
+            raise ValueError(
+                f"{limit} is not a valid `limit`, which has to be a positive integer."
+            )
 
-        pgh_text = ['project', 'group', 'hub']
+        pgh_text = ["project", "group", "hub"]
         pgh_val = [project, group, hub]
         for idx, val in enumerate(pgh_val):
-            if val is not None and None in pgh_val[idx+1:]:
-                raise ValueError(f"If {pgh_text[idx]} is specified, "
-                                 f"{' and '.join(pgh_text[idx+1:])} must also be specified.")
+            if val is not None and None in pgh_val[idx + 1 :]:
+                raise ValueError(
+                    f"If {pgh_text[idx]} is specified, "
+                    f"{' and '.join(pgh_text[idx+1:])} must also be specified."
+                )
 
         start_time_filters = []
         if start_datetime_after:
-            st_filter = 'ge:{}'.format(local_to_utc_str(start_datetime_after))
+            st_filter = "ge:{}".format(local_to_utc_str(start_datetime_after))
             start_time_filters.append(st_filter)
         if start_datetime_before:
-            st_filter = 'le:{}'.format(local_to_utc_str(start_datetime_before))
+            st_filter = "le:{}".format(local_to_utc_str(start_datetime_before))
             start_time_filters.append(st_filter)
 
         if exclude_public and public_only:
-            raise ValueError('exclude_public and public_only cannot both be True')
+            raise ValueError("exclude_public and public_only cannot both be True")
 
         if exclude_mine and mine_only:
-            raise ValueError('exclude_mine and mine_only cannot both be True')
+            raise ValueError("exclude_mine and mine_only cannot both be True")
 
         converted = self._filtering_to_api(
             tags=tags,
             tags_operator=tags_operator,
             sort_by=sort_by,
-            sort_map={"start_datetime": "start_time",
-                      "experiment_type": "type"},
+            sort_map={"start_datetime": "start_time", "experiment_type": "type"},
             device_components=device_components,
             device_components_operator=device_components_operator,
             item_type=experiment_type,
-            item_type_operator=experiment_type_operator
+            item_type_operator=experiment_type_operator,
         )
 
         experiments = []
@@ -578,26 +606,29 @@ class IBMExperimentService:
                     start_time=start_time_filters,
                     device_components=converted["device_components"],
                     tags=converted["tags"],
-                    hub=hub, group=group, project=project,
+                    hub=hub,
+                    group=group,
+                    project=project,
                     exclude_public=exclude_public,
                     public_only=public_only,
                     exclude_mine=exclude_mine,
                     mine_only=mine_only,
                     parent_id=parent_id,
-                    sort_by=converted["sort_by"])
+                    sort_by=converted["sort_by"],
+                )
             raw_data = json.loads(response, cls=json_decoder)
-            marker = raw_data.get('marker')
-            for exp in raw_data['experiments']:
+            marker = raw_data.get("marker")
+            for exp in raw_data["experiments"]:
                 experiments.append(self._api_to_experiment_data(exp))
             if limit:
-                limit -= len(raw_data['experiments'])
+                limit -= len(raw_data["experiments"])
             if not marker:  # No more experiments to return.
                 break
         return experiments
 
     def _api_to_experiment_data(
-            self,
-            raw_data: Dict,
+        self,
+        raw_data: Dict,
     ) -> Dict:
         """Convert API response to experiment data.
 
@@ -607,25 +638,29 @@ class IBMExperimentService:
         Returns:
             Converted experiment data.
         """
-        backend_name = raw_data['device_name']
+        backend_name = raw_data["device_name"]
         # should decide whether the wanted functionality is returning
         # an actual backend (requires a given provider) or simply the name
         # backend = self._provider.get_backend(backend_name)
         backend = backend_name
 
         extra_data: Dict[str, Any] = {}
-        self._convert_dt(raw_data.get('created_at', None), extra_data, 'creation_datetime')
-        self._convert_dt(raw_data.get('start_time', None), extra_data, 'start_datetime')
-        self._convert_dt(raw_data.get('end_time', None), extra_data, 'end_datetime')
-        self._convert_dt(raw_data.get('updated_at', None), extra_data, 'updated_datetime')
+        self._convert_dt(
+            raw_data.get("created_at", None), extra_data, "creation_datetime"
+        )
+        self._convert_dt(raw_data.get("start_time", None), extra_data, "start_datetime")
+        self._convert_dt(raw_data.get("end_time", None), extra_data, "end_datetime")
+        self._convert_dt(
+            raw_data.get("updated_at", None), extra_data, "updated_datetime"
+        )
 
         out_dict = {
-            "experiment_type": raw_data['type'],
+            "experiment_type": raw_data["type"],
             "backend": backend,
-            "experiment_id": raw_data['uuid'],
-            "parent_id": raw_data.get('parent_experiment_uuid', None),
+            "experiment_id": raw_data["uuid"],
+            "parent_id": raw_data.get("parent_experiment_uuid", None),
             "tags": raw_data.get("tags", None),
-            "job_ids": raw_data['jobs'],
+            "job_ids": raw_data["jobs"],
             "share_level": raw_data.get("visibility", None),
             "metadata": raw_data.get("extra", None),
             "figure_names": raw_data.get("plot_names", None),
@@ -634,15 +669,12 @@ class IBMExperimentService:
             "group": raw_data.get("group_id", ""),
             "project": raw_data.get("project_id", ""),
             "owner": raw_data.get("owner", ""),
-            **extra_data
+            **extra_data,
         }
         return out_dict
 
     def _convert_dt(
-            self,
-            timestamp: Optional[str],
-            data: Dict,
-            field_name: str
+        self, timestamp: Optional[str], data: Dict, field_name: str
     ) -> None:
         """Convert input timestamp.
 
@@ -667,9 +699,11 @@ class IBMExperimentService:
         Raises:
             IBMApiError: If the request to the server failed.
         """
-        confirmation = input('\nAre you sure you want to delete the experiment? '
-                             'Results and plots for the experiment will also be deleted. [y/N]: ')
-        if confirmation not in ('y', 'Y'):
+        confirmation = input(
+            "\nAre you sure you want to delete the experiment? "
+            "Results and plots for the experiment will also be deleted. [y/N]: "
+        )
+        if confirmation not in ("y", "Y"):
             return
 
         try:
@@ -681,19 +715,20 @@ class IBMExperimentService:
                 raise IBMApiError(f"Failed to process the request: {api_err}") from None
 
     def create_analysis_result(
-            self,
-            experiment_id: str,
-            result_data: Dict,
-            result_type: str,
-            device_components: Optional[Union[List[Union[str, DeviceComponent]],
-                                              str, DeviceComponent]] = None,
-            tags: Optional[List[str]] = None,
-            quality: Union[ResultQuality, str] = ResultQuality.UNKNOWN,
-            verified: bool = False,
-            result_id: Optional[str] = None,
-            chisq: Optional[float] = None,
-            json_encoder: Type[json.JSONEncoder] = json.JSONEncoder,
-            **kwargs: Any,
+        self,
+        experiment_id: str,
+        result_data: Dict,
+        result_type: str,
+        device_components: Optional[
+            Union[List[Union[str, DeviceComponent]], str, DeviceComponent]
+        ] = None,
+        tags: Optional[List[str]] = None,
+        quality: Union[ResultQuality, str] = ResultQuality.UNKNOWN,
+        verified: bool = False,
+        result_id: Optional[str] = None,
+        chisq: Optional[float] = None,
+        json_encoder: Type[json.JSONEncoder] = json.JSONEncoder,
+        **kwargs: Any,
     ) -> str:
         """Create a new analysis result in the database.
 
@@ -721,9 +756,11 @@ class IBMExperimentService:
         """
         # pylint: disable=arguments-differ
         if kwargs:
-            logger.info("Keywords %s are not supported by IBM Quantum experiment service "
-                        "and will be ignored.",
-                        kwargs.keys())
+            logger.info(
+                "Keywords %s are not supported by IBM Quantum experiment service "
+                "and will be ignored.",
+                kwargs.keys(),
+            )
 
         components = []
         if device_components:
@@ -744,23 +781,24 @@ class IBMExperimentService:
             quality=quality,
             verified=verified,
             result_id=result_id,
-            chisq=chisq
+            chisq=chisq,
         )
         with map_api_error(f"Analysis result {result_id} already exists."):
             response = self._api_client.analysis_result_create(
-                json.dumps(request, cls=json_encoder))
-        return response['uuid']
+                json.dumps(request, cls=json_encoder)
+            )
+        return response["uuid"]
 
     def update_analysis_result(
-            self,
-            result_id: str,
-            result_data: Optional[Dict] = None,
-            tags: Optional[List[str]] = None,
-            quality: Union[ResultQuality, str] = None,
-            verified: bool = None,
-            chisq: Optional[float] = None,
-            json_encoder: Type[json.JSONEncoder] = json.JSONEncoder,
-            **kwargs: Any,
+        self,
+        result_id: str,
+        result_data: Optional[Dict] = None,
+        tags: Optional[List[str]] = None,
+        quality: Union[ResultQuality, str] = None,
+        verified: bool = None,
+        chisq: Optional[float] = None,
+        json_encoder: Type[json.JSONEncoder] = json.JSONEncoder,
+        **kwargs: Any,
     ) -> None:
         """Update an existing analysis result.
 
@@ -781,33 +819,34 @@ class IBMExperimentService:
         """
         # pylint: disable=arguments-differ
         if kwargs:
-            logger.info("Keywords %s are not supported by IBM Quantum experiment service "
-                        "and will be ignored.",
-                        kwargs.keys())
+            logger.info(
+                "Keywords %s are not supported by IBM Quantum experiment service "
+                "and will be ignored.",
+                kwargs.keys(),
+            )
 
         if isinstance(quality, str):
             quality = ResultQuality(quality.upper())
 
-        request = self._analysis_result_to_api(data=result_data,
-                                               tags=tags,
-                                               quality=quality,
-                                               verified=verified,
-                                               chisq=chisq)
+        request = self._analysis_result_to_api(
+            data=result_data, tags=tags, quality=quality, verified=verified, chisq=chisq
+        )
         with map_api_error(f"Analysis result {result_id} not found."):
             self._api_client.analysis_result_update(
-                result_id, json.dumps(request, cls=json_encoder))
+                result_id, json.dumps(request, cls=json_encoder)
+            )
 
     def _analysis_result_to_api(
-            self,
-            experiment_id: Optional[str] = None,
-            device_components: Optional[List[str]] = None,
-            data: Optional[Dict] = None,
-            result_type: Optional[str] = None,
-            tags: Optional[List[str]] = None,
-            quality: Optional[ResultQuality] = None,
-            verified: Optional[bool] = None,
-            result_id: Optional[str] = None,
-            chisq: Optional[float] = None,
+        self,
+        experiment_id: Optional[str] = None,
+        device_components: Optional[List[str]] = None,
+        data: Optional[Dict] = None,
+        result_type: Optional[str] = None,
+        tags: Optional[List[str]] = None,
+        quality: Optional[ResultQuality] = None,
+        verified: Optional[bool] = None,
+        result_id: Optional[str] = None,
+        chisq: Optional[float] = None,
     ) -> Dict:
         """Convert analysis result fields to server format.
 
@@ -848,9 +887,7 @@ class IBMExperimentService:
         return out
 
     def analysis_result(
-            self,
-            result_id: str,
-            json_decoder: Type[json.JSONDecoder] = json.JSONDecoder
+        self, result_id: str, json_decoder: Type[json.JSONDecoder] = json.JSONDecoder
     ) -> Dict:
         """Retrieve a previously stored analysis result.
 
@@ -871,23 +908,25 @@ class IBMExperimentService:
         return self._api_to_analysis_result(json.loads(raw_data, cls=json_decoder))
 
     def analysis_results(
-            self,
-            limit: Optional[int] = 10,
-            json_decoder: Type[json.JSONDecoder] = json.JSONDecoder,
-            device_components: Optional[List[Union[str, DeviceComponent]]] = None,
-            device_components_operator: Optional[str] = None,
-            experiment_id: Optional[str] = None,
-            result_type: Optional[str] = None,
-            result_type_operator: Optional[str] = None,
-            backend_name: Optional[str] = None,
-            quality: Optional[Union[List[Union[ResultQuality, str]], ResultQuality, str]] = None,
-            verified: Optional[bool] = None,
-            tags: Optional[List[str]] = None,
-            tags_operator: Optional[str] = "OR",
-            creation_datetime_after: Optional[datetime] = None,
-            creation_datetime_before: Optional[datetime] = None,
-            sort_by: Optional[Union[str, List[str]]] = None,
-            **filters: Any
+        self,
+        limit: Optional[int] = 10,
+        json_decoder: Type[json.JSONDecoder] = json.JSONDecoder,
+        device_components: Optional[List[Union[str, DeviceComponent]]] = None,
+        device_components_operator: Optional[str] = None,
+        experiment_id: Optional[str] = None,
+        result_type: Optional[str] = None,
+        result_type_operator: Optional[str] = None,
+        backend_name: Optional[str] = None,
+        quality: Optional[
+            Union[List[Union[ResultQuality, str]], ResultQuality, str]
+        ] = None,
+        verified: Optional[bool] = None,
+        tags: Optional[List[str]] = None,
+        tags_operator: Optional[str] = "OR",
+        creation_datetime_after: Optional[datetime] = None,
+        creation_datetime_before: Optional[datetime] = None,
+        sort_by: Optional[Union[str, List[str]]] = None,
+        **filters: Any,
     ) -> List[Dict]:
         """Retrieve all analysis results, with optional filtering.
 
@@ -959,34 +998,40 @@ class IBMExperimentService:
         """
         # pylint: disable=arguments-differ
         if filters:
-            logger.info("Keywords %s are not supported by IBM Quantum experiment service "
-                        "and will be ignored.",
-                        filters.keys())
+            logger.info(
+                "Keywords %s are not supported by IBM Quantum experiment service "
+                "and will be ignored.",
+                filters.keys(),
+            )
 
         if limit is not None and (not isinstance(limit, int) or limit <= 0):  # type: ignore
-            raise ValueError(f"{limit} is not a valid `limit`, which has to be a positive integer.")
+            raise ValueError(
+                f"{limit} is not a valid `limit`, which has to be a positive integer."
+            )
 
         quality = self._quality_filter_to_api(quality)
 
         created_at_filters = []
         if creation_datetime_after:
-            ca_filter = 'ge:{}'.format(local_to_utc_str(creation_datetime_after))
+            ca_filter = "ge:{}".format(local_to_utc_str(creation_datetime_after))
             created_at_filters.append(ca_filter)
         if creation_datetime_before:
-            ca_filter = 'le:{}'.format(local_to_utc_str(creation_datetime_before))
+            ca_filter = "le:{}".format(local_to_utc_str(creation_datetime_before))
             created_at_filters.append(ca_filter)
 
         converted = self._filtering_to_api(
             tags=tags,
             tags_operator=tags_operator,
             sort_by=sort_by,
-            sort_map={"creation_datetime": "created_at",
-                      "device_components": "device_components",
-                      "result_type": "type"},
+            sort_map={
+                "creation_datetime": "created_at",
+                "device_components": "device_components",
+                "result_type": "type",
+            },
             device_components=device_components,
             device_components_operator=device_components_operator,
             item_type=result_type,
-            item_type_operator=result_type_operator
+            item_type_operator=result_type_operator,
         )
 
         results = []
@@ -1004,21 +1049,23 @@ class IBMExperimentService:
                     verified=verified,
                     tags=converted["tags"],
                     created_at=created_at_filters,
-                    sort_by=converted["sort_by"]
+                    sort_by=converted["sort_by"],
                 )
             raw_data = json.loads(response, cls=json_decoder)
-            marker = raw_data.get('marker')
-            for result in raw_data['analysis_results']:
+            marker = raw_data.get("marker")
+            for result in raw_data["analysis_results"]:
                 results.append(self._api_to_analysis_result(result))
             if limit:
-                limit -= len(raw_data['analysis_results'])
+                limit -= len(raw_data["analysis_results"])
             if not marker:  # No more experiments to return.
                 break
         return results
 
     def _quality_filter_to_api(
-            self,
-            quality: Optional[Union[List[Union[ResultQuality, str]], ResultQuality, str]] = None,
+        self,
+        quality: Optional[
+            Union[List[Union[ResultQuality, str]], ResultQuality, str]
+        ] = None,
     ) -> Optional[Union[str, List[str]]]:
         """Convert quality filter to server format."""
         if not quality:
@@ -1042,15 +1089,15 @@ class IBMExperimentService:
         return "in:" + ",".join(api_quals)
 
     def _filtering_to_api(
-            self,
-            tags: Optional[List[str]] = None,
-            tags_operator: Optional[str] = "OR",
-            sort_by: Optional[Union[str, List[str]]] = None,
-            sort_map: Optional[Dict] = None,
-            device_components: Optional[List[Union[str, DeviceComponent]]] = None,
-            device_components_operator: Optional[str] = None,
-            item_type: Optional[str] = None,
-            item_type_operator: Optional[str] = None,
+        self,
+        tags: Optional[List[str]] = None,
+        tags_operator: Optional[str] = "OR",
+        sort_by: Optional[Union[str, List[str]]] = None,
+        sort_map: Optional[Dict] = None,
+        device_components: Optional[List[Union[str, DeviceComponent]]] = None,
+        device_components_operator: Optional[str] = None,
+        item_type: Optional[str] = None,
+        item_type_operator: Optional[str] = None,
     ) -> Dict:
         """Convert filtering inputs to server format.
 
@@ -1072,13 +1119,15 @@ class IBMExperimentService:
         """
         tags_filter = None
         if tags:
-            if tags_operator.upper() == 'OR':
-                tags_filter = 'any:' + ','.join(tags)
-            elif tags_operator.upper() == 'AND':
-                tags_filter = 'contains:' + ','.join(tags)
+            if tags_operator.upper() == "OR":
+                tags_filter = "any:" + ",".join(tags)
+            elif tags_operator.upper() == "AND":
+                tags_filter = "contains:" + ",".join(tags)
             else:
-                raise ValueError('{} is not a valid `tags_operator`. Valid values are '
-                                 '"AND" and "OR".'.format(tags_operator))
+                raise ValueError(
+                    "{} is not a valid `tags_operator`. Valid values are "
+                    '"AND" and "OR".'.format(tags_operator)
+                )
 
         sort_list = []
         if sort_by:
@@ -1088,12 +1137,16 @@ class IBMExperimentService:
                 key, direction = sorter.split(":")
                 key = key.lower()
                 if key not in sort_map:
-                    raise ValueError(f'"{key}" is not a valid sort key. '
-                                     f'Valid sort keys are {sort_map.keys()}')
+                    raise ValueError(
+                        f'"{key}" is not a valid sort key. '
+                        f"Valid sort keys are {sort_map.keys()}"
+                    )
                 key = sort_map[key]
                 if direction not in ["asc", "desc"]:
-                    raise ValueError(f'"{direction}" is not a valid sorting direction.'
-                                     f'Valid directions are "asc" and "desc".')
+                    raise ValueError(
+                        f'"{direction}" is not a valid sorting direction.'
+                        f'Valid directions are "asc" and "desc".'
+                    )
                 sort_list.append(f"{key}:{direction}")
             sort_by = ",".join(sort_list)
 
@@ -1101,26 +1154,33 @@ class IBMExperimentService:
             device_components = [str(comp) for comp in device_components]
             if device_components_operator:
                 if device_components_operator != "contains":
-                    raise ValueError(f'{device_components_operator} is not a valid '
-                                     f'device_components_operator value. Valid values '
-                                     f'are ``None`` and "contains"')
-                device_components = \
-                    "contains:" + ','.join(device_components)  # type: ignore
+                    raise ValueError(
+                        f"{device_components_operator} is not a valid "
+                        f"device_components_operator value. Valid values "
+                        f'are ``None`` and "contains"'
+                    )
+                device_components = "contains:" + ",".join(
+                    device_components
+                )  # type: ignore
 
         if item_type and item_type_operator:
             if item_type_operator != "like":
-                raise ValueError(f'"{item_type_operator}" is not a valid type operator value. '
-                                 f'Valid values are ``None`` and "like".')
+                raise ValueError(
+                    f'"{item_type_operator}" is not a valid type operator value. '
+                    f'Valid values are ``None`` and "like".'
+                )
             item_type = "like:" + item_type
 
-        return {"tags": tags_filter,
-                "sort_by": sort_by,
-                "device_components": device_components,
-                "type": item_type}
+        return {
+            "tags": tags_filter,
+            "sort_by": sort_by,
+            "device_components": device_components,
+            "type": item_type,
+        }
 
     def _api_to_analysis_result(
-            self,
-            raw_data: Dict,
+        self,
+        raw_data: Dict,
     ) -> Dict:
         """Map API response to a dictionary representing an analysis result.
 
@@ -1132,39 +1192,40 @@ class IBMExperimentService:
         """
         extra_data = {}
 
-        chisq = raw_data.get('chisq', None)
+        chisq = raw_data.get("chisq", None)
         if chisq:
-            extra_data['chisq'] = chisq
+            extra_data["chisq"] = chisq
 
-        backend_name = raw_data['device_name']
+        backend_name = raw_data["device_name"]
         if backend_name:
-            extra_data['backend_name'] = backend_name
+            extra_data["backend_name"] = backend_name
 
-        quality = raw_data.get('quality', None)
+        quality = raw_data.get("quality", None)
         if quality:
             quality = RESULT_QUALITY_FROM_API[quality]
 
-        self._convert_dt(raw_data.get('created_at', None), extra_data, 'creation_datetime')
-        self._convert_dt(raw_data.get('updated_at', None), extra_data, 'updated_datetime')
+        self._convert_dt(
+            raw_data.get("created_at", None), extra_data, "creation_datetime"
+        )
+        self._convert_dt(
+            raw_data.get("updated_at", None), extra_data, "updated_datetime"
+        )
 
         out_dict = {
-            "result_data": raw_data.get('fit', {}),
-            "result_type": raw_data.get('type', None),
-            "device_components": raw_data.get('device_components', []),
-            "experiment_id": raw_data.get('experiment_uuid'),
-            "result_id": raw_data.get('uuid', None),
+            "result_data": raw_data.get("fit", {}),
+            "result_type": raw_data.get("type", None),
+            "device_components": raw_data.get("device_components", []),
+            "experiment_id": raw_data.get("experiment_uuid"),
+            "result_id": raw_data.get("uuid", None),
             "quality": quality,
-            "verified": raw_data.get('verified', False),
-            "tags": raw_data.get('tags', []),
+            "verified": raw_data.get("verified", False),
+            "tags": raw_data.get("tags", []),
             "service": self,
-            **extra_data
+            **extra_data,
         }
         return out_dict
 
-    def delete_analysis_result(
-            self,
-            result_id: str
-    ) -> None:
+    def delete_analysis_result(self, result_id: str) -> None:
         """Delete an analysis result.
 
         Args:
@@ -1176,8 +1237,10 @@ class IBMExperimentService:
         Raises:
             IBMApiError: If the request to the server failed.
         """
-        confirmation = input('\nAre you sure you want to delete the analysis result? [y/N]: ')
-        if confirmation not in ('y', 'Y'):
+        confirmation = input(
+            "\nAre you sure you want to delete the analysis result? [y/N]: "
+        )
+        if confirmation not in ("y", "Y"):
             return
 
         try:
@@ -1189,11 +1252,11 @@ class IBMExperimentService:
                 raise IBMApiError(f"Failed to process the request: {api_err}") from None
 
     def create_figure(
-            self,
-            experiment_id: str,
-            figure: Union[str, bytes],
-            figure_name: Optional[str] = None,
-            sync_upload: bool = True
+        self,
+        experiment_id: str,
+        figure: Union[str, bytes],
+        figure_name: Optional[str] = None,
+        sync_upload: bool = True,
     ) -> Tuple[str, int]:
         """Store a new figure in the database.
 
@@ -1226,16 +1289,17 @@ class IBMExperimentService:
             figure_name += ".svg"
 
         with map_api_error(f"Figure {figure_name} already exists."):
-            response = self._api_client.experiment_plot_upload(experiment_id, figure, figure_name,
-                                                               sync_upload=sync_upload)
-        return response['name'], response['size']
+            response = self._api_client.experiment_plot_upload(
+                experiment_id, figure, figure_name, sync_upload=sync_upload
+            )
+        return response["name"], response["size"]
 
     def update_figure(
-            self,
-            experiment_id: str,
-            figure: Union[str, bytes],
-            figure_name: str,
-            sync_upload: bool = True
+        self,
+        experiment_id: str,
+        figure: Union[str, bytes],
+        figure_name: str,
+        sync_upload: bool = True,
     ) -> Tuple[str, int]:
         """Update an existing figure.
 
@@ -1254,16 +1318,14 @@ class IBMExperimentService:
             IBMApiError: If the request to the server failed.
         """
         with map_api_error(f"Figure {figure_name} not found."):
-            response = self._api_client.experiment_plot_update(experiment_id, figure, figure_name,
-                                                               sync_upload=sync_upload)
+            response = self._api_client.experiment_plot_update(
+                experiment_id, figure, figure_name, sync_upload=sync_upload
+            )
 
-        return response['name'], response['size']
+        return response["name"], response["size"]
 
     def figure(
-            self,
-            experiment_id: str,
-            figure_name: str,
-            file_name: Optional[str] = None
+        self, experiment_id: str, figure_name: str, file_name: Optional[str] = None
     ) -> Union[int, bytes]:
         """Retrieve an existing figure.
 
@@ -1285,17 +1347,13 @@ class IBMExperimentService:
             data = self._api_client.experiment_plot_get(experiment_id, figure_name)
 
         if file_name:
-            with open(file_name, 'wb') as file:
+            with open(file_name, "wb") as file:
                 num_bytes = file.write(data)
             return num_bytes
 
         return data
 
-    def delete_figure(
-            self,
-            experiment_id: str,
-            figure_name: str
-    ) -> None:
+    def delete_figure(self, experiment_id: str, figure_name: str) -> None:
         """Delete an experiment plot.
 
         Note:
@@ -1308,8 +1366,10 @@ class IBMExperimentService:
         Raises:
             IBMApiError: If the request to the server failed.
         """
-        confirmation = input('\nAre you sure you want to delete the experiment plot? [y/N]: ')
-        if confirmation not in ('y', 'Y'):
+        confirmation = input(
+            "\nAre you sure you want to delete the experiment plot? [y/N]: "
+        )
+        if confirmation not in ("y", "Y"):
             return
 
         try:
@@ -1321,8 +1381,7 @@ class IBMExperimentService:
                 raise IBMApiError(f"Failed to process the request: {api_err}") from None
 
     def device_components(
-            self,
-            backend_name: Optional[str] = None
+        self, backend_name: Optional[str] = None
     ) -> Union[Dict[str, List], List]:
         """Return the device components.
 
@@ -1342,7 +1401,7 @@ class IBMExperimentService:
 
         components = defaultdict(list)
         for data in raw_data:
-            components[data['device_name']].append(data['type'])
+            components[data["device_name"]].append(data["type"])
 
         if backend_name:
             return components[backend_name]

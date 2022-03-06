@@ -14,26 +14,23 @@
 
 import logging
 from typing import Dict, List, Any, Union, Optional
-import json
+from qiskit_ibm_experiment.client.session import RetrySession
 
 logger = logging.getLogger(__name__)
-
-
-from qiskit_ibm_experiment.client.session import RetrySession
 
 
 class ExperimentRestAdapter:
     """REST adapter for experiment result DB"""
 
     URL_MAP = {
-        'devices': '/devices',
-        'device_components': '/device_components',
-        'experiment': '/experiments/{uuid}',
-        'experiments': '/experiments',
-        'analysis_results': '/analysis_results',
-        'analysis_result': '/analysis_results/{uuid}',
-        'plots': '/experiments/{uuid}/plots',
-        'plot': '/experiments/{uuid}/plots/{name}'
+        "devices": "/devices",
+        "device_components": "/device_components",
+        "experiment": "/experiments/{uuid}",
+        "experiments": "/experiments",
+        "analysis_results": "/analysis_results",
+        "analysis_result": "/analysis_results/{uuid}",
+        "plots": "/experiments/{uuid}/plots",
+        "plot": "/experiments/{uuid}/plots/{name}",
     }
 
     _HEADER_JSON_CONTENT = {"Content-Type": "application/json"}
@@ -61,34 +58,36 @@ class ExperimentRestAdapter:
         return self.prefix_url + self.URL_MAP[identifier]
 
     def devices(self):
-        url = self.get_url('devices')
+        """Return the device list from the experiment DB."""
+        url = self.get_url("devices")
         raw_data = self.session.get(url).json()
         return raw_data
 
     def experiment(self, experiment_id):
-        url = self.get_url('experiment')
-        url = url.format(uuid = experiment_id)
+        """Return the experiment list from the experiment DB."""
+        url = self.get_url("experiment")
+        url = url.format(uuid=experiment_id)
         # to enable custom JSON decoding request text, not json
         return self.session.get(url).text
 
     def experiments(
-            self,
-            limit: Optional[int],
-            marker: Optional[str],
-            backend_name: Optional[str] = None,
-            experiment_type: Optional[str] = None,
-            start_time: Optional[List] = None,
-            device_components: Optional[List[str]] = None,
-            tags: Optional[List[str]] = None,
-            hub: Optional[str] = None,
-            group: Optional[str] = None,
-            project: Optional[str] = None,
-            exclude_public: Optional[bool] = False,
-            public_only: Optional[bool] = False,
-            exclude_mine: Optional[bool] = False,
-            mine_only: Optional[bool] = False,
-            parent_id: Optional[str] = None,
-            sort_by: Optional[str] = None
+        self,
+        limit: Optional[int],
+        marker: Optional[str],
+        backend_name: Optional[str] = None,
+        experiment_type: Optional[str] = None,
+        start_time: Optional[List] = None,
+        device_components: Optional[List[str]] = None,
+        tags: Optional[List[str]] = None,
+        hub: Optional[str] = None,
+        group: Optional[str] = None,
+        project: Optional[str] = None,
+        exclude_public: Optional[bool] = False,
+        public_only: Optional[bool] = False,
+        exclude_mine: Optional[bool] = False,
+        mine_only: Optional[bool] = False,
+        parent_id: Optional[str] = None,
+        sort_by: Optional[str] = None,
     ) -> str:
         """Return experiment data.
 
@@ -113,56 +112,56 @@ class ExperimentRestAdapter:
         Returns:
             Response text.
         """
-        url = self.get_url('experiments')
+        url = self.get_url("experiments")
         params = {}  # type: Dict[str, Any]
         if backend_name:
-            params['device_name'] = backend_name
+            params["device_name"] = backend_name
         if experiment_type:
-            params['type'] = experiment_type
+            params["type"] = experiment_type
         if start_time:
-            params['start_time'] = start_time
+            params["start_time"] = start_time
         if device_components:
-            params['device_components'] = device_components
+            params["device_components"] = device_components
         if tags:
-            params['tags'] = tags
+            params["tags"] = tags
         if limit:
-            params['limit'] = limit
+            params["limit"] = limit
         if marker:
-            params['marker'] = marker
+            params["marker"] = marker
         if hub:
-            params['hub_id'] = hub
+            params["hub_id"] = hub
         if group:
-            params['group_id'] = group
+            params["group_id"] = group
         if project:
-            params['project_id'] = project
+            params["project_id"] = project
         if parent_id:
-            params['parent_experiment_uuid'] = parent_id
+            params["parent_experiment_uuid"] = parent_id
         if exclude_public:
-            params['visibility'] = '!public'
+            params["visibility"] = "!public"
         elif public_only:
-            params['visibility'] = 'public'
+            params["visibility"] = "public"
         if exclude_mine:
-            params['owner'] = '!me'
+            params["owner"] = "!me"
         elif mine_only:
-            params['owner'] = 'me'
+            params["owner"] = "me"
         if sort_by:
-            params['sort'] = sort_by
+            params["sort"] = sort_by
 
         return self.session.get(url, params=params).text
 
     def analysis_results(
-            self,
-            limit: Optional[int],
-            marker: Optional[str],
-            backend_name: Optional[str] = None,
-            device_components: Optional[Union[str, List[str]]] = None,
-            experiment_uuid: Optional[str] = None,
-            result_type: Optional[str] = None,
-            quality: Optional[List[str]] = None,
-            verified: Optional[bool] = None,
-            tags: Optional[List[str]] = None,
-            created_at: Optional[List] = None,
-            sort_by: Optional[str] = None
+        self,
+        limit: Optional[int],
+        marker: Optional[str],
+        backend_name: Optional[str] = None,
+        device_components: Optional[Union[str, List[str]]] = None,
+        experiment_uuid: Optional[str] = None,
+        result_type: Optional[str] = None,
+        quality: Optional[List[str]] = None,
+        verified: Optional[bool] = None,
+        tags: Optional[List[str]] = None,
+        created_at: Optional[List] = None,
+        sort_by: Optional[str] = None,
     ) -> str:
         """Return all analysis results.
 
@@ -182,30 +181,30 @@ class ExperimentRestAdapter:
         Returns:
             Server response.
         """
-        url = self.get_url('analysis_results')
+        url = self.get_url("analysis_results")
         params = {}  # type: Dict[str, Any]
         if backend_name:
-            params['device_name'] = backend_name
+            params["device_name"] = backend_name
         if device_components:
-            params['device_components'] = device_components
+            params["device_components"] = device_components
         if experiment_uuid:
-            params['experiment_uuid'] = experiment_uuid
+            params["experiment_uuid"] = experiment_uuid
         if quality:
-            params['quality'] = quality
+            params["quality"] = quality
         if result_type:
-            params['type'] = result_type
+            params["type"] = result_type
         if limit:
-            params['limit'] = limit
+            params["limit"] = limit
         if marker:
-            params['marker'] = marker
+            params["marker"] = marker
         if verified is not None:
             params["verified"] = "true" if verified else "false"
         if tags:
-            params['tags'] = tags
+            params["tags"] = tags
         if created_at:
-            params['created_at'] = created_at
+            params["created_at"] = created_at
         if sort_by:
-            params['sort'] = sort_by
+            params["sort"] = sort_by
         return self.session.get(url, params=params).text
 
     def analysis_result(self, result_id):
@@ -217,7 +216,7 @@ class ExperimentRestAdapter:
         Returns:
             The analysis result .
         """
-        url = self.get_url('analysis_result')
+        url = self.get_url("analysis_result")
         url = url.format(uuid=result_id)
         return self.session.get(url).text
 
@@ -230,9 +229,10 @@ class ExperimentRestAdapter:
         Returns:
             JSON response.
         """
-        url = self.get_url('experiments')
-        raw_data = self.session.post(url, data=experiment,
-                                     headers=self._HEADER_JSON_CONTENT).json()
+        url = self.get_url("experiments")
+        raw_data = self.session.post(
+            url, data=experiment, headers=self._HEADER_JSON_CONTENT
+        ).json()
         return raw_data
 
     def experiment_delete(self, experiment_id: str) -> Dict:
@@ -244,7 +244,7 @@ class ExperimentRestAdapter:
         Returns:
             JSON response.
         """
-        url = self.get_url('experiment')
+        url = self.get_url("experiment")
         url = url.format(uuid=experiment_id)
         return self.session.delete(url).json()
 
@@ -258,23 +258,25 @@ class ExperimentRestAdapter:
         Returns:
             JSON response.
         """
-        url = self.get_url('experiment')
+        url = self.get_url("experiment")
         url = url.format(uuid=experiment_id)
-        return self.session.put(url, data=new_data,
-                                headers=self._HEADER_JSON_CONTENT).json()
+        return self.session.put(
+            url, data=new_data, headers=self._HEADER_JSON_CONTENT
+        ).json()
 
     def analysis_result_create(self, result: str) -> Dict:
         """Create an analysis result.
 
-            Args:
-                result: The analysis result to upload.
+        Args:
+            result: The analysis result to upload.
 
-            Returns:
-                JSON response.
-            """
-        url = self.get_url('analysis_results')
-        return self.session.post(url, data=result,
-                                 headers=self._HEADER_JSON_CONTENT).json()
+        Returns:
+            JSON response.
+        """
+        url = self.get_url("analysis_results")
+        return self.session.post(
+            url, data=result, headers=self._HEADER_JSON_CONTENT
+        ).json()
 
     def analysis_result_update(self, result_id: str, new_data: str) -> Dict:
         """Update the analysis result.
@@ -286,10 +288,11 @@ class ExperimentRestAdapter:
         Returns:
             JSON response.
         """
-        url = self.get_url('analysis_result')
+        url = self.get_url("analysis_result")
         url = url.format(uuid=result_id)
-        return self.session.put(url, data=new_data,
-                                headers=self._HEADER_JSON_CONTENT).json()
+        return self.session.put(
+            url, data=new_data, headers=self._HEADER_JSON_CONTENT
+        ).json()
 
     def analysis_result_delete(self, result_id) -> Dict:
         """Delete the analysis result.
@@ -299,16 +302,16 @@ class ExperimentRestAdapter:
         Returns:
             JSON response.
         """
-        url = self.get_url('analysis_result')
+        url = self.get_url("analysis_result")
         url = url.format(uuid=result_id)
         return self.session.delete(url).json()
 
     def upload_plot(
-            self,
-            experiment_id: str,
-            plot: Union[bytes, str],
-            plot_name: str,
-            sync_upload: bool = True
+        self,
+        experiment_id: str,
+        plot: Union[bytes, str],
+        plot_name: str,
+        sync_upload: bool = True,
     ) -> Dict:
         """Upload a plot for the experiment.
 
@@ -323,28 +326,25 @@ class ExperimentRestAdapter:
         Returns:
             JSON response.
         """
-        url = self.get_url('plots')
+        url = self.get_url("plots")
         url = url.format(uuid=experiment_id)
-        headers = {
-            'x-sync-upload': str(sync_upload)
-        }
+        headers = {"x-sync-upload": str(sync_upload)}
         if isinstance(plot, str):
-            with open(plot, 'rb') as file:
-                data = {'plot': (plot_name, file)}
+            with open(plot, "rb") as file:
+                data = {"plot": (plot_name, file)}
                 response = self.session.post(url, files=data, headers=headers).json()
         else:
-            data = {'plot': (plot_name, plot)}  # type: ignore[dict-item]
+            data = {"plot": (plot_name, plot)}  # type: ignore[dict-item]
             response = self.session.post(url, files=data, headers=headers).json()
 
         return response
 
-
     def update_plot(
-            self,
-            experiment_id: str,
-            plot: Union[bytes, str],
-            plot_name: str,
-            sync_upload: bool = True
+        self,
+        experiment_id: str,
+        plot: Union[bytes, str],
+        plot_name: str,
+        sync_upload: bool = True,
     ) -> Dict:
         """Update an experiment plot.
 
@@ -359,17 +359,15 @@ class ExperimentRestAdapter:
         Returns:
             JSON response.
         """
-        url = self.get_url('plot')
+        url = self.get_url("plot")
         url = url.format(uuid=experiment_id, name=plot_name)
-        headers = {
-            'x-sync-upload': str(sync_upload)
-        }
+        headers = {"x-sync-upload": str(sync_upload)}
         if isinstance(plot, str):
-            with open(plot, 'rb') as file:
-                data = {'plot': (plot_name, file)}
+            with open(plot, "rb") as file:
+                data = {"plot": (plot_name, file)}
                 response = self.session.put(url, files=data, headers=headers).json()
         else:
-            data = {'plot': (plot_name, plot)}  # type: ignore[dict-item]
+            data = {"plot": (plot_name, plot)}  # type: ignore[dict-item]
             response = self.session.put(url, files=data, headers=headers).json()
 
         return response
@@ -383,7 +381,7 @@ class ExperimentRestAdapter:
         Returns:
             Plot content.
         """
-        url = self.get_url('plot')
+        url = self.get_url("plot")
         url = url.format(uuid=experiment_id, name=plot_name)
         response = self.session.get(url)
         return response.content
@@ -394,7 +392,7 @@ class ExperimentRestAdapter:
             experiment_id: The experiment the plot belongs to.
             plot_name: Name of the plot to be retrieved.
         """
-        url = self.get_url('plot')
+        url = self.get_url("plot")
         url = url.format(uuid=experiment_id, name=plot_name)
         self.session.delete(url)
 
@@ -409,6 +407,6 @@ class ExperimentRestAdapter:
         """
         params = {}
         if backend_name:
-            params['device_name'] = backend_name
-        url = self.get_url('device_components')
+            params["device_name"] = backend_name
+        url = self.get_url("device_components")
         return self.session.get(url, params=params).json()

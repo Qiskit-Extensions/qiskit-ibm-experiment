@@ -78,6 +78,7 @@ disable=arguments-renamed,              # TODO: investigate / re-enable
         duplicate-code,                 # too verbose
         f-string-without-interpolation, # TODO: investigate / re-enable
         fixme,                          # avoid that to do annotations show up as warnings
+        import-outside-toplevel,        # Used when testing matplotlib, etc.
         invalid-name,                   # TODO: investigate / re-enable
         missing-param-doc,              # TODO: investigate / re-enable (issues with kwargs docs)
         missing-type-doc,               # TODO: investigate / re-enable

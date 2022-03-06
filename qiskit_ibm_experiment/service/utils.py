@@ -14,16 +14,17 @@
 
 import logging
 import os
-import dateutil
 from typing import Generator, Union, Optional
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
+import dateutil
 
-from ..exceptions import (IBMExperimentEntryNotFound,
-                          IBMExperimentEntryExists,
-                          RequestsApiError,
-                          IBMApiError,
-                          )
+from ..exceptions import (
+    IBMExperimentEntryNotFound,
+    IBMExperimentEntryExists,
+    RequestsApiError,
+    IBMApiError,
+)
 
 
 @contextmanager
@@ -37,6 +38,7 @@ def map_api_error(error_msg: str = "") -> Generator[None, None, None]:
         if api_err.status_code == 404:
             raise IBMExperimentEntryNotFound(error_msg + f" {api_err}") from None
         raise IBMApiError(f"Failed to process the request: {api_err}") from None
+
 
 def setup_logger(logger: logging.Logger) -> None:
     """Setup the logger for the provider modules with the appropriate level.
@@ -53,11 +55,11 @@ def setup_logger(logger: logging.Logger) -> None:
           messages will not be logged to the screen. If a log file is not specified,
           the log messages will only be logged to the screen and not to a file.
     """
-    log_level = os.getenv('QISKIT_IBM_PROVIDER_LOG_LEVEL', '')
-    log_file = os.getenv('QISKIT_IBM_PROVIDER_LOG_FILE', '')
+    log_level = os.getenv("QISKIT_IBM_PROVIDER_LOG_LEVEL", "")
+    log_file = os.getenv("QISKIT_IBM_PROVIDER_LOG_FILE", "")
 
     # Setup the formatter for the log messages.
-    log_fmt = '%(module)s.%(funcName)s:%(levelname)s:%(asctime)s: %(message)s'
+    log_fmt = "%(module)s.%(funcName)s:%(levelname)s:%(asctime)s: %(message)s"
     formatter = logging.Formatter(log_fmt)
 
     # Set propagate to `False` since handlers are to be attached.
@@ -80,13 +82,18 @@ def setup_logger(logger: logging.Logger) -> None:
         # Default to `WARNING` if the specified level is not valid.
         level = logging.getLevelName(log_level.upper())
         if not isinstance(level, int):
-            logger.warning('"%s" is not a valid log level. The valid log levels are: '
-                           '`DEBUG`, `INFO`, `WARNING`, `ERROR`, and `CRITICAL`.', log_level)
+            logger.warning(
+                '"%s" is not a valid log level. The valid log levels are: '
+                "`DEBUG`, `INFO`, `WARNING`, `ERROR`, and `CRITICAL`.",
+                log_level,
+            )
             level = logging.WARNING
         logger.debug('The logger is being set to level "%s"', level)
         logger.setLevel(level)
 
+
 # converters
+
 
 def utc_to_local(utc_dt: Union[datetime, str]) -> datetime:
     """Convert a UTC ``datetime`` object or string to a local timezone ``datetime``.
@@ -103,7 +110,7 @@ def utc_to_local(utc_dt: Union[datetime, str]) -> datetime:
     if isinstance(utc_dt, str):
         utc_dt = dateutil.parser.parse(utc_dt)
     if not isinstance(utc_dt, datetime):
-        raise TypeError('Input `utc_dt` is not string or datetime.')
+        raise TypeError("Input `utc_dt` is not string or datetime.")
     utc_dt = utc_dt.replace(tzinfo=timezone.utc)  # type: ignore[arg-type]
     local_dt = utc_dt.astimezone(dateutil.tz.tzlocal())  # type: ignore[attr-defined]
     return local_dt
@@ -124,7 +131,7 @@ def local_to_utc(local_dt: Union[datetime, str]) -> datetime:
     if isinstance(local_dt, str):
         local_dt = dateutil.parser.parse(local_dt)
     if not isinstance(local_dt, datetime):
-        raise TypeError('Input `local_dt` is not string or datetime.')
+        raise TypeError("Input `local_dt` is not string or datetime.")
 
     # Input is considered local if it's ``utcoffset()`` is ``None`` or none-zero.
     if local_dt.utcoffset() is None or local_dt.utcoffset() != timedelta(0):
@@ -133,7 +140,7 @@ def local_to_utc(local_dt: Union[datetime, str]) -> datetime:
     return local_dt  # Already in UTC.
 
 
-def local_to_utc_str(local_dt: Union[datetime, str], suffix: str = 'Z') -> str:
+def local_to_utc_str(local_dt: Union[datetime, str], suffix: str = "Z") -> str:
     """Convert a local ``datetime`` object or string to a UTC string.
 
     Args:
@@ -145,9 +152,10 @@ def local_to_utc_str(local_dt: Union[datetime, str], suffix: str = 'Z') -> str:
         UTC datetime in ISO format.
     """
     utc_dt_str = local_to_utc(local_dt).isoformat()
-    if suffix == 'Z':
-        utc_dt_str = utc_dt_str.replace('+00:00', 'Z')
+    if suffix == "Z":
+        utc_dt_str = utc_dt_str.replace("+00:00", "Z")
     return utc_dt_str
+
 
 def str_to_utc(utc_dt: Optional[str]) -> Optional[datetime]:
     """Convert a UTC string to a ``datetime`` object with UTC timezone.
