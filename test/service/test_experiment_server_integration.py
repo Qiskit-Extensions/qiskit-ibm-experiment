@@ -39,8 +39,11 @@ class TestExperimentServerIntegration(IBMTestCase):
         super().setUpClass()
         try:
             cls._setup_service()
+            cls.log.info("Finished setting up the service")
             cls._setup_provider()
-        except Exception:
+            cls.log.info("Finished setting up the provider")
+        except Exception as err:
+            cls.log.info("Error while setting the service/provider: {}".format(err))
             raise SkipTest("Not authorized to use experiment service.")
 
     @classmethod
@@ -73,7 +76,7 @@ class TestExperimentServerIntegration(IBMTestCase):
                     self.service.delete_experiment(expr_uuid)
             except Exception as err:    # pylint: disable=broad-except
                 print("Unable to delete experiment %s: %s", expr_uuid, err)
-                # self.log.info("Unable to delete experiment %s: %s", expr_uuid, err)
+                self.log.info("Unable to delete experiment %s: %s", expr_uuid, err)
         super().tearDown()
 
     def test_experiments(self):
@@ -861,8 +864,8 @@ class TestExperimentServerIntegration(IBMTestCase):
         cdt1 = result1['creation_datetime']
         # Assert that the UTC timestamp was converted to the local time.
         self.assertIsNotNone(cdt1.tzinfo)
-        # self.log.debug('Created first analysis result %s with creation_datetime %s',
-        #                result1_id, cdt1.isoformat())
+        self.log.debug('Created first analysis result %s with creation_datetime %s',
+                       result1_id, cdt1.isoformat())
         # Get the analysis result back using the exact creation timestamp
         # using both ge and le prefixes.
         results = self.service.analysis_results(
