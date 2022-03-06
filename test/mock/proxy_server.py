@@ -15,7 +15,7 @@
 import subprocess
 from contextlib import contextmanager
 
-from qiskit_ibm_experiment.proxies import ProxyConfiguration
+from qiskit_ibm_experiment.accounts import ProxyConfiguration
 
 
 class MockProxyServer:

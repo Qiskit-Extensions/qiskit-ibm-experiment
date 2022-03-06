@@ -15,12 +15,9 @@
 import os
 import logging
 import inspect
-import time
-from functools import partialmethod
-
+from test.utils.utils import setup_test_logging
 from qiskit.test.base import BaseQiskitTestCase
 from qiskit_ibm_experiment import QISKIT_IBM_EXPERIMENT_LOGGER_NAME
-from test.utils.utils import setup_test_logging
 
 
 class IBMTestCase(BaseQiskitTestCase):

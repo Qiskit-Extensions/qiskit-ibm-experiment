@@ -14,12 +14,9 @@
 
 import logging
 from typing import Dict, List, Any, Union, Optional
-import json
+from qiskit_ibm_experiment.client.session import RetrySession
 
 logger = logging.getLogger(__name__)
-
-
-from qiskit_ibm_experiment.client.session import RetrySession
 
 
 class ExperimentRestAdapter:
@@ -61,11 +58,13 @@ class ExperimentRestAdapter:
         return self.prefix_url + self.URL_MAP[identifier]
 
     def devices(self):
+        """Return the device list from the experiment DB."""
         url = self.get_url("devices")
         raw_data = self.session.get(url).json()
         return raw_data
 
     def experiment(self, experiment_id):
+        """Return the experiment list from the experiment DB."""
         url = self.get_url("experiment")
         url = url.format(uuid=experiment_id)
         # to enable custom JSON decoding request text, not json

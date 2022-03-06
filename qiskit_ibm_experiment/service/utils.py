@@ -14,10 +14,10 @@
 
 import logging
 import os
-import dateutil
 from typing import Generator, Union, Optional
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
+import dateutil
 
 from ..exceptions import (
     IBMExperimentEntryNotFound,

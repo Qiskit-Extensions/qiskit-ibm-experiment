@@ -19,15 +19,14 @@ from unittest import mock, SkipTest, skipIf
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 import re
-from dateutil import tz
+from test.service.ibm_test_case import IBMTestCase
+from test.utils.utils import ExperimentEncoder, ExperimentDecoder
 import numpy as np
-
+from dateutil import tz
 from qiskit.providers.ibmq import IBMQFactory, least_busy
 from qiskit_ibm_experiment.service import ResultQuality, ExperimentShareLevel
 from qiskit_ibm_experiment import IBMExperimentEntryNotFound
 from qiskit_ibm_experiment import IBMExperimentService
-from test.service.ibm_test_case import IBMTestCase
-from test.utils.utils import ExperimentEncoder, ExperimentDecoder
 
 
 @skipIf(
@@ -47,7 +46,7 @@ class TestExperimentServerIntegration(IBMTestCase):
             cls.log.info("Finished setting up the service")
             cls.device_components = cls.service.device_components(cls.backend.name())
         except Exception as err:
-            cls.log.info("Error while setting the service/provider: {}".format(err))
+            cls.log.info("Error while setting the service/provider: %s", err)
             raise SkipTest("Not authorized to use experiment service.")
 
     @classmethod

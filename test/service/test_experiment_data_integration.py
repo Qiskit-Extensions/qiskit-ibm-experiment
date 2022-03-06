@@ -16,21 +16,16 @@ import os
 import unittest
 from unittest import mock, SkipTest, skipIf
 import contextlib
+from test.service.ibm_test_case import IBMTestCase
 import numpy as np
-
 from qiskit import transpile
 from qiskit.providers import JobStatus
 from qiskit.test.reference_circuits import ReferenceCircuits
 from qiskit.tools.visualization import HAS_MATPLOTLIB
 from qiskit.providers.ibmq import IBMQ, least_busy
-from qiskit_ibm_experiment.service import ResultQuality
 from qiskit_ibm_experiment import IBMExperimentService
-from qiskit_experiments.database_service.db_experiment_data import (
-    ExperimentStatus,
-)
+from qiskit_ibm_experiment.service import ResultQuality
 from qiskit_ibm_experiment.exceptions import IBMExperimentEntryNotFound
-from test.service.ibm_test_case import IBMTestCase
-
 
 try:
     from qiskit_experiments.database_service import (
@@ -38,6 +33,7 @@ try:
     )
     from qiskit_experiments.database_service import DbAnalysisResultV1 as AnalysisResult
     from qiskit_experiments.database_service.exceptions import DbExperimentEntryNotFound
+    from qiskit_experiments.database_service.db_experiment_data import ExperimentStatus
 
     HAS_QISKIT_EXPERIMENTS = True
 except ImportError:

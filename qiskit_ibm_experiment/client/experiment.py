@@ -14,9 +14,8 @@
 
 import logging
 from typing import List, Dict, Optional, Union
-
-from .experiment_rest_adapter import ExperimentRestAdapter
 from qiskit_ibm_experiment.client.session import RetrySession
+from .experiment_rest_adapter import ExperimentRestAdapter
 from .base import BaseClient
 
 logger = logging.getLogger(__name__)
@@ -37,6 +36,7 @@ class ExperimentClient(BaseClient):
         self.api = ExperimentRestAdapter(self._session)
 
     def devices(self) -> Dict:
+        """Return the device list from the experiment DB."""
         return self.api.devices()["devices"]
 
     def experiments(

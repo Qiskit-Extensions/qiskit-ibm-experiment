@@ -16,12 +16,9 @@ import logging
 import json
 import copy
 from typing import Optional, List, Dict, Union, Tuple, Any, Type
-import requests
 from datetime import datetime
 from collections import defaultdict
-
-from qiskit.providers.exceptions import QiskitBackendNotFoundError
-
+import requests
 from .constants import (
     ExperimentShareLevel,
     ResultQuality,
@@ -120,6 +117,8 @@ class IBMExperimentService:
         )
 
     def get_access_token(self, auth_url, api_token=None):
+        """Authenticates to the server with the API token, receiving access token
+        for the current session"""
         if api_token is None:
             try:
                 api_token = self._account.token

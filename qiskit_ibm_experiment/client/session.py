@@ -14,6 +14,7 @@
 
 import os
 import re
+import copy
 import logging
 from typing import List, Dict, Optional, Any, Tuple, Union
 import pkg_resources
