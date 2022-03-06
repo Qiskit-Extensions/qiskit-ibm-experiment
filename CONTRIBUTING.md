@@ -7,11 +7,11 @@ included in the qiskit documentation:
 https://qiskit.org/documentation/contributing_to_qiskit.html
 
 
-Contributing to Qiskit IBM Runtime
+Contributing to Qiskit IBM Experiment
 ---------------------------
 
 In addition to the general guidelines there are specific details for
-contributing to the Qiskit IBM Runtime, these are documented below.
+contributing to the Qiskit IBM Experiment, these are documented below.
 
 ### Pull request checklist
 
@@ -56,12 +56,12 @@ The current categories for each label are as follows:
 ### Release Notes
 
 When making any end user facing changes in a contribution we have to make sure
-we document that when we release a new version of qiskit-ibm. The
+we document that when we release a new version of qiskit-ibm-experiment. The
 expectation is that if your code contribution has user facing changes that you
 will write the release documentation for these changes. This documentation must
 explain what was changed, why it was changed, and how users can either use or
 adapt to the change. The idea behind release documentation is that when a naive
-user with limited internal knowledege of the project is upgrading from the
+user with limited internal knowledge of the project is upgrading from the
 previous release to the new one, they should be able to read the release notes,
 understand if they need to update their program which uses qiskit, and how they
 would go about doing that. It ideally should explain why they need to make
@@ -155,7 +155,7 @@ as:
 fixes:
   - |
     Fixes a race condition in the function ``foo()``. Refer to
-    `#12345 <https://github.com/Qiskit/qiskit-ibm-runtime/issues/12345>`_ for
+    `#12345 <https://github.com/Qiskit/qiskit-ibm-experiment/issues/12345>`_ for
     more details.
 ```
 
@@ -165,16 +165,15 @@ After release notes have been added if you want to see what the full output of
 the release notes. In general the output from reno that we'll get is a rst
 (ReStructuredText) file that can be compiled by
 [sphinx](https://www.sphinx-doc.org/en/master/). To generate the rst file you
-use the ``reno report`` command. If you want to generate the full Qiskit IBM provider
-release notes for all releases (since we started using reno during 0.9) you just
-run::
+use the ``reno report`` command. If you want to generate the full Qiskit IBM experiment
+release notes for all releases you just run::
 
     reno report
 
 but you can also use the ``--version`` argument to view a single release (after
 it has been tagged::
 
-    reno report --version 0.9.0
+    reno report --version 0.1.0
 
 At release time ``reno report`` is used to generate the release notes for the
 release and the output will be submitted as a pull request to the documentation
@@ -183,17 +182,17 @@ https://github.com/Qiskit/qiskit/blob/master/docs/release_notes.rst)
 
 #### Building release notes locally
 
-Building The release notes are part of the standard qiskit-ibm
+Building The release notes are part of the standard qiskit-ibm-experiment
 documentation builds. To check what the rendered html output of the release
 notes will look like for the current state of the repo you can run:
 `tox -edocs` which will build all the documentation into `docs/_build/html`
 and the release notes in particular will be located at
 `docs/_build/html/release_notes.html`
 
-## Installing Qiskit IBM Provider from source
+## Installing Qiskit IBM Experiment from source
 Please see the [Installing IBM Quantum Provider from
 Source](https://qiskit.org/documentation/contributing_to_qiskit.html#installing-ibm-quantum-provider-from-source)
-section of the Qiskit documentation.
+section of the Qiskit documentation; for `qiskit-ibm-experiment` the process is the same.
 
 
 ### Test
@@ -224,16 +223,9 @@ or the examples below for the set of supported environment variables.
 
 Run integration tests against IBM Quantum 
 ```bash
-QISKIT_IBM_TOKEN=...                                            # IBM Quantum API token
-QISKIT_IBM_URL=https://auth.quantum-computing.ibm.com/api       # IBM Quantum API URL
-QISKIT_IBM_INSTANCE=ibm-q/open/main                             # IBM Quantum provider to use (hub/group/project)
-```
-
-Run integration tests against IBM Cloud
-```bash
-QISKIT_IBM_TOKEN=...                                            # IBM Cloud API key
-QISKIT_IBM_URL=https://us-east.quantum-computing.cloud.ibm.com  # Runtime URL
-QISKIT_IBM_INSTANCE=crn:v1:bluemix:...                          # The CRN value of the Quantum service instance
+QISKIT_IBM_USE_STAGING_CREDENTIALS=True
+QISKIT_IBM_STAGING_API_TOKEN=...                                            # IBM Quantum API token
+QISKIT_IBM_STAGING_API_URL=https://auth.quantum-computing.ibm.com/api       # IBM Quantum API URL
 ```
 
 Run unit tests
@@ -268,7 +260,7 @@ out$> make mypy
 
 ### Development Cycle
 
-The development cycle for qiskit-ibm  is all handled in the open using
+The development cycle for qiskit-ibm-experiment  is all handled in the open using
 the project boards in Github for project management. We use milestones
 in Github to track work for specific releases. The features or other changes
 that we want to include in a release will be tagged and discussed in Github.
@@ -279,20 +271,19 @@ previous version in the release notes.
 
 * `main`:
 
-The main branch is used for development of the next version of qiskit-ibm.
+The main branch is used for development of the next version of qiskit-ibm-experiment.
 It will be updated frequently and should not be considered stable. The API
 can and will change on main as we introduce and refine new features.
 
 * `stable/*` branches:
-Branches under `stable/*` are used to maintain released versions of qiskit-ibm.
+Branches under `stable/*` are used to maintain released versions of qiskit-ibm-experiment.
 It contains the version of the code corresponding to the latest release for
-that minor version on pypi. For example, stable/0.8 contains the code for the
-0.8.2 release on pypi. The API on these branches are stable and the only changes
+that minor version on pypi. The API on these branches are stable and the only changes
 merged to it are bugfixes.
 
 ### Release cycle
 
-When it is time to release a new minor version of qiskit-ibm we will:
+When it is time to release a new minor version of qiskit-ibm-experiment we will:
 
 1.  Create a new tag with the version number and push it to github
 2.  Change the `main` version to the next release version.
@@ -304,7 +295,7 @@ the following steps:
     on the `main` branch
 2.  Build and upload binary wheels to pypi
 3.  Create a github release page with a generated changelog
-4.  Generate a PR on the meta-repository to bump the Qiskit IBM Provider version and
+4.  Generate a PR on the meta-repository to bump the Qiskit IBM Experiment version and
     meta-package version.
 
 The `stable/*` branches should only receive changes in the form of bug
