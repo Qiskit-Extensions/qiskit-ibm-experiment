@@ -21,14 +21,11 @@ from .base import BaseClient
 
 logger = logging.getLogger(__name__)
 
+
 class ExperimentClient(BaseClient):
     """Client for accessing IBM Quantum experiment services."""
-    def __init__(
-            self,
-            access_token,
-            url,
-            additional_params
-    ) -> None:
+
+    def __init__(self, access_token, url, additional_params) -> None:
         """ExperimentClient constructor.
 
         Args:
@@ -40,26 +37,26 @@ class ExperimentClient(BaseClient):
         self.api = ExperimentRestAdapter(self._session)
 
     def devices(self) -> Dict:
-        return self.api.devices()['devices']
+        return self.api.devices()["devices"]
 
     def experiments(
-            self,
-            limit: Optional[int],
-            marker: Optional[str],
-            backend_name: Optional[str],
-            experiment_type: Optional[str] = None,
-            start_time: Optional[List] = None,
-            device_components: Optional[List[str]] = None,
-            tags: Optional[List[str]] = None,
-            hub: Optional[str] = None,
-            group: Optional[str] = None,
-            project: Optional[str] = None,
-            exclude_public: Optional[bool] = False,
-            public_only: Optional[bool] = False,
-            exclude_mine: Optional[bool] = False,
-            mine_only: Optional[bool] = False,
-            parent_id: Optional[str] = None,
-            sort_by: Optional[str] = None
+        self,
+        limit: Optional[int],
+        marker: Optional[str],
+        backend_name: Optional[str],
+        experiment_type: Optional[str] = None,
+        start_time: Optional[List] = None,
+        device_components: Optional[List[str]] = None,
+        tags: Optional[List[str]] = None,
+        hub: Optional[str] = None,
+        group: Optional[str] = None,
+        project: Optional[str] = None,
+        exclude_public: Optional[bool] = False,
+        public_only: Optional[bool] = False,
+        exclude_mine: Optional[bool] = False,
+        mine_only: Optional[bool] = False,
+        parent_id: Optional[str] = None,
+        sort_by: Optional[str] = None,
     ) -> str:
         """Retrieve experiments, with optional filtering.
 
@@ -92,11 +89,16 @@ class ExperimentClient(BaseClient):
             start_time=start_time,
             device_components=device_components,
             tags=tags,
-            hub=hub, group=group, project=project,
-            exclude_public=exclude_public, public_only=public_only,
-            exclude_mine=exclude_mine, mine_only=mine_only,
+            hub=hub,
+            group=group,
+            project=project,
+            exclude_public=exclude_public,
+            public_only=public_only,
+            exclude_mine=exclude_mine,
+            mine_only=mine_only,
             parent_id=parent_id,
-            sort_by=sort_by)
+            sort_by=sort_by,
+        )
         return resp
 
     def experiment_get(self, experiment_id: str) -> str:
@@ -145,11 +147,11 @@ class ExperimentClient(BaseClient):
         return self.api.experiment_delete(experiment_id)
 
     def experiment_plot_upload(
-            self,
-            experiment_id: str,
-            plot: Union[bytes, str],
-            plot_name: str,
-            sync_upload: bool = True
+        self,
+        experiment_id: str,
+        plot: Union[bytes, str],
+        plot_name: str,
+        sync_upload: bool = True,
     ) -> Dict:
         """Upload an experiment plot.
 
@@ -164,15 +166,16 @@ class ExperimentClient(BaseClient):
         Returns:
             JSON response.
         """
-        return self.api.upload_plot(experiment_id,
-                plot, plot_name, sync_upload=sync_upload)
+        return self.api.upload_plot(
+            experiment_id, plot, plot_name, sync_upload=sync_upload
+        )
 
     def experiment_plot_update(
-            self,
-            experiment_id: str,
-            plot: Union[bytes, str],
-            plot_name: str,
-            sync_upload: bool = True
+        self,
+        experiment_id: str,
+        plot: Union[bytes, str],
+        plot_name: str,
+        sync_upload: bool = True,
     ) -> Dict:
         """Update an experiment plot.
 
@@ -187,8 +190,9 @@ class ExperimentClient(BaseClient):
         Returns:
             JSON response.
         """
-        return self.api.update_plot(experiment_id,
-                plot, plot_name, sync_upload=sync_upload)
+        return self.api.update_plot(
+            experiment_id, plot, plot_name, sync_upload=sync_upload
+        )
 
     def experiment_plot_get(self, experiment_id: str, plot_name: str) -> bytes:
         """Retrieve an experiment plot.
@@ -217,21 +221,21 @@ class ExperimentClient(BaseClient):
         Returns:
             A list of experiment devices.
         """
-        return self.base_api.experiment_devices()['devices']
+        return self.base_api.experiment_devices()["devices"]
 
     def analysis_results(
-            self,
-            limit: Optional[int],
-            marker: Optional[str],
-            backend_name: Optional[str] = None,
-            device_components: Optional[List[str]] = None,
-            experiment_uuid: Optional[str] = None,
-            result_type: Optional[str] = None,
-            quality: Optional[Union[str, List[str]]] = None,
-            verified: Optional[bool] = None,
-            tags: Optional[List[str]] = None,
-            created_at: Optional[List] = None,
-            sort_by: Optional[str] = None
+        self,
+        limit: Optional[int],
+        marker: Optional[str],
+        backend_name: Optional[str] = None,
+        device_components: Optional[List[str]] = None,
+        experiment_uuid: Optional[str] = None,
+        result_type: Optional[str] = None,
+        quality: Optional[Union[str, List[str]]] = None,
+        verified: Optional[bool] = None,
+        tags: Optional[List[str]] = None,
+        created_at: Optional[List] = None,
+        sort_by: Optional[str] = None,
     ) -> str:
         """Return a list of analysis results.
 
@@ -262,7 +266,7 @@ class ExperimentClient(BaseClient):
             verified=verified,
             tags=tags,
             created_at=created_at,
-            sort_by=sort_by
+            sort_by=sort_by,
         )
         return resp
 
@@ -321,4 +325,4 @@ class ExperimentClient(BaseClient):
             A list of device components.
         """
         resp = self.api.device_components(backend_name)
-        return resp['device_components']
+        return resp["device_components"]

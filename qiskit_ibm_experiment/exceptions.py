@@ -86,8 +86,10 @@ class RuntimeInvalidStateError(IBMRuntimeError):
 
     pass
 
+
 class IBMExperimentError(IBMError):
     """Base class for errors raised by the experiment service modules."""
+
     pass
 
 
@@ -97,6 +99,7 @@ class IBMExperimentEntryNotFound(IBMExperimentError):
 
 class IBMExperimentEntryExists(IBMExperimentError):
     """Errors raised when an experiment entry already exists."""
+
 
 class ApiError(IBMError):
     """Generic IBM Quantum API error."""

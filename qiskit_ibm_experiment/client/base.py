@@ -68,8 +68,8 @@ class BaseWebsocketClient(BaseClient, ABC):
         """
         self._websocket_url = websocket_url.rstrip("/")
         self._proxy_params = (
-            client_params['proxies'].to_ws_params(self._websocket_url)
-            if client_params['proxies']
+            client_params["proxies"].to_ws_params(self._websocket_url)
+            if client_params["proxies"]
             else {}
         )
         self._access_token = access_token

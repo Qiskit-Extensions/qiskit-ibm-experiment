@@ -87,8 +87,7 @@ class AccountManager:
         filtered_accounts = dict(
             list(
                 filter(
-                    lambda kv: _matching_default(kv[0])
-                    and _matching_name(kv[0]),
+                    lambda kv: _matching_default(kv[0]) and _matching_name(kv[0]),
                     all_accounts,
                 )
             )
@@ -97,9 +96,7 @@ class AccountManager:
         return filtered_accounts
 
     @classmethod
-    def get(
-        cls, name: Optional[str] = None
-    ) -> Optional[Account]:
+    def get(cls, name: Optional[str] = None) -> Optional[Account]:
         """Read account from disk.
 
         Args:
@@ -151,9 +148,7 @@ class AccountManager:
         url = os.getenv("QISKIT_IBM_EXPERIMENT_URL")
         if not (token and url):
             return None
-        return Account(
-            token=token, url=url
-        )
+        return Account(token=token, url=url)
 
     @classmethod
     def _get_default_account_name(cls) -> str:

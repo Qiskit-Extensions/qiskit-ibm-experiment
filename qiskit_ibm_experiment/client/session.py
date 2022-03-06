@@ -179,11 +179,9 @@ class RetrySession(Session):
         """Set the session access token."""
         self._access_token = value
         if value:
-            self.headers.update(
-                {'X-Access-Token': value})  # type: ignore[attr-defined]
+            self.headers.update({"X-Access-Token": value})  # type: ignore[attr-defined]
         else:
-            self.headers.pop('X-Access-Token',
-                             None)  # type: ignore[attr-defined]
+            self.headers.pop("X-Access-Token", None)  # type: ignore[attr-defined]
 
     def __del__(self) -> None:
         """RetrySession destructor. Closes the session."""
@@ -389,6 +387,7 @@ class RetrySession(Session):
         state.update(self.__dict__)
         return state
 
+
 def filter_data(data: Dict[str, Any]) -> Dict[str, Any]:
     """Return the data with certain fields filtered.
 
@@ -404,12 +403,14 @@ def filter_data(data: Dict[str, Any]) -> Dict[str, Any]:
         return data
 
     data_to_filter = copy.deepcopy(data)
-    keys_to_filter = ['hubInfo']
+    keys_to_filter = ["hubInfo"]
     _filter_value(data_to_filter, keys_to_filter)  # type: ignore[arg-type]
     return data_to_filter
 
 
-def _filter_value(data: Dict[str, Any], filter_keys: List[Union[str, Tuple[str, str]]]) -> None:
+def _filter_value(
+    data: Dict[str, Any], filter_keys: List[Union[str, Tuple[str, str]]]
+) -> None:
     """Recursive function to filter out the values of the input keys.
 
     Args:
@@ -422,8 +423,8 @@ def _filter_value(data: Dict[str, Any], filter_keys: List[Union[str, Tuple[str, 
     for key, value in data.items():
         for filter_key in filter_keys:
             if isinstance(filter_key, str) and key == filter_key:
-                data[key] = '...'
+                data[key] = "..."
             elif key == filter_key[0] and filter_key[1] in value:
-                data[filter_key[0]][filter_key[1]] = '...'
+                data[filter_key[0]][filter_key[1]] = "..."
             elif isinstance(value, dict):
                 _filter_value(value, filter_keys)

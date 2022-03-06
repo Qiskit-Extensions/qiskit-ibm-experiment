@@ -17,6 +17,7 @@ from urllib.parse import urlparse
 from .exceptions import InvalidAccountError
 from .configuration import ProxyConfiguration
 
+
 class Account:
     """Class that represents an account."""
 
@@ -26,7 +27,7 @@ class Account:
         url: Optional[str] = None,
         proxies: Optional[ProxyConfiguration] = None,
         verify: Optional[bool] = True,
-        preferences: Optional[Dict] = None
+        preferences: Optional[Dict] = None,
     ):
         """Account constructor.
 
@@ -58,7 +59,7 @@ class Account:
             token=data.get("token"),
             proxies=ProxyConfiguration(**proxies) if proxies else None,
             verify=data.get("verify", True),
-            preferences = data.get("preferences")
+            preferences=data.get("preferences"),
         )
 
     def __eq__(self, other: object) -> bool:

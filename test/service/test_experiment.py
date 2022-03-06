@@ -21,7 +21,9 @@ from qiskit_ibm_experiment import IBMExperimentService
 from test.service.ibm_test_case import IBMTestCase
 
 
-@skipIf(not os.environ.get('QISKIT_IBM_USE_STAGING_CREDENTIALS', ''), "Only runs on staging")
+@skipIf(
+    not os.environ.get("QISKIT_IBM_USE_STAGING_CREDENTIALS", ""), "Only runs on staging"
+)
 class TestExperimentPreferences(IBMTestCase):
     """Test experiment preferences."""
 
@@ -39,20 +41,19 @@ class TestExperimentPreferences(IBMTestCase):
     def _setup_service(cls):
         """Get the service for the class."""
         cls.service = IBMExperimentService(
-            token=os.getenv('QISKIT_IBM_STAGING_API_TOKEN'),
-            url=os.getenv('QISKIT_IBM_STAGING_API_URL'),
+            token=os.getenv("QISKIT_IBM_STAGING_API_TOKEN"),
+            url=os.getenv("QISKIT_IBM_STAGING_API_URL"),
         )
 
     def test_default_preferences(self):
         """Test getting default preferences."""
-        self.assertFalse(self.service.preferences['auto_save'])
+        self.assertFalse(self.service.preferences["auto_save"])
 
     def test_set_preferences(self):
         """Test setting preferences."""
-        self.service.preferences['auto_save'] = True
-        self.assertTrue(self.service.preferences['auto_save'])
+        self.service.preferences["auto_save"] = True
+        self.assertTrue(self.service.preferences["auto_save"])
+
 
 if __name__ == "__main__":
     unittest.main()
-
-
