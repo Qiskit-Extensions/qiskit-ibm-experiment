@@ -24,6 +24,7 @@ from .constants import (
     ResultQuality,
     RESULT_QUALITY_FROM_API,
     RESULT_QUALITY_TO_API,
+    DEFAULT_BASE_URL,
 )
 from .utils import map_api_error, local_to_utc_str, utc_to_local
 from .device_component import DeviceComponent
@@ -71,7 +72,6 @@ class IBMExperimentService:
     """
 
     _default_preferences = {"auto_save": False}
-    _DEFAULT_BASE_URL = "https://api.quantum-computing.ibm.com"
     _DEFAULT_AUTHENTICATION_PREFIX = "/v2/users/loginWithToken"
     _DEFAULT_EXPERIMENT_PREFIX = "/resultsdb"
 
@@ -91,7 +91,7 @@ class IBMExperimentService:
         """
         super().__init__()
         if url is None:
-            url = self._DEFAULT_BASE_URL
+            url = DEFAULT_BASE_URL
         self._account = self._discover_account(
             token=token,
             url=url,
@@ -164,7 +164,7 @@ class IBMExperimentService:
             overwrite: ``True`` if the existing account is to be overwritten.
         """
         if url is None:
-            url = cls._DEFAULT_BASE_URL
+            url = DEFAULT_BASE_URL
         AccountManager.save(
             token=token,
             url=url,
