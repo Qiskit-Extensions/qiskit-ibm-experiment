@@ -22,7 +22,7 @@ import re
 from dateutil import tz
 import numpy as np
 
-from qiskit.providers.ibmq import IBMQ, least_busy
+from qiskit.providers.ibmq import IBMQFactory, least_busy
 from qiskit_ibm_experiment.service import ResultQuality, ExperimentShareLevel
 from qiskit_ibm_experiment import IBMExperimentEntryNotFound
 from qiskit_ibm_experiment import IBMExperimentService
@@ -38,10 +38,12 @@ class TestExperimentServerIntegration(IBMTestCase):
         """Initial class level setup."""
         super().setUpClass()
         try:
-            cls._setup_service()
-            cls.log.info("Finished setting up the service")
             cls._setup_provider()
             cls.log.info("Finished setting up the provider")
+            cls._setup_service()
+            cls.log.info("Finished setting up the service")
+            cls.device_components = cls.service.device_components(
+                cls.backend.name())
         except Exception as err:
             cls.log.info("Error while setting the service/provider: {}".format(err))
             raise SkipTest("Not authorized to use experiment service.")
@@ -56,11 +58,10 @@ class TestExperimentServerIntegration(IBMTestCase):
     @classmethod
     def _setup_provider(cls):
         """Get the provider for the class."""
-        cls.provider = IBMQ.enable_account(token=os.getenv('QISKIT_IBM_STAGING_API_TOKEN'),
+        cls.provider = IBMQFactory().enable_account(token=os.getenv('QISKIT_IBM_STAGING_API_TOKEN'),
                                             url=os.getenv('QISKIT_IBM_STAGING_API_URL') + "/v2")
         cls.backend = least_busy(cls.provider.backends(
             simulator=False, min_num_qubits=5))
-        cls.device_components = cls.service.device_components(cls.backend.name())
 
 
     def setUp(self) -> None:
