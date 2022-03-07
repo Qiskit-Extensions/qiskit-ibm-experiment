@@ -69,6 +69,8 @@ class TestExperimentServerIntegration(IBMTestCase):
 
     @classmethod
     def get_experiments(cls, **kwargs):
+        """Gets the experiments, filtering for default experiment type
+        if not explicitly doing otherwise"""
         if "experiment_type" not in kwargs:
             kwargs["experiment_type"] = cls.default_exp_type
         return cls.service.experiments(**kwargs)
@@ -193,9 +195,7 @@ class TestExperimentServerIntegration(IBMTestCase):
     def test_experiments_with_bad_type_operator(self):
         """Test retrieving all experiments with a bad type operator."""
         with self.assertRaises(ValueError):
-            self.get_experiments(
-                experiment_type="foo", experiment_type_operator="bad"
-            )
+            self.get_experiments(experiment_type="foo", experiment_type_operator="bad")
 
     def test_experiments_with_start_time(self):
         """Test retrieving an experiment by its start_time."""
@@ -254,9 +254,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         ]
         for tags, operator, found in sub_tests:
             with self.subTest(tags=tags, operator=operator):
-                experiments = self.get_experiments(
-                    tags=tags, tags_operator=operator
-                )
+                experiments = self.get_experiments(tags=tags, tags_operator=operator)
                 ref_expr_found = False
                 for expr in experiments:
                     msg = "Tags {} not fond in experiment tags {}".format(
@@ -470,7 +468,9 @@ class TestExperimentServerIntegration(IBMTestCase):
             start_datetime=datetime.now() - timedelta(hours=1),
         )
         exp2 = self._create_experiment(
-            tags=tags, experiment_type="{}2".format(self.default_exp_type), start_datetime=datetime.now()
+            tags=tags,
+            experiment_type="{}2".format(self.default_exp_type),
+            start_datetime=datetime.now(),
         )
         exp3 = self._create_experiment(
             tags=tags,
@@ -491,7 +491,12 @@ class TestExperimentServerIntegration(IBMTestCase):
 
         for sort_by, expected in subtests:
             with self.subTest(sort_by=sort_by):
-                experiments = self.get_experiments(tags=tags, sort_by=sort_by, experiment_type_operator="like", experiment_type=self.default_exp_type)
+                experiments = self.get_experiments(
+                    tags=tags,
+                    sort_by=sort_by,
+                    experiment_type_operator="like",
+                    experiment_type=self.default_exp_type,
+                )
                 self.assertEqual(
                     expected, [exp["experiment_id"] for exp in experiments]
                 )
