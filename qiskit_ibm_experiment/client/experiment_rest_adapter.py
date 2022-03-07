@@ -207,14 +207,14 @@ class ExperimentRestAdapter:
             params["sort"] = sort_by
         return self.session.get(url, params=params).text
 
-    def analysis_result(self, result_id):
+    def analysis_result(self, result_id: str) -> str:
         """Return an analysis result.
 
         Args:
             analysis_result_id: UUID of the analysis result.
 
         Returns:
-            The analysis result .
+            The analysis result.
         """
         url = self.get_url("analysis_result")
         url = url.format(uuid=result_id)

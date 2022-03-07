@@ -39,11 +39,10 @@ class TestExperimentServerIntegration(IBMTestCase):
     def setUpClass(cls):
         """Initial class level setup."""
         super().setUpClass()
+        cls.default_exp_type = "qiskit_test"
         try:
             cls._setup_provider()
-            cls.log.info("Finished setting up the provider")
             cls._setup_service()
-            cls.log.info("Finished setting up the service")
             cls.device_components = cls.service.device_components(cls.backend.name())
         except Exception as err:
             cls.log.info("Error while setting the service/provider: %s", err)
@@ -68,6 +67,14 @@ class TestExperimentServerIntegration(IBMTestCase):
             cls.provider.backends(simulator=False, min_num_qubits=5)
         )
 
+    @classmethod
+    def get_experiments(cls, **kwargs):
+        """Gets the experiments, filtering for default experiment type
+        if not explicitly doing otherwise"""
+        if "experiment_type" not in kwargs:
+            kwargs["experiment_type"] = cls.default_exp_type
+        return cls.service.experiments(**kwargs)
+
     def setUp(self) -> None:
         """Test level setup."""
         super().setUp()
@@ -87,7 +94,7 @@ class TestExperimentServerIntegration(IBMTestCase):
     def test_experiments(self):
         """Test retrieving experiments."""
         exp_id = self._create_experiment()
-        experiments = self.service.experiments()
+        experiments = self.get_experiments()
         self.assertTrue(experiments, "No experiments found.")
 
         found = False
@@ -108,7 +115,7 @@ class TestExperimentServerIntegration(IBMTestCase):
     def test_experiments_with_backend(self):
         """Test retrieving all experiments for a specific backend."""
         exp_id = self._create_experiment()
-        backend_experiments = self.service.experiments(backend_name=self.backend.name())
+        backend_experiments = self.get_experiments(backend_name=self.backend.name())
 
         found = False
         for exp in backend_experiments:
@@ -126,7 +133,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         """Test retrieving all experiments for a specific type."""
         exp_type = "qiskit_test"
         exp_id = self._create_experiment(experiment_type=exp_type)
-        backend_experiments = self.service.experiments(experiment_type=exp_type)
+        backend_experiments = self.get_experiments(experiment_type=exp_type)
 
         found = False
         for exp in backend_experiments:
@@ -142,7 +149,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         """Test retrieving all experiments for a specific parent id."""
         parent_id = self._create_experiment()
         child_id = self._create_experiment(parent_id=parent_id)
-        experiments = self.service.experiments(parent_id=parent_id)
+        experiments = self.get_experiments(parent_id=parent_id)
 
         found = False
         for exp in experiments:
@@ -161,7 +168,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         exp_type = "qiskit_test"
         exp_id = self._create_experiment(experiment_type=exp_type)
 
-        experiments = self.service.experiments(
+        experiments = self.get_experiments(
             experiment_type="foo", experiment_type_operator="like"
         )
         self.assertNotIn(exp_id, [exp["experiment_id"] for exp in experiments])
@@ -169,7 +176,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         subtests = ["qiskit", "test"]
         for filter_type in subtests:
             with self.subTest(filter_type=filter_type):
-                experiments = self.service.experiments(
+                experiments = self.get_experiments(
                     experiment_type=exp_type, experiment_type_operator="like"
                 )
                 found = False
@@ -188,9 +195,7 @@ class TestExperimentServerIntegration(IBMTestCase):
     def test_experiments_with_bad_type_operator(self):
         """Test retrieving all experiments with a bad type operator."""
         with self.assertRaises(ValueError):
-            self.service.experiments(
-                experiment_type="foo", experiment_type_operator="bad"
-            )
+            self.get_experiments(experiment_type="foo", experiment_type_operator="bad")
 
     def test_experiments_with_start_time(self):
         """Test retrieving an experiment by its start_time."""
@@ -211,7 +216,7 @@ class TestExperimentServerIntegration(IBMTestCase):
 
         for start_dt, end_dt, expected, title in sub_tests:
             with self.subTest(title=title):
-                backend_experiments = self.service.experiments(
+                backend_experiments = self.get_experiments(
                     start_datetime_after=start_dt,
                     start_datetime_before=end_dt,
                     experiment_type="qiskit_test",
@@ -249,9 +254,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         ]
         for tags, operator, found in sub_tests:
             with self.subTest(tags=tags, operator=operator):
-                experiments = self.service.experiments(
-                    tags=tags, tags_operator=operator
-                )
+                experiments = self.get_experiments(tags=tags, tags_operator=operator)
                 ref_expr_found = False
                 for expr in experiments:
                     msg = "Tags {} not fond in experiment tags {}".format(
@@ -287,7 +290,7 @@ class TestExperimentServerIntegration(IBMTestCase):
 
         for hgp_kwargs in sub_tests:
             with self.subTest(kwargs=hgp_kwargs.keys()):
-                hgp_experiments = self.service.experiments(**hgp_kwargs)
+                hgp_experiments = self.get_experiments(**hgp_kwargs)
                 ref_expr_found = False
                 for expr in hgp_experiments:
                     for hgp_key, hgp_val in hgp_kwargs.items():
@@ -308,7 +311,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         for hgp_kwargs, missing_keys in sub_tests:
             with self.subTest(kwargs=hgp_kwargs.keys()):
                 with self.assertRaises(ValueError) as ex_cm:
-                    self.service.experiments(**hgp_kwargs)
+                    self.get_experiments(**hgp_kwargs)
                 for key in missing_keys:
                     self.assertIn(key, str(ex_cm.exception))
 
@@ -321,7 +324,7 @@ class TestExperimentServerIntegration(IBMTestCase):
             share_level=ExperimentShareLevel.PRIVATE
         )
 
-        experiments = self.service.experiments(exclude_public=True)
+        experiments = self.get_experiments(exclude_public=True)
         # The public experiment we just created should not be in the set.
         non_public_experiment_uuids = []
         for experiment in experiments:
@@ -353,7 +356,7 @@ class TestExperimentServerIntegration(IBMTestCase):
             share_level=ExperimentShareLevel.PRIVATE
         )
 
-        experiments = self.service.experiments(public_only=True)
+        experiments = self.get_experiments(public_only=True)
         public_experiment_uuids = []
         for experiment in experiments:
             self.assertEqual(
@@ -381,7 +384,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         with self.assertRaisesRegex(
             ValueError, "exclude_public and public_only cannot both be True"
         ):
-            self.service.experiments(exclude_public=True, public_only=True)
+            self.get_experiments(exclude_public=True, public_only=True)
 
     def test_experiments_with_exclude_mine(self):
         """Tests retrieving experiments with exclude_mine filter."""
@@ -393,7 +396,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         exp_id = self._create_experiment()
         exp_owner = self.service.experiment(exp_id)["owner"]
 
-        not_my_experiments = self.service.experiments(exclude_mine=True)
+        not_my_experiments = self.get_experiments(exclude_mine=True)
         # The experiment we just created should not be in the set.
         not_mine_experiment_uuids = []
         for experiment in not_my_experiments:
@@ -419,7 +422,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         # environment though.
         exp_id = self._create_experiment()
         exp_owner = self.service.experiment(exp_id)["owner"]
-        my_experiments = self.service.experiments(mine_only=True)
+        my_experiments = self.get_experiments(mine_only=True)
         my_experiment_uuids = []
         for experiment in my_experiments:
             self.assertEqual(
@@ -440,19 +443,19 @@ class TestExperimentServerIntegration(IBMTestCase):
         with self.assertRaisesRegex(
             ValueError, "exclude_mine and mine_only cannot both be True"
         ):
-            self.service.experiments(exclude_mine=True, mine_only=True)
+            self.get_experiments(exclude_mine=True, mine_only=True)
 
     def test_experiments_with_limit(self):
         """Test retrieving experiments with limit."""
         self._create_experiment()
-        experiments = self.service.experiments(limit=1)
+        experiments = self.get_experiments(limit=1)
         self.assertEqual(1, len(experiments))
 
     def test_experiments_with_no_limit(self):
         """Test retrieving experiments with no limit."""
         tags = [str(uuid.uuid4())]
         exp_id = self._create_experiment(tags=tags)
-        experiments = self.service.experiments(limit=None, tags=tags)
+        experiments = self.get_experiments(limit=None, tags=tags)
         self.assertEqual(1, len(experiments))
         self.assertEqual(exp_id, experiments[0]["experiment_id"])
 
@@ -461,15 +464,17 @@ class TestExperimentServerIntegration(IBMTestCase):
         tags = [str(uuid.uuid4())]
         exp1 = self._create_experiment(
             tags=tags,
-            experiment_type="qiskit_test1",
+            experiment_type="{}1".format(self.default_exp_type),
             start_datetime=datetime.now() - timedelta(hours=1),
         )
         exp2 = self._create_experiment(
-            tags=tags, experiment_type="qiskit_test2", start_datetime=datetime.now()
+            tags=tags,
+            experiment_type="{}2".format(self.default_exp_type),
+            start_datetime=datetime.now(),
         )
         exp3 = self._create_experiment(
             tags=tags,
-            experiment_type="qiskit_test1",
+            experiment_type="{}1".format(self.default_exp_type),
             start_datetime=datetime.now() - timedelta(hours=2),
         )
 
@@ -486,7 +491,12 @@ class TestExperimentServerIntegration(IBMTestCase):
 
         for sort_by, expected in subtests:
             with self.subTest(sort_by=sort_by):
-                experiments = self.service.experiments(tags=tags, sort_by=sort_by)
+                experiments = self.get_experiments(
+                    tags=tags,
+                    sort_by=sort_by,
+                    experiment_type_operator="like",
+                    experiment_type=self.default_exp_type,
+                )
                 self.assertEqual(
                     expected, [exp["experiment_id"] for exp in experiments]
                 )
@@ -503,7 +513,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         for sort_by in subtests:
             with self.subTest(sort_by=sort_by):
                 with self.assertRaises(ValueError):
-                    self.service.experiments(sort_by=sort_by)
+                    self.get_experiments(sort_by=sort_by)
 
     def test_experiments_with_device_components(self):
         """Test filtering experiments with device components."""
@@ -511,7 +521,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         self._create_analysis_result(
             exp_id=expr_id, device_components=self.device_components
         )
-        experiments = self.service.experiments(device_components=self.device_components)
+        experiments = self.get_experiments(device_components=self.device_components)
         self.assertIn(
             expr_id,
             [expr["experiment_id"] for expr in experiments],
@@ -529,7 +539,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         self._create_analysis_result(
             exp_id=expr_id, device_components=device_components
         )
-        experiments = self.service.experiments(
+        experiments = self.get_experiments(
             device_components=device_components[:2],
             device_components_operator="contains",
         )
@@ -544,7 +554,7 @@ class TestExperimentServerIntegration(IBMTestCase):
     def test_experiments_with_bad_components_operator(self):
         """Test filtering experiments with bad device components operator."""
         with self.assertRaises(ValueError):
-            self.service.experiments(
+            self.get_experiments(
                 device_components=["Q1"], device_components_operator="foo"
             )
 

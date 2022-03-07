@@ -25,7 +25,7 @@ from requests.auth import AuthBase
 from urllib3.util.retry import Retry
 
 from ..exceptions import RequestsApiError
-from ..version import __version__ as ibm_runtime_version
+from ..version import __version__ as ibm_experiment_version
 
 STATUS_FORCELIST = (
     500,  # General server error
@@ -55,7 +55,7 @@ def _get_client_header() -> str:
         pass
 
     qiskit_pkgs = ["qiskit-terra", "qiskit-aer", "qiskit-ignis", "qiskit-aqua"]
-    pkg_versions = {"qiskit-ibm-runtime": ibm_runtime_version}
+    pkg_versions = {"qiskit-ibm-experiment": ibm_experiment_version}
     for pkg_name in qiskit_pkgs:
         try:
             pkg_versions[pkg_name] = pkg_resources.get_distribution(pkg_name).version
