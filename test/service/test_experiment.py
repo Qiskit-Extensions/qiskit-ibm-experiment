@@ -67,7 +67,9 @@ class TestExperiment(IBMTestCase):
     def test_prompt_for_delete_options(self):
         original_options = self.service.options
         self.service.set_option(prompt_for_delete=False)
-        self.assertTrue(self.service._confirm_delete("")) # should work without mock patch
+        self.assertTrue(
+            self.service._confirm_delete("")
+        )  # should work without mock patch
         self.service.options = original_options
 
 

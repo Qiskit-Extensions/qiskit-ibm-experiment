@@ -708,8 +708,10 @@ class IBMExperimentService:
         Raises:
             IBMApiError: If the request to the server failed.
         """
-        if not self._confirm_delete("Are you sure you want to delete the experiment? "
-                "Results and plots for the experiment will also be deleted. [y/N]: "):
+        if not self._confirm_delete(
+            "Are you sure you want to delete the experiment? "
+            "Results and plots for the experiment will also be deleted. [y/N]: "
+        ):
             return
         try:
             self._api_client.experiment_delete(experiment_id)
@@ -841,7 +843,9 @@ class IBMExperimentService:
                 result_id, json.dumps(request, cls=json_encoder)
             )
 
-    def _confirm_delete(self, msg):
+    def _confirm_delete(self, msg: str) -> bool:
+        """Confirms a delete command; if the options indicate a prompt should be
+        dislayed, display one and verify the user input"""
         if not self.options["prompt_for_delete"]:
             return True
         confirmation = input("\n" + msg)
@@ -1250,7 +1254,9 @@ class IBMExperimentService:
         Raises:
             IBMApiError: If the request to the server failed.
         """
-        if not self._confirm_delete("Are you sure you want to delete the analysis result? [y/N]: "):
+        if not self._confirm_delete(
+            "Are you sure you want to delete the analysis result? [y/N]: "
+        ):
             return
         try:
             self._api_client.analysis_result_delete(result_id)
@@ -1375,7 +1381,9 @@ class IBMExperimentService:
         Raises:
             IBMApiError: If the request to the server failed.
         """
-        if not self._confirm_delete("Are you sure you want to delete the experiment plot? [y/N]: "):
+        if not self._confirm_delete(
+            "Are you sure you want to delete the experiment plot? [y/N]: "
+        ):
             return
         try:
             self._api_client.experiment_plot_delete(experiment_id, figure_name)
