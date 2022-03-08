@@ -1180,7 +1180,8 @@ class TestExperimentServerIntegration(IBMTestCase):
 
     def test_analysis_result_coders(self):
         """Test custom encoder and decoder for an analysis result."""
-        data = {"complex": 2 + 3j, "numpy": np.zeros(2)}
+        data = {"complex": 2 + 3j, "numpy": np.zeros(2),
+                "numpy_int": np.int64(42)}
         result_id = self._create_analysis_result(
             result_data=data, json_encoder=ExperimentEncoder
         )
@@ -1190,8 +1191,9 @@ class TestExperimentServerIntegration(IBMTestCase):
         rdata = rresult["result_data"]
         self.assertEqual(data["complex"], rdata["complex"])
         self.assertTrue((data["numpy"] == rdata["numpy"]).all())
+        self.assertEqual(data["numpy_int"], rdata["numpy_int"])
 
-        new_data = {"complex": 4 + 5j, "numpy": np.ones(3)}
+        new_data = {"complex": 4 + 5j, "numpy": np.ones(3), "numpy_int": np.int64(127)}
         self.service.update_analysis_result(
             result_id, result_data=new_data, json_encoder=ExperimentEncoder
         )
@@ -1201,6 +1203,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         rdata = rresult["result_data"]
         self.assertEqual(new_data["complex"], rdata["complex"])
         self.assertTrue((new_data["numpy"] == rdata["numpy"]).all())
+        self.assertEqual(new_data["numpy_int"], rdata["numpy_int"])
 
     def _create_experiment(
         self,
