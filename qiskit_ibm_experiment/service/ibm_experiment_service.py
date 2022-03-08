@@ -72,6 +72,7 @@ class IBMExperimentService:
     """
 
     _default_preferences = {"auto_save": False}
+    _default_options = {"prompt_for_delete": True}
     _DEFAULT_AUTHENTICATION_PREFIX = "/v2/users/loginWithToken"
     _DEFAULT_EXPERIMENT_PREFIX = "/resultsdb"
 
@@ -82,6 +83,7 @@ class IBMExperimentService:
         name: Optional[str] = None,
         proxies: Optional[dict] = None,
         verify: Optional[bool] = None,
+        **kwargs,
     ) -> None:
         """IBMExperimentService constructor.
 
@@ -115,6 +117,14 @@ class IBMExperimentService:
         self._api_client = ExperimentClient(
             self._access_token, db_url, self._additional_params
         )
+        self.options = self._default_options
+        self.set_option(**kwargs)
+
+    def set_option(self, **kwargs):
+        """Sets the options given as keywords"""
+        for name, value in kwargs.items():
+            if name in self.options:
+                self.options[name] = value
 
     def get_access_token(self, auth_url, api_token=None):
         """Authenticates to the server with the API token, receiving access token
@@ -699,13 +709,11 @@ class IBMExperimentService:
         Raises:
             IBMApiError: If the request to the server failed.
         """
-        confirmation = input(
-            "\nAre you sure you want to delete the experiment? "
+        if not self._confirm_delete(
+            "Are you sure you want to delete the experiment? "
             "Results and plots for the experiment will also be deleted. [y/N]: "
-        )
-        if confirmation not in ("y", "Y"):
+        ):
             return
-
         try:
             self._api_client.experiment_delete(experiment_id)
         except RequestsApiError as api_err:
@@ -835,6 +843,16 @@ class IBMExperimentService:
             self._api_client.analysis_result_update(
                 result_id, json.dumps(request, cls=json_encoder)
             )
+
+    def _confirm_delete(self, msg: str) -> bool:
+        """Confirms a delete command; if the options indicate a prompt should be
+        dislayed, display one and verify the user input"""
+        if not self.options["prompt_for_delete"]:
+            return True
+        confirmation = input("\n" + msg)
+        if confirmation not in ("y", "Y"):
+            return False
+        return True
 
     def _analysis_result_to_api(
         self,
@@ -1237,12 +1255,10 @@ class IBMExperimentService:
         Raises:
             IBMApiError: If the request to the server failed.
         """
-        confirmation = input(
-            "\nAre you sure you want to delete the analysis result? [y/N]: "
-        )
-        if confirmation not in ("y", "Y"):
+        if not self._confirm_delete(
+            "Are you sure you want to delete the analysis result? [y/N]: "
+        ):
             return
-
         try:
             self._api_client.analysis_result_delete(result_id)
         except RequestsApiError as api_err:
@@ -1366,12 +1382,10 @@ class IBMExperimentService:
         Raises:
             IBMApiError: If the request to the server failed.
         """
-        confirmation = input(
-            "\nAre you sure you want to delete the experiment plot? [y/N]: "
-        )
-        if confirmation not in ("y", "Y"):
+        if not self._confirm_delete(
+            "Are you sure you want to delete the experiment plot? [y/N]: "
+        ):
             return
-
         try:
             self._api_client.experiment_plot_delete(experiment_id, figure_name)
         except RequestsApiError as api_err:
