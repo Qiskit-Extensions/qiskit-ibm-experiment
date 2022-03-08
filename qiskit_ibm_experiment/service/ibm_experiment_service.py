@@ -121,6 +121,7 @@ class IBMExperimentService:
         self.set_option(**kwargs)
 
     def set_option(self, **kwargs):
+        """Sets the options given as keywords"""
         for name, value in kwargs.items():
             if name in self.options:
                 self.options[name] = value

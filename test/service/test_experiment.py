@@ -65,6 +65,7 @@ class TestExperiment(IBMTestCase):
         self.service.options = original_options
 
     def test_prompt_for_delete_options(self):
+        """Test delete prompt is not displayed given the corresponding option"""
         original_options = self.service.options
         self.service.set_option(prompt_for_delete=False)
         self.assertTrue(
