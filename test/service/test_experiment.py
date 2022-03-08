@@ -23,8 +23,8 @@ from qiskit_ibm_experiment import IBMExperimentService
 @skipIf(
     not os.environ.get("QISKIT_IBM_USE_STAGING_CREDENTIALS", ""), "Only runs on staging"
 )
-class TestExperimentPreferences(IBMTestCase):
-    """Test experiment preferences."""
+class TestExperiment(IBMTestCase):
+    """Test experiment."""
 
     @classmethod
     def setUpClass(cls):
@@ -52,6 +52,23 @@ class TestExperimentPreferences(IBMTestCase):
         """Test setting preferences."""
         self.service.preferences["auto_save"] = True
         self.assertTrue(self.service.preferences["auto_save"])
+
+    def test_default_options(self):
+        """Test getting default options."""
+        self.assertTrue(self.service.options["prompt_for_delete"])
+
+    def test_set_options(self):
+        """Test setting options."""
+        original_options = self.service.options
+        self.service.set_option(prompt_for_delete=False)
+        self.assertFalse(self.service.options["prompt_for_delete"])
+        self.service.options = original_options
+
+    def test_prompt_for_delete_options(self):
+        original_options = self.service.options
+        self.service.set_option(prompt_for_delete=False)
+        self.assertTrue(self.service._confirm_delete("")) # should work without mock patch
+        self.service.options = original_options
 
 
 if __name__ == "__main__":
