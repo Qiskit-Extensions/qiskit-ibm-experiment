@@ -140,13 +140,13 @@ class RetrySession(Session):
         self,
         base_url: str,
         access_token: str,
-        retries_total: int = 5,
-        retries_connect: int = 3,
+        retries_total: int = 8,
+        retries_connect: int = 5,
         backoff_factor: float = 0.5,
         verify: bool = True,
         proxies: Optional[Dict[str, str]] = None,
         auth: Optional[AuthBase] = None,
-        timeout: Tuple[float, Union[float, None]] = (5.0, None),
+        timeout: Tuple[float, Union[float, None]] = (10.0, None),
     ) -> None:
         """RetrySession constructor.
 
