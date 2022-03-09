@@ -309,7 +309,7 @@ class IBMExperimentService:
             )
         )
 
-        with map_api_error(f"Experiment {experiment_id} already exists."):
+        with map_api_error(f"Experiment {experiment_id} creation failed."):
             response_data = self._api_client.experiment_upload(
                 json.dumps(data, cls=json_encoder)
             )
@@ -373,7 +373,7 @@ class IBMExperimentService:
             logger.warning("update_experiment() called with nothing to update.")
             return
 
-        with map_api_error(f"Experiment {experiment_id} not found."):
+        with map_api_error(f"Experiment {experiment_id} update failed."):
             self._api_client.experiment_update(
                 experiment_id, json.dumps(data, cls=json_encoder)
             )
@@ -791,7 +791,7 @@ class IBMExperimentService:
             result_id=result_id,
             chisq=chisq,
         )
-        with map_api_error(f"Analysis result {result_id} already exists."):
+        with map_api_error(f"Analysis result {result_id} creation failed."):
             response = self._api_client.analysis_result_create(
                 json.dumps(request, cls=json_encoder)
             )
@@ -839,7 +839,7 @@ class IBMExperimentService:
         request = self._analysis_result_to_api(
             data=result_data, tags=tags, quality=quality, verified=verified, chisq=chisq
         )
-        with map_api_error(f"Analysis result {result_id} not found."):
+        with map_api_error(f"Analysis result {result_id} update failed."):
             self._api_client.analysis_result_update(
                 result_id, json.dumps(request, cls=json_encoder)
             )
@@ -1304,7 +1304,7 @@ class IBMExperimentService:
         if not figure_name.endswith(".svg"):
             figure_name += ".svg"
 
-        with map_api_error(f"Figure {figure_name} already exists."):
+        with map_api_error(f"Figure {figure_name} creation failed."):
             response = self._api_client.experiment_plot_upload(
                 experiment_id, figure, figure_name, sync_upload=sync_upload
             )
@@ -1333,7 +1333,7 @@ class IBMExperimentService:
             IBMExperimentEntryNotFound: If the figure does not exist.
             IBMApiError: If the request to the server failed.
         """
-        with map_api_error(f"Figure {figure_name} not found."):
+        with map_api_error(f"Figure {figure_name} update failed."):
             response = self._api_client.experiment_plot_update(
                 experiment_id, figure, figure_name, sync_upload=sync_upload
             )
@@ -1410,7 +1410,7 @@ class IBMExperimentService:
         Raises:
             IBMApiError: If the request to the server failed.
         """
-        with map_api_error(f"No device components found for backend {backend_name}"):
+        with map_api_error(f"Device components call for backend {backend_name} failed."):
             raw_data = self._api_client.device_components(backend_name)
 
         components = defaultdict(list)

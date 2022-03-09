@@ -34,10 +34,10 @@ def map_api_error(error_msg: str = "") -> Generator[None, None, None]:
         yield
     except RequestsApiError as api_err:
         if api_err.status_code == 409:
-            raise IBMExperimentEntryExists(error_msg + f" {api_err}") from None
+            raise IBMExperimentEntryExists(error_msg + f" The server responded with {api_err}") from None
         if api_err.status_code == 404:
-            raise IBMExperimentEntryNotFound(error_msg + f" {api_err}") from None
-        raise IBMApiError(f"Failed to process the request: {api_err}") from None
+            raise IBMExperimentEntryNotFound(error_msg + f" The server responded with {api_err}") from None
+        raise IBMApiError(f"Failed to process the request: The server responded with {api_err}") from None
 
 
 def setup_logger(logger: logging.Logger) -> None:
