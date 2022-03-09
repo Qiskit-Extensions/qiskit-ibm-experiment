@@ -1410,7 +1410,9 @@ class IBMExperimentService:
         Raises:
             IBMApiError: If the request to the server failed.
         """
-        with map_api_error(f"Device components call for backend {backend_name} failed."):
+        with map_api_error(
+            f"Device components call for backend {backend_name} failed."
+        ):
             raw_data = self._api_client.device_components(backend_name)
 
         components = defaultdict(list)
