@@ -1081,6 +1081,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         figure_name = "hello.svg"
         with open(file_name, "wb") as file:
             file.write(hello_bytes)
+        self.assertTrue(os.path.isfile(file_name), f"File {file_name} was not created")
         self.addCleanup(os.remove, file_name)
 
         subtests = [
