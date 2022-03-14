@@ -101,7 +101,7 @@ class IBMExperimentService:
             name=name,
             proxies=ProxyConfiguration(**proxies) if proxies else None,
             verify=verify,
-            local=local
+            local=local,
         )
         if self._account.preferences is None:
             self._account.preferences = copy.deepcopy(self._default_preferences)
