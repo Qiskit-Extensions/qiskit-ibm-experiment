@@ -12,17 +12,11 @@
 
 """Experiment tests."""
 
-import os
 import unittest
-from unittest import skipIf, SkipTest
 from test.service.ibm_test_case import IBMTestCase
-from qiskit_ibm_experiment.exceptions import IBMNotAuthorizedError
 from qiskit_ibm_experiment import IBMExperimentService
 
 
-@skipIf(
-    not os.environ.get("QISKIT_IBM_USE_STAGING_CREDENTIALS", ""), "Only runs on staging"
-)
 class TestExperiment(IBMTestCase):
     """Test experiment."""
 
@@ -31,18 +25,12 @@ class TestExperiment(IBMTestCase):
         """Initial class level setup."""
         # pylint: disable=arguments-differ
         super().setUpClass()
-        try:
-            cls._setup_service()
-        except IBMNotAuthorizedError:
-            raise SkipTest("Not authorized to use experiment service.")
+        cls._setup_service()
 
     @classmethod
     def _setup_service(cls):
         """Get the service for the class."""
-        cls.service = IBMExperimentService(
-            token=os.getenv("QISKIT_IBM_STAGING_API_TOKEN"),
-            url=os.getenv("QISKIT_IBM_STAGING_API_URL"),
-        )
+        cls.service = IBMExperimentService(local=True)
 
     def test_default_preferences(self):
         """Test getting default preferences."""

@@ -37,10 +37,6 @@ jobs:
       matrix:
         python-version: [3.7, 3.8, 3.9]
         os: ["ubuntu-latest", "macOS-latest", "windows-latest"]
-    env:
-      QISKIT_IBM_USE_STAGING_CREDENTIALS: True
-      QISKIT_IBM_STAGING_API_TOKEN: ${{ secrets.QISKIT_IBM_STAGING_API_TOKEN }}
-      QISKIT_IBM_STAGING_API_URL: ${{ secrets.QISKIT_IBM_STAGING_API_URL }}
     steps:
       - name: Print Concurrency Group
         env:
