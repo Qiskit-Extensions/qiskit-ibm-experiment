@@ -1,6 +1,6 @@
 # This code is part of Qiskit.
 #
-# (C) Copyright IBM 2021, 2022.
+# (C) Copyright IBM 2022.
 #
 # This code is licensed under the Apache License, Version 2.0. You may
 # obtain a copy of this license in the LICENSE.txt file in the root directory
@@ -10,20 +10,15 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""Client for accessing IBM Quantum experiment services."""
+"""Client for local Quantum experiment services."""
 
 import logging
 from typing import List, Dict, Optional, Union
-from qiskit_ibm_experiment.client.session import RetrySession
-from .experiment_rest_adapter import ExperimentRestAdapter
 
 logger = logging.getLogger(__name__)
 
-
-class ExperimentClient:
-    """Client for accessing IBM Quantum experiment services."""
-
-    def __init__(self, access_token, url, additional_params) -> None:
+class LocalExperimentClient():
+    def __init__(self, directory) -> None:
         """ExperimentClient constructor.
 
         Args:
@@ -31,12 +26,11 @@ class ExperimentClient:
             url: The session's base url
             additional_params: additional session parameters
         """
-        self._session = RetrySession(url, access_token, **additional_params)
-        self.api = ExperimentRestAdapter(self._session)
+        self.directory = directory
 
     def devices(self) -> Dict:
         """Return the device list from the experiment DB."""
-        return self.api.devices()["devices"]
+        pass
 
     def experiments(
         self,
@@ -80,25 +74,7 @@ class ExperimentClient:
         Returns:
             A list of experiments and the marker, if applicable.
         """
-        resp = self.api.experiments(
-            limit=limit,
-            marker=marker,
-            backend_name=backend_name,
-            experiment_type=experiment_type,
-            start_time=start_time,
-            device_components=device_components,
-            tags=tags,
-            hub=hub,
-            group=group,
-            project=project,
-            exclude_public=exclude_public,
-            public_only=public_only,
-            exclude_mine=exclude_mine,
-            mine_only=mine_only,
-            parent_id=parent_id,
-            sort_by=sort_by,
-        )
-        return resp
+        pass
 
     def experiment_get(self, experiment_id: str) -> str:
         """Get a specific experiment.
@@ -109,7 +85,8 @@ class ExperimentClient:
         Returns:
             Experiment data.
         """
-        return self.api.experiment(experiment_id)
+        pass
+
 
     def experiment_upload(self, data: str) -> Dict:
         """Upload an experiment.
@@ -120,7 +97,7 @@ class ExperimentClient:
         Returns:
             Experiment data.
         """
-        return self.api.experiment_upload(data)
+        pass
 
     def experiment_update(self, experiment_id: str, new_data: str) -> Dict:
         """Update an experiment.
@@ -132,7 +109,8 @@ class ExperimentClient:
         Returns:
             Experiment data.
         """
-        return self.api.experiment_update(experiment_id, new_data)
+        pass
+
 
     def experiment_delete(self, experiment_id: str) -> Dict:
         """Delete an experiment.
@@ -143,7 +121,8 @@ class ExperimentClient:
         Returns:
             JSON response.
         """
-        return self.api.experiment_delete(experiment_id)
+        pass
+
 
     def experiment_plot_upload(
         self,
@@ -165,9 +144,8 @@ class ExperimentClient:
         Returns:
             JSON response.
         """
-        return self.api.upload_plot(
-            experiment_id, plot, plot_name, sync_upload=sync_upload
-        )
+        pass
+
 
     def experiment_plot_update(
         self,
@@ -189,9 +167,8 @@ class ExperimentClient:
         Returns:
             JSON response.
         """
-        return self.api.update_plot(
-            experiment_id, plot, plot_name, sync_upload=sync_upload
-        )
+        pass
+
 
     def experiment_plot_get(self, experiment_id: str, plot_name: str) -> bytes:
         """Retrieve an experiment plot.
@@ -203,7 +180,8 @@ class ExperimentClient:
         Returns:
             Retrieved experiment plot.
         """
-        return self.api.get_plot(experiment_id, plot_name)
+        pass
+
 
     def experiment_plot_delete(self, experiment_id: str, plot_file_name: str) -> None:
         """Delete an experiment plot.
@@ -212,7 +190,8 @@ class ExperimentClient:
             experiment_id: Experiment UUID.
             plot_file_name: Plot file name.
         """
-        self.api.delete_plot(experiment_id, plot_file_name)
+        pass
+
 
     def experiment_devices(self) -> List:
         """Return list of experiment devices.
@@ -220,7 +199,8 @@ class ExperimentClient:
         Returns:
             A list of experiment devices.
         """
-        return self.base_api.experiment_devices()["devices"]
+        pass
+
 
     def analysis_results(
         self,
@@ -254,20 +234,8 @@ class ExperimentClient:
         Returns:
             A list of analysis results and the marker, if applicable.
         """
-        resp = self.api.analysis_results(
-            limit=limit,
-            marker=marker,
-            backend_name=backend_name,
-            device_components=device_components,
-            experiment_uuid=experiment_uuid,
-            result_type=result_type,
-            quality=quality,
-            verified=verified,
-            tags=tags,
-            created_at=created_at,
-            sort_by=sort_by,
-        )
-        return resp
+        pass
+
 
     def analysis_result_create(self, result: str) -> Dict:
         """Upload an analysis result.
@@ -278,7 +246,8 @@ class ExperimentClient:
         Returns:
             Analysis result data.
         """
-        return self.api.analysis_result_create(result)
+        pass
+
 
     def analysis_result_update(self, result_id: str, new_data: str) -> Dict:
         """Update an analysis result.
@@ -290,7 +259,8 @@ class ExperimentClient:
         Returns:
             Analysis result data.
         """
-        return self.api.analysis_result_update(result_id, new_data)
+        pass
+
 
     def analysis_result_delete(self, result_id: str) -> Dict:
         """Delete an analysis result.
@@ -301,7 +271,8 @@ class ExperimentClient:
         Returns:
             Analysis result data.
         """
-        return self.api.analysis_result_delete(result_id)
+        pass
+
 
     def analysis_result_get(self, result_id: str) -> str:
         """Retrieve an analysis result.
@@ -312,42 +283,8 @@ class ExperimentClient:
         Returns:
             Analysis result data.
         """
-        return self.api.analysis_result(result_id)
+        pass
 
-    def experiment_files_get(self, experiment_id: str) -> str:
-        """Retrieve experiment related files.
-
-        Args:
-            experiment_id: Experiment ID.
-
-        Returns:
-            Experiment files.
-        """
-        return self.api.files(experiment_id)
-
-    def experiment_file_upload(
-        self, experiment_id: str, file_name: str, file_data: str
-    ):
-        """Uploads a data file to the DB
-
-        Args:
-            experiment_id: Experiment ID.
-            file_name: The intended name of the data file
-            file_data: The contents of the data file
-        """
-        self.api.file_upload(experiment_id, file_name, file_data)
-
-    def experiment_file_download(self, experiment_id: str, file_name: str) -> Dict:
-        """Downloads a data file from the DB
-
-        Args:
-            experiment_id: Experiment ID.
-            file_name: The name of the data file
-
-        Returns:
-            The Dictionary of contents of the file
-        """
-        return self.api.file_download(experiment_id, file_name)
 
     def device_components(self, backend_name: Optional[str]) -> List[Dict]:
         """Return device components for the backend.
@@ -358,5 +295,5 @@ class ExperimentClient:
         Returns:
             A list of device components.
         """
-        resp = self.api.device_components(backend_name)
-        return resp["device_components"]
+        pass
+
