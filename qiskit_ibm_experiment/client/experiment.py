@@ -16,12 +16,11 @@ import logging
 from typing import List, Dict, Optional, Union
 from qiskit_ibm_experiment.client.session import RetrySession
 from .experiment_rest_adapter import ExperimentRestAdapter
-from .base import BaseClient
 
 logger = logging.getLogger(__name__)
 
 
-class ExperimentClient(BaseClient):
+class ExperimentClient():
     """Client for accessing IBM Quantum experiment services."""
 
     def __init__(self, access_token, url, additional_params) -> None:
