@@ -23,11 +23,12 @@ class Account:
 
     def __init__(
         self,
-        token: str,
+        token: Optional[str] = None,
         url: Optional[str] = None,
         proxies: Optional[ProxyConfiguration] = None,
         verify: Optional[bool] = True,
         preferences: Optional[Dict] = None,
+        local: Optional[bool] = False,
     ):
         """Account constructor.
 
@@ -42,6 +43,7 @@ class Account:
         self.proxies = proxies
         self.verify = verify
         self.preferences = preferences
+        self.local = local
 
     def to_saved_format(self) -> dict:
         """Returns a dictionary that represents how the account is saved on disk."""
@@ -72,6 +74,7 @@ class Account:
                 self.proxies == other.proxies,
                 self.verify == other.verify,
                 self.preferences == other.preferences,
+                self.local == other.local,
             ]
         )
 
@@ -84,7 +87,8 @@ class Account:
         Returns:
             This Account instance.
         """
-
+        if self.local:
+            return True
         self._assert_valid_token(self.token)
         self._assert_valid_url(self.url)
         self._assert_valid_proxies(self.proxies)

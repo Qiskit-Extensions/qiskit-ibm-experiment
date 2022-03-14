@@ -83,6 +83,7 @@ class IBMExperimentService:
         name: Optional[str] = None,
         proxies: Optional[dict] = None,
         verify: Optional[bool] = None,
+        local: Optional[bool] = None,
         **kwargs,
     ) -> None:
         """IBMExperimentService constructor.
@@ -100,23 +101,25 @@ class IBMExperimentService:
             name=name,
             proxies=ProxyConfiguration(**proxies) if proxies else None,
             verify=verify,
+            local=local
         )
         if self._account.preferences is None:
             self._account.preferences = copy.deepcopy(self._default_preferences)
-        db_url = self._account.url + self._DEFAULT_EXPERIMENT_PREFIX
-        auth_url = self._account.url + self._DEFAULT_AUTHENTICATION_PREFIX
+        if not self._account.local:
+            db_url = self._account.url + self._DEFAULT_EXPERIMENT_PREFIX
+            auth_url = self._account.url + self._DEFAULT_AUTHENTICATION_PREFIX
 
-        self.get_access_token(auth_url)
+            self.get_access_token(auth_url)
 
-        self._additional_params = {
-            "proxies": self._account.proxies.to_request_params()
-            if self._account.proxies is not None
-            else None,
-            "verify": self._account.verify,
-        }
-        self._api_client = ExperimentClient(
-            self._access_token, db_url, self._additional_params
-        )
+            self._additional_params = {
+                "proxies": self._account.proxies.to_request_params()
+                if self._account.proxies is not None
+                else None,
+                "verify": self._account.verify,
+            }
+            self._api_client = ExperimentClient(
+                self._access_token, db_url, self._additional_params
+            )
         self.options = self._default_options
         self.set_option(**kwargs)
 
@@ -191,17 +194,21 @@ class IBMExperimentService:
         name: Optional[str] = None,
         proxies: Optional[ProxyConfiguration] = None,
         verify: Optional[bool] = None,
+        local: Optional[bool] = None,
     ) -> Account:
         """Discover account."""
         account = None
         verify_ = verify or True
         if name:
-            if any([token, url]):
+            if any([token, url, local]):
                 logger.warning(
-                    "Loading account with name %s. Any input 'token', 'url' are ignored.",
+                    "Loading account with name %s. Any input 'token', 'url', 'local' are ignored.",
                     name,
                 )
             account = AccountManager.get(name=name)
+        if local:
+            return Account(local=True)
+
         if token:
             return Account(
                 token=token,
