@@ -13,12 +13,43 @@
 """Client for local Quantum experiment services."""
 
 import logging
+import os
 from typing import List, Dict, Optional, Union
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
 class LocalExperimentClient():
-    def __init__(self, directory) -> None:
+    experiment_db_columns = [
+        "experiment_type",
+        "backend_name",
+        "metadata",
+        "experiment_id",
+        "parent_id",
+        "job_ids",
+        "tags",
+        "notes",
+        "share_level",
+        "start_datetime",
+        "device_components",
+        "figure_names",
+        "backend",
+    ]
+    results_db_columns =[
+        "experiment_id",
+        "result_data",
+        "result_type",
+        "device_components",
+        "tags",
+        "quality",
+        "verified",
+        "result_id",
+        "chisq",
+        "creation_datetime",
+        "service",
+        "backend_name",
+    ]
+    def __init__(self, main_dir) -> None:
         """ExperimentClient constructor.
 
         Args:
@@ -26,7 +57,35 @@ class LocalExperimentClient():
             url: The session's base url
             additional_params: additional session parameters
         """
-        self.directory = directory
+        self.set_paths(main_dir)
+        self.create_directories()
+        self.init_db()
+
+    def set_paths(self, main_dir):
+        self.main_dir = main_dir
+        self.figures_dir = os.path.join(self.main_dir, 'figures')
+        self.experiments_file = os.path.join(self.main_dir, 'experiments.json')
+        self.results_file = os.path.join(self.main_dir, 'results.json')
+
+    def create_directories(self):
+        """Creates the directories needed for the DB if they do not exist"""
+        dirs_to_create = [self.main_dir, self.figures_dir]
+        for dir in dirs_to_create:
+            if not os.path.exists(dir):
+                os.makedirs(dir)
+
+    def init_db(self):
+        if os.path.exists(self.experiments_file):
+            self.experiments = df = pd.read_json(self.experiments_file)
+        else:
+            self.experiments = pd.DataFrame(columns=self.experiment_db_columns)
+            self.experiments.to_json(self.experiments_file)
+
+        if os.path.exists(self.results_file):
+            self.results = df = pd.read_json(self.results_file)
+        else:
+            self.results = pd.DataFrame(columns=self.results_db_columns)
+            self.results.to_json(self.results_file)
 
     def devices(self) -> Dict:
         """Return the device list from the experiment DB."""

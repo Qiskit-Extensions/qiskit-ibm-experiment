@@ -15,6 +15,7 @@
 import logging
 import json
 import copy
+import os
 from typing import Optional, List, Dict, Union, Tuple, Any, Type
 from datetime import datetime
 from collections import defaultdict
@@ -79,6 +80,11 @@ class IBMExperimentService:
 
     _default_preferences = {"auto_save": False}
     _default_options = {"prompt_for_delete": True}
+    _DEFAULT_AUTHENTICATION_PREFIX = "/v2/users/loginWithToken"
+    _DEFAULT_EXPERIMENT_PREFIX = "/resultsdb"
+    _DEFAULT_LOCAL_DB_DIR = os.path.join(
+        os.path.expanduser("~"), ".qiskit", "resultdb"
+    )
     _AUTHENTICATION_CMD = "/users/loginWithToken"
     _USER_DATA_CMD = "/users/me"
 
@@ -126,6 +132,8 @@ class IBMExperimentService:
             self._api_client = ExperimentClient(
                 self._access_token, db_url, self._additional_params
             )
+        else:
+            self._api_client = LocalExperimentClient(main_dir=self._DEFAULT_LOCAL_DB_DIR)
         self.options = self._default_options
         self.set_option(**kwargs)
 
