@@ -12,11 +12,8 @@
 
 """Experiment tests."""
 
-import os
 import unittest
-from unittest import skipIf, SkipTest
 from test.service.ibm_test_case import IBMTestCase
-from qiskit_ibm_experiment.exceptions import IBMNotAuthorizedError
 from qiskit_ibm_experiment import IBMExperimentService
 
 
