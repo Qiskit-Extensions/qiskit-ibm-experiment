@@ -15,6 +15,7 @@
 import logging
 import json
 import copy
+import os
 from typing import Optional, List, Dict, Union, Tuple, Any, Type
 from datetime import datetime
 from collections import defaultdict
@@ -29,6 +30,7 @@ from .constants import (
 from .utils import map_api_error, local_to_utc_str, utc_to_local
 from .device_component import DeviceComponent
 from ..client.experiment import ExperimentClient
+from ..client.local_client import LocalExperimentClient
 from ..exceptions import RequestsApiError, IBMApiError
 from ..accounts import AccountManager, Account, ProxyConfiguration
 
@@ -75,6 +77,9 @@ class IBMExperimentService:
     _default_options = {"prompt_for_delete": True}
     _DEFAULT_AUTHENTICATION_PREFIX = "/v2/users/loginWithToken"
     _DEFAULT_EXPERIMENT_PREFIX = "/resultsdb"
+    _DEFAULT_LOCAL_DB_DIR = os.path.join(
+        os.path.expanduser("~"), ".qiskit", "resultdb"
+    )
 
     def __init__(
         self,
@@ -120,6 +125,8 @@ class IBMExperimentService:
             self._api_client = ExperimentClient(
                 self._access_token, db_url, self._additional_params
             )
+        else:
+            self._api_client = LocalExperimentClient(main_dir=self._DEFAULT_LOCAL_DB_DIR)
         self.options = self._default_options
         self.set_option(**kwargs)
 
