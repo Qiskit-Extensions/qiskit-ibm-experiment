@@ -39,7 +39,6 @@ try:
 except ImportError:
     HAS_QISKIT_EXPERIMENTS = False
 
-
 @skipIf(
     not os.environ.get("QISKIT_IBM_USE_STAGING_CREDENTIALS", ""), "Only runs on staging"
 )
