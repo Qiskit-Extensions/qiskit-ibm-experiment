@@ -14,26 +14,29 @@
 
 import logging
 import os
+import uuid
 from typing import List, Dict, Optional, Union
 import pandas as pd
+import json
 
 logger = logging.getLogger(__name__)
 
 class LocalExperimentClient():
     experiment_db_columns = [
         "experiment_type",
-        "backend_name",
-        "metadata",
+        "device_name",
+        "extra",
         "experiment_id",
-        "parent_id",
-        "job_ids",
-        "tags",
+        "group_id",
+        "hub_id",
+        "jobs",
         "notes",
-        "share_level",
-        "start_datetime",
-        "device_components",
-        "figure_names",
-        "backend",
+        "parent_experiment_uuid",
+        "project_id",
+        "start_time",
+        "tags",
+        "uuid",
+        "visibility",
     ]
     results_db_columns =[
         "experiment_id",
@@ -74,18 +77,22 @@ class LocalExperimentClient():
             if not os.path.exists(dir):
                 os.makedirs(dir)
 
+    def save(self):
+        self.experiments.to_json(self.experiments_file)
+        self.results.to_json(self.results_file)
+
     def init_db(self):
         if os.path.exists(self.experiments_file):
-            self.experiments = df = pd.read_json(self.experiments_file)
+            self.experiments = pd.read_json(self.experiments_file)
         else:
             self.experiments = pd.DataFrame(columns=self.experiment_db_columns)
-            self.experiments.to_json(self.experiments_file)
 
         if os.path.exists(self.results_file):
-            self.results = df = pd.read_json(self.results_file)
+            self.results = pd.read_json(self.results_file)
         else:
             self.results = pd.DataFrame(columns=self.results_db_columns)
-            self.results.to_json(self.results_file)
+
+        self.save()
 
     def devices(self) -> Dict:
         """Return the device list from the experiment DB."""
@@ -156,7 +163,14 @@ class LocalExperimentClient():
         Returns:
             Experiment data.
         """
-        pass
+        data_dict = json.loads(data)
+        if "uuid" not in data_dict:
+            data_dict["uuid"] = uuid.uuid4()
+        new_df = pd.DataFrame([data_dict], columns=self.experiments.columns)
+        self.experiments = pd.concat([self.experiments, new_df], ignore_index=True)
+        self.save()
+        return data_dict
+
 
     def experiment_update(self, experiment_id: str, new_data: str) -> Dict:
         """Update an experiment.

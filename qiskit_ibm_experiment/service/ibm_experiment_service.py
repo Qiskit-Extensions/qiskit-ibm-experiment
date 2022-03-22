@@ -31,7 +31,7 @@ from .utils import map_api_error, local_to_utc_str, utc_to_local
 from .device_component import DeviceComponent
 from ..client.experiment import ExperimentClient
 from ..client.local_client import LocalExperimentClient
-from ..exceptions import RequestsApiError, IBMApiError
+from ..exceptions import RequestsApiError, IBMApiError, IBMProviderMissing
 from ..accounts import AccountManager, Account, ProxyConfiguration
 
 logger = logging.getLogger(__name__)
@@ -248,7 +248,7 @@ class IBMExperimentService:
         self,
         experiment_type: str,
         backend_name: str,
-        provider: "IBMProvider",
+        provider: "IBMProvider" = None,
         metadata: Optional[Dict] = None,
         experiment_id: Optional[str] = None,
         parent_id: Optional[str] = None,
@@ -302,14 +302,20 @@ class IBMExperimentService:
                 "and will be ignored.",
                 kwargs.keys(),
             )
-
         data = {
             "type": experiment_type,
             "device_name": backend_name,
-            "hub_id": provider.credentials.hub,
-            "group_id": provider.credentials.group,
-            "project_id": provider.credentials.project,
         }
+        if provider is not None:
+            data.update({
+                    "hub_id": provider.credentials.hub,
+                    "group_id": provider.credentials.group,
+                    "project_id": provider.credentials.project,
+            })
+        else:
+            if not self._account.local:
+                raise IBMProviderMissing("The 'provider' parameter is required when creating a new experiment on the server")
+
         data.update(
             self._experiment_data_to_api(
                 metadata=metadata,
