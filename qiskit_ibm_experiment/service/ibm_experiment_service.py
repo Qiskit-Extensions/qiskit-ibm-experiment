@@ -37,6 +37,8 @@ from ..exceptions import (
     IBMExperimentEntryExists,
     IBMExperimentEntryNotFound,
 )
+from ..client.local_client import LocalExperimentClient
+from ..exceptions import RequestsApiError, IBMApiError, IBMProviderMissing
 from ..accounts import AccountManager, Account, ProxyConfiguration
 
 logger = logging.getLogger(__name__)
