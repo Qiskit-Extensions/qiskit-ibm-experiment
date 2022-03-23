@@ -29,8 +29,15 @@ class TestExperimentServerIntegration(IBMTestCase):
         exp_id = self.service.create_experiment(
             experiment_type="test_experiment",
             backend_name="ibmq_qasm_simulator",
+            metadata={"float_data": 3.14, "string_data": "foo"}
         )
         self.assertIsNotNone(exp_id)
+
+        exp = self.service.experiment(experiment_id=exp_id)
+        self.assertEqual(exp['experiment_type'], "test_experiment")
+        self.assertEqual(exp['backend'], "ibmq_qasm_simulator")
+        self.assertEqual(exp['metadata']['float_data'], 3.14)
+        self.assertEqual(exp['metadata']['string_data'], "foo")
 
 if __name__ == "__main__":
     unittest.main()
