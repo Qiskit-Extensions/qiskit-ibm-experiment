@@ -17,13 +17,14 @@ import os
 import uuid
 from typing import List, Dict, Optional, Union
 import pandas as pd
+import numpy as np
 import json
 
 logger = logging.getLogger(__name__)
 
 class LocalExperimentClient():
     experiment_db_columns = [
-        "experiment_type",
+        "type",
         "device_name",
         "extra",
         "experiment_id",
@@ -80,6 +81,10 @@ class LocalExperimentClient():
     def save(self):
         self.experiments.to_json(self.experiments_file)
         self.results.to_json(self.results_file)
+
+    def serialize(self, df):
+        result = df.where(pd.notnull(df), None).to_dict("records")[0]
+        return json.dumps(result)
 
     def init_db(self):
         if os.path.exists(self.experiments_file):
@@ -151,8 +156,8 @@ class LocalExperimentClient():
         Returns:
             Experiment data.
         """
-        pass
-
+        exp = self.experiments.loc[self.experiments.uuid == experiment_id]
+        return self.serialize(exp)
 
     def experiment_upload(self, data: str) -> Dict:
         """Upload an experiment.
@@ -165,7 +170,7 @@ class LocalExperimentClient():
         """
         data_dict = json.loads(data)
         if "uuid" not in data_dict:
-            data_dict["uuid"] = uuid.uuid4()
+            data_dict["uuid"] = str(uuid.uuid4())
         new_df = pd.DataFrame([data_dict], columns=self.experiments.columns)
         self.experiments = pd.concat([self.experiments, new_df], ignore_index=True)
         self.save()
