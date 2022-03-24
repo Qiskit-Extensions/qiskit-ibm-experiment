@@ -14,6 +14,7 @@
 import unittest
 from test.service.ibm_test_case import IBMTestCase
 from qiskit_ibm_experiment import IBMExperimentService
+from qiskit_ibm_experiment.exceptions import IBMExperimentEntryNotFound
 
 
 class TestExperimentServerIntegration(IBMTestCase):
@@ -24,6 +25,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         """Initial class level setup."""
         super().setUpClass()
         cls.service = IBMExperimentService(local=True)
+        cls.service.set_option(prompt_for_delete=False)
 
     def test_create_experiment(self):
         exp_id = self.service.create_experiment(
@@ -38,6 +40,22 @@ class TestExperimentServerIntegration(IBMTestCase):
         self.assertEqual(exp['backend'], "ibmq_qasm_simulator")
         self.assertEqual(exp['metadata']['float_data'], 3.14)
         self.assertEqual(exp['metadata']['string_data'], "foo")
+
+    def test_delete_experiment(self):
+        new_exp_id = self.service.create_experiment(
+            experiment_type="test_experiment",
+            backend_name="ibmq_qasm_simulator",
+            notes="delete me",
+        )
+        # first verify the experiment is there
+        exp = self.service.experiment(new_exp_id)
+        self.assertEqual(exp['notes'], "delete me")
+
+        # now delete and verify we can't find it anymore
+        self.service.delete_experiment(new_exp_id)
+        with self.assertRaises(IBMExperimentEntryNotFound) as ex_cm:
+            self.service.experiment(new_exp_id)
+        self.assertIn("Not Found", ex_cm.exception.message)
 
 if __name__ == "__main__":
     unittest.main()

@@ -19,6 +19,7 @@ from typing import List, Dict, Optional, Union
 import pandas as pd
 import numpy as np
 import json
+from ..exceptions import RequestsApiError
 
 logger = logging.getLogger(__name__)
 
@@ -91,6 +92,7 @@ class LocalExperimentClient():
             self.experiments = pd.read_json(self.experiments_file)
         else:
             self.experiments = pd.DataFrame(columns=self.experiment_db_columns)
+            #self.experiments.set_index('uuid', inplace=True)
 
         if os.path.exists(self.results_file):
             self.results = pd.read_json(self.results_file)
@@ -156,6 +158,8 @@ class LocalExperimentClient():
         Returns:
             Experiment data.
         """
+        if experiment_id not in self.experiments.uuid.values:
+            raise RequestsApiError("Not Found", 404)
         exp = self.experiments.loc[self.experiments.uuid == experiment_id]
         return self.serialize(exp)
 
@@ -199,7 +203,9 @@ class LocalExperimentClient():
         Returns:
             JSON response.
         """
-        pass
+        if not experiment_id in self.experiments.uuid.values:
+            raise RequestsApiError("Not Found", 404)
+        self.experiments = self.experiments[self.experiments.uuid != experiment_id]
 
 
     def experiment_plot_upload(
