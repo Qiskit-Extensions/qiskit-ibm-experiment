@@ -93,8 +93,6 @@ class IBMExperimentService:
             url: the url for the result DB API
         """
         super().__init__()
-        if url is None:
-            url = DEFAULT_BASE_URL
         self._account = self._discover_account(
             token=token,
             url=url,
@@ -210,6 +208,8 @@ class IBMExperimentService:
             return Account(local=True)
 
         if token:
+            if url is None:
+                url = DEFAULT_BASE_URL
             return Account(
                 token=token,
                 url=url,
