@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    - Error messages when server-related operations fail are no longer misleading.
+    - Delete prompt code can now be disabled.
+    - Integration tests now filter tests with `experiment_type='qiskit_test'`
