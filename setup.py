@@ -25,7 +25,6 @@ REQUIREMENTS = [
     "numpy>=1.13",
     "urllib3>=1.21.1",
     "python-dateutil>=2.8.0",
-    "websocket-client>=1.0.1",
     "typing-extensions>=4.0.0",  # remove when support for Python 3.7 is dropped (use "from typing import" instead)
 ]
 
