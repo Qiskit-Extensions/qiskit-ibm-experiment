@@ -20,7 +20,7 @@ from .experiment_rest_adapter import ExperimentRestAdapter
 logger = logging.getLogger(__name__)
 
 
-class ExperimentClient():
+class ExperimentClient:
     """Client for accessing IBM Quantum experiment services."""
 
     def __init__(self, access_token, url, additional_params) -> None:
