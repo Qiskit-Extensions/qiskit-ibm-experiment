@@ -11,9 +11,9 @@
 # that they have been altered from the originals.
 
 """
-==============================================
+================================================
 Accounts (:mod:`qiskit_ibm_experiment.accounts`)
-==============================================
+================================================
 
 .. currentmodule:: qiskit_ibm_experiment.accounts
 

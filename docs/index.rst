@@ -12,5 +12,4 @@ Contents
   :maxdepth: 2
 
   API References <apidocs/index>
-  Tutorials <tutorials/index>
   Release Notes <release_notes>

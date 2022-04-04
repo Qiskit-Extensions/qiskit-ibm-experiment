@@ -42,7 +42,7 @@ class IBMExperimentService:
     experiment service, which allows you to create, delete, update, query, and
     retrieve experiments, experiment figures, and analysis results.
 
-
+    .. parsed-literal::
         # Retrieve all experiments.
         experiments = experiment_provider.experiments()
 
@@ -241,7 +241,7 @@ class IBMExperimentService:
         self,
         experiment_type: str,
         backend_name: str,
-        provider: "IBMProvider",
+        provider: Any,
         metadata: Optional[Dict] = None,
         experiment_id: Optional[str] = None,
         parent_id: Optional[str] = None,
