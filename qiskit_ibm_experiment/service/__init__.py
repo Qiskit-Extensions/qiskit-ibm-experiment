@@ -43,16 +43,6 @@ Classes
     IBMExperimentService
     ResultQuality
     DeviceComponent
-
-Exceptions
-==========
-
-.. autosummary::
-    :toctree: ../stubs/
-
-    IBMExperimentError
-    IBMExperimentEntryExists
-    IBMExperimentEntryNotFound
 """
 
 from .ibm_experiment_service import IBMExperimentService
