@@ -25,7 +25,6 @@ REQUIREMENTS = [
     "numpy>=1.13",
     "urllib3>=1.21.1",
     "python-dateutil>=2.8.0",
-    "websocket-client>=1.0.1",
     "typing-extensions>=4.0.0",  # remove when support for Python 3.7 is dropped (use "from typing import" instead)
 ]
 
@@ -43,7 +42,7 @@ with open(README_PATH) as readme_file:
 
 
 setuptools.setup(
-    name="qiskit-ibm-runtime",
+    name="qiskit-ibm-experiment",
     version=VERSION,
     description="Qiskit IBM Experiment service for accessing the quantum experiment "
     "interface at IBM",
@@ -73,22 +72,9 @@ setuptools.setup(
     include_package_data=True,
     python_requires=">=3.7",
     zip_safe=False,
-    extras_require={
-        "visualization": [
-            "matplotlib>=2.1",
-            "ipywidgets>=7.3.0",
-            "seaborn>=0.9.0",
-            "plotly>=4.4",
-            "ipyvuetify>=1.1",
-            "pyperclip>=1.7",
-            "ipython>=5.0.0",
-            "traitlets!=5.0.5",
-            "ipyvue>=1.4.1",
-        ]
-    },
     project_urls={
-        "Bug Tracker": "https://github.com/Qiskit/qiskit-ibm-runtime/issues",
+        "Bug Tracker": "https://github.com/Qiskit/qiskit-ibm-experiment/issues",
         "Documentation": "https://qiskit.org/documentation/",
-        "Source Code": "https://github.com/Qiskit/qiskit-ibm-runtime",
+        "Source Code": "https://github.com/Qiskit/qiskit-ibm-experiment",
     },
 )

@@ -11,9 +11,9 @@
 # that they have been altered from the originals.
 
 """
-==========================================
+========================================================
 Qiskit Experiment Service (:mod:`qiskit_ibm_experiment`)
-==========================================
+========================================================
 
 .. currentmodule:: qiskit_ibm_experiment
 
@@ -44,6 +44,15 @@ Classes
 .. autosummary::
    :toctree: ../stubs/
 
+Exceptions
+==========
+
+.. autosummary::
+    :toctree: ../stubs/
+
+    IBMExperimentError
+    IBMExperimentEntryExists
+    IBMExperimentEntryNotFound
 """
 
 import logging
