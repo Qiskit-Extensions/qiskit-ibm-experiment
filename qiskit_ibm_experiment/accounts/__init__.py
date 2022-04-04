@@ -11,7 +11,33 @@
 # that they have been altered from the originals.
 
 """
-Account management functionality related to the IBM Runtime Services.
+================================================
+Accounts (:mod:`qiskit_ibm_experiment.accounts`)
+================================================
+
+.. currentmodule:: qiskit_ibm_experiment.accounts
+
+Account management functionality related to the IBM experiment service.
+
+Classes
+=======
+
+.. autosummary::
+    :toctree: ../stubs/
+
+    Account
+    AccountManager
+    ProxyConfiguration
+
+Exceptions
+==========
+
+.. autosummary::
+    :toctree: ../stubs/
+
+    AccountNotFoundError
+    AccountAlreadyExistsError
+    InvalidAccountError
 """
 
 from .account import Account

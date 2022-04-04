@@ -1,0 +1,13 @@
+---
+prelude: >
+  `qiskit-ibm-experiment` is a Python API for accessing the IBM experiment database,
+  used as part of `qiskit-experiments` for recording the results of performed
+  experiments.
+
+
+  This new package is built upon the work already done in `qiskit-ibmq-provider`
+  package and replaces it going forward as the whole package is being deprecated.
+
+
+  `qiskit-ibm-experiment` is not included as part of `Qiskit` meta package and thereby you have to
+   install it separately using ``pip install qiskit-ibm-experiment``.
