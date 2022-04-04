@@ -1,6 +1,6 @@
 # This code is part of Qiskit.
 #
-# (C) Copyright IBM 2021.
+# (C) Copyright IBM 2022.
 #
 # This code is licensed under the Apache License, Version 2.0. You may
 # obtain a copy of this license in the LICENSE.txt file in the root directory
@@ -11,11 +11,11 @@
 # that they have been altered from the originals.
 
 """
-====================================================
-Experiment (:mod:`qiskit_ibm.experiment`)
-====================================================
+==============================================
+Service (:mod:`qiskit_ibm_experiment.service`)
+==============================================
 
-.. currentmodule:: qiskit_ibm.experiment
+.. currentmodule:: qiskit_ibm_experiment.service
 
 Modules related to IBM Quantum experiment service.
 
@@ -26,13 +26,9 @@ Modules related to IBM Quantum experiment service.
 You can use the experiment service to query, upload, and retrieve
 experiments, experiment figures, and analysis results. For example::
 
-    from qiskit_ibm import IBMProvider
-    provider = IBMProvider()
-    experiments = provider.experiment.experiments()
-
-All the available functions can be invoked using the `provider.experiment`
-attribute, which is an instance of the
-:class:`~qiskit_ibm.experiment.ExperimentService` class.
+    from qiskit_ibm_experiment import IBMExperimentService
+    service = IBMExperimentService()
+    print(service.backends())
 
 This service is intended to be used in conjunction with the ``qiskit-experiments``
 package, which allows you to create different types of experiments (for example,

@@ -12,6 +12,5 @@ Contents
   :maxdepth: 2
 
   API References <apidocs/index>
-  Experiment Library <apidocs/library>
   Tutorials <tutorials/index>
   Release Notes <release_notes>
