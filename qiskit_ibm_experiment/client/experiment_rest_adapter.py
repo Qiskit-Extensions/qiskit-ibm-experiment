@@ -31,6 +31,7 @@ class ExperimentRestAdapter:
         "analysis_result": "/analysis_results/{uuid}",
         "plots": "/experiments/{uuid}/plots",
         "plot": "/experiments/{uuid}/plots/{name}",
+        "files": "/experiments/{uuid}/files",
     }
 
     _HEADER_JSON_CONTENT = {"Content-Type": "application/json"}
@@ -410,3 +411,10 @@ class ExperimentRestAdapter:
             params["device_name"] = backend_name
         url = self.get_url("device_components")
         return self.session.get(url, params=params).json()
+
+    def files(self, experiment_id):
+        """Return the experiment file list from the experiment DB."""
+        url = self.get_url("files")
+        url = url.format(uuid=experiment_id)
+        # to enable custom JSON decoding request text, not json
+        return self.session.get(url).text

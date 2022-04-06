@@ -1431,6 +1431,25 @@ class IBMExperimentService:
 
         return dict(components)
 
+    def files(
+        self, experiment_id: str
+    ) -> str:
+        """Retrieve the file list for an experiment
+
+        Args:
+            experiment_id: Experiment ID.
+
+        Returns:
+            The file list metadata
+
+        Raises:
+            IBMExperimentEntryNotFound: If the experiment does not exist.
+            IBMApiError: If the request to the server failed.
+        """
+        with map_api_error(f"Experiment {experiment_id} file list not received."):
+            data = self._api_client.experiment_files_get(experiment_id)
+        return data
+
     @property
     def preferences(self) -> Dict:
         """Return saved experiment preferences.

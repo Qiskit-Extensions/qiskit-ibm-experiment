@@ -314,6 +314,28 @@ class ExperimentClient:
         """
         return self.api.analysis_result(result_id)
 
+    def analysis_result_get(self, result_id: str) -> str:
+        """Retrieve an analysis result.
+
+        Args:
+            result_id: Analysis result ID.
+
+        Returns:
+            Analysis result data.
+        """
+        return self.api.analysis_result(result_id)
+
+    def experiment_files_get(self, experiment_id: str) -> str:
+        """Retrieve experiment related files.
+
+        Args:
+            experiment_id: Experiment ID.
+
+        Returns:
+            Experiment files.
+        """
+        return self.api.files(experiment_id)
+
     def device_components(self, backend_name: Optional[str]) -> List[Dict]:
         """Return device components for the backend.
 
