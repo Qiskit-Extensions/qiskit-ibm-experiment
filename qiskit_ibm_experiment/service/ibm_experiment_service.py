@@ -1431,6 +1431,61 @@ class IBMExperimentService:
 
         return dict(components)
 
+    def files(self, experiment_id: str) -> str:
+        """Retrieve the file list for an experiment
+
+        Args:
+            experiment_id: Experiment ID.
+
+        Returns:
+            The file list metadata
+
+        Raises:
+            IBMExperimentEntryNotFound: If the experiment does not exist.
+            IBMApiError: If the request to the server failed.
+        """
+        with map_api_error(f"Experiment {experiment_id} file list not received."):
+            data = self._api_client.experiment_files_get(experiment_id)
+        return data
+
+    def file_upload(
+        self, experiment_id: str, file_name: str, file_data: Union[Dict, str]
+    ):
+        """Uploads a data file to the DB
+
+        Args:
+            experiment_id: The experiment the data file belongs to
+            file_name: The expected filename of the data file
+            file_data: The dictionary of data to save, or JSON serialization of it
+
+        Additional info:
+            The filename is expected to end with ".json" (otherwise it will be added)
+            and the data itself should be either a dictionary or a JSON serialization
+            with the default encoder.
+        """
+        # currently the resultdb enforces files to end with .json or .yaml
+        if not file_name.endswith(".json"):
+            file_name += ".json"
+        if isinstance(file_data, Dict):
+            file_data = json.dumps(file_data)
+        self._api_client.experiment_file_upload(experiment_id, file_name, file_data)
+
+    def file_download(self, experiment_id: str, file_name: str) -> Dict:
+        """Downloads a data file from the DB and returns its deserialization
+        Args:
+            experiment_id: The experiment the data file belongs to
+            file_name: The filename of the data file
+        Returns:
+            The JSON deserialization of the data file
+        Additional info:
+            The filename is expected to end with ".json", otherwise
+            it will be added.
+        """
+        if not file_name.endswith(".json"):
+            file_name += ".json"
+        file_data = self._api_client.experiment_file_download(experiment_id, file_name)
+        return file_data
+
     @property
     def preferences(self) -> Dict:
         """Return saved experiment preferences.
