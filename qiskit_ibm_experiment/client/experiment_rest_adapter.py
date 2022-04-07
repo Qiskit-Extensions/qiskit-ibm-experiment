@@ -33,7 +33,7 @@ class ExperimentRestAdapter:
         "plot": "/experiments/{uuid}/plots/{name}",
         "files": "/experiments/{uuid}/files",
         "files_upload": "/experiments/{uuid}/files/upload/{path}",
-        "files_download": "/experiments/{uuid}/files/{path}"
+        "files_download": "/experiments/{uuid}/files/{path}",
     }
 
     _HEADER_JSON_CONTENT = {"Content-Type": "application/json"}
@@ -414,25 +414,48 @@ class ExperimentRestAdapter:
         url = self.get_url("device_components")
         return self.session.get(url, params=params).json()
 
-    def files(self, experiment_id):
-        """Return the experiment file list from the experiment DB."""
+    def files(self, experiment_id: str) -> Dict:
+        """Return the experiment file list from the experiment DB.
+        Args:
+            experiment_id: The experiment ID
+        Returns:
+            A dictionary containing the file list
+        """
         url = self.get_url("files")
         url = url.format(uuid=experiment_id)
         return self.session.get(url).json()
 
-    def file_upload(self, experiment_id, file_pathname, file_data):
+    def file_upload(self, experiment_id: str, file_pathname: str, file_data: str):
+        """Uploads a file to the DB
+        Args:
+            experiment_id: Experiment ID.
+            file_name: The intended name of the data file
+            file_data: The contents of the data file
+        """
         upload_request_url = self.get_url("files_upload")
-        upload_request_url = upload_request_url.format(uuid=experiment_id, path=file_pathname)
+        upload_request_url = upload_request_url.format(
+            uuid=experiment_id, path=file_pathname
+        )
         upload_url = self.session.get(upload_request_url).json()["url"]
-        response = self.session.put(upload_url, data=file_data,
-                         headers=self._HEADER_JSON_CONTENT, bare=True)
-        return response
+        self.session.put(
+            upload_url, data=file_data, headers=self._HEADER_JSON_CONTENT, bare=True
+        )
 
-    def file_download(self, experiment_id, file_name):
+    def file_download(self, experiment_id: str, file_name: str) -> Dict:
+        """Downloads a data file from the DB
+
+        Args:
+            experiment_id: Experiment ID.
+            file_name: The name of the data file
+
+        Returns:
+            The Dictionary of contents of the file
+        """
         download_request_url = self.get_url("files_download")
-        download_request_url = download_request_url.format(uuid=experiment_id, path=file_name)
+        download_request_url = download_request_url.format(
+            uuid=experiment_id, path=file_name
+        )
         result = self.session.get(download_request_url)
         if result.status_code == 200:
             return result.json()
         return result
-

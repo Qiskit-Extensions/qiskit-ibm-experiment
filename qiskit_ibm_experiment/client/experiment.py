@@ -314,17 +314,6 @@ class ExperimentClient:
         """
         return self.api.analysis_result(result_id)
 
-    def analysis_result_get(self, result_id: str) -> str:
-        """Retrieve an analysis result.
-
-        Args:
-            result_id: Analysis result ID.
-
-        Returns:
-            Analysis result data.
-        """
-        return self.api.analysis_result(result_id)
-
     def experiment_files_get(self, experiment_id: str) -> str:
         """Retrieve experiment related files.
 
@@ -336,10 +325,28 @@ class ExperimentClient:
         """
         return self.api.files(experiment_id)
 
-    def experiment_file_upload(self, experiment_id: str, file_name: str, file_data: str):
-        return self.api.file_upload(experiment_id, file_name, file_data)
+    def experiment_file_upload(
+        self, experiment_id: str, file_name: str, file_data: str
+    ):
+        """Uploads a data file to the DB
 
-    def experiment_file_download(self, experiment_id: str, file_name: str) -> str:
+        Args:
+            experiment_id: Experiment ID.
+            file_name: The intended name of the data file
+            file_data: The contents of the data file
+        """
+        self.api.file_upload(experiment_id, file_name, file_data)
+
+    def experiment_file_download(self, experiment_id: str, file_name: str) -> Dict:
+        """Downloads a data file from the DB
+
+        Args:
+            experiment_id: Experiment ID.
+            file_name: The name of the data file
+
+        Returns:
+            The Dictionary of contents of the file
+        """
         return self.api.file_download(experiment_id, file_name)
 
     def device_components(self, backend_name: Optional[str]) -> List[Dict]:
