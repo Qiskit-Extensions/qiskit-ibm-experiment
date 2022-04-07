@@ -336,6 +336,12 @@ class ExperimentClient:
         """
         return self.api.files(experiment_id)
 
+    def experiment_file_upload(self, experiment_id: str, file_name: str, file_data: str):
+        return self.api.file_upload(experiment_id, file_name, file_data)
+
+    def experiment_file_download(self, experiment_id: str, file_name: str) -> str:
+        return self.api.file_download(experiment_id, file_name)
+
     def device_components(self, backend_name: Optional[str]) -> List[Dict]:
         """Return device components for the backend.
 

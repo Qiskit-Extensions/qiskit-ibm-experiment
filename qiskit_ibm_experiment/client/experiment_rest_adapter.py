@@ -32,6 +32,8 @@ class ExperimentRestAdapter:
         "plots": "/experiments/{uuid}/plots",
         "plot": "/experiments/{uuid}/plots/{name}",
         "files": "/experiments/{uuid}/files",
+        "files_upload": "/experiments/{uuid}/files/upload/{path}",
+        "files_download": "/experiments/{uuid}/files/{path}"
     }
 
     _HEADER_JSON_CONTENT = {"Content-Type": "application/json"}
@@ -416,5 +418,21 @@ class ExperimentRestAdapter:
         """Return the experiment file list from the experiment DB."""
         url = self.get_url("files")
         url = url.format(uuid=experiment_id)
-        # to enable custom JSON decoding request text, not json
-        return self.session.get(url).text
+        return self.session.get(url).json()
+
+    def file_upload(self, experiment_id, file_pathname, file_data):
+        upload_request_url = self.get_url("files_upload")
+        upload_request_url = upload_request_url.format(uuid=experiment_id, path=file_pathname)
+        upload_url = self.session.get(upload_request_url).json()["url"]
+        response = self.session.put(upload_url, data=file_data,
+                         headers=self._HEADER_JSON_CONTENT, bare=True)
+        return response
+
+    def file_download(self, experiment_id, file_name):
+        download_request_url = self.get_url("files_download")
+        download_request_url = download_request_url.format(uuid=experiment_id, path=file_name)
+        result = self.session.get(download_request_url)
+        if result.status_code == 200:
+            return result.json()
+        return result
+

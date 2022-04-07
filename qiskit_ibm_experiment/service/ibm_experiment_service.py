@@ -1450,6 +1450,19 @@ class IBMExperimentService:
             data = self._api_client.experiment_files_get(experiment_id)
         return data
 
+    def file_upload(self, experiment_id: str, file_name: str, file_data: Union[Dict, str]) -> str:
+        # currently the resultdb enforces files to end with .json or .yaml
+        if not file_name.endswith(".json"):
+            file_name += ".json"
+        if isinstance(file_data, Dict):
+            file_data = json.dumps(file_data)
+        data = self._api_client.experiment_file_upload(experiment_id, file_name, file_data)
+        return data
+
+    def file_download(self, experiment_id: str, file_name: str) -> Dict:
+        file_data = self._api_client.experiment_file_download(experiment_id, file_name)
+        return file_data
+
     @property
     def preferences(self) -> Dict:
         """Return saved experiment preferences.
