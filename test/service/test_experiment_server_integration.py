@@ -1203,6 +1203,37 @@ class TestExperimentServerIntegration(IBMTestCase):
         self.assertEqual(new_data["complex"], rdata["complex"])
         self.assertTrue((new_data["numpy"] == rdata["numpy"]).all())
 
+    def test_file_upload(self):
+        """Test the file upload and download API"""
+        exp_id = self._create_experiment()
+        # basic functionality
+        data = {'string': 'a-string', 'int': 174, 'float': 3.14}
+        filename = 'data_file'
+        self.service.file_upload(exp_id, filename, data)
+        rdata = self.service.file_download(exp_id, filename)
+        self.assertEqual(data, rdata)
+        file_list = self.service.files(exp_id)['files']
+        self.assertEqual(len(file_list), 1)
+        self.assertEqual(file_list[0]['Key'], filename + ".json")
+
+        # updating existing file
+        data = {'string': 'a-string', 'int': 89, 'float': 2.71, 'null': None}
+        filename = 'data_file'
+        self.service.file_upload(exp_id, filename, data)
+        rdata = self.service.file_download(exp_id, filename)
+        self.assertEqual(data, rdata)
+        file_list = self.service.files(exp_id)['files']
+        self.assertEqual(len(file_list), 1)
+
+        # adding additional file
+        data = {'string': 'b-string', 'int': 10, 'float': 0.333}
+        filename = 'another_data_file'
+        self.service.file_upload(exp_id, filename, data)
+        rdata = self.service.file_download(exp_id, filename)
+        self.assertEqual(data, rdata)
+        file_list = self.service.files(exp_id)['files']
+        self.assertEqual(len(file_list), 2)
+
     def _create_experiment(
         self,
         experiment_type: Optional[str] = None,

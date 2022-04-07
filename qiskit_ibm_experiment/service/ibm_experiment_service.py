@@ -1460,6 +1460,8 @@ class IBMExperimentService:
         return data
 
     def file_download(self, experiment_id: str, file_name: str) -> Dict:
+        if not (file_name.endswith(".json") or file_name.endswith('yaml')):
+            file_name += ".json"
         file_data = self._api_client.experiment_file_download(experiment_id, file_name)
         return file_data
 
