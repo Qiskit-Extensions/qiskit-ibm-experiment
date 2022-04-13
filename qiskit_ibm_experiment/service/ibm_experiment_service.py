@@ -1279,7 +1279,6 @@ class IBMExperimentService:
         experiment_id: str,
         figure: Union[str, bytes],
         figure_name: Optional[str] = None,
-        sync_upload: bool = True,
     ) -> Tuple[str, int]:
         """Store a new figure in the database.
 
@@ -1291,8 +1290,6 @@ class IBMExperimentService:
             figure: Name of the figure file or figure data to store.
             figure_name: Name of the figure. If ``None``, the figure file name, if
                 given, or a generated name is used.
-            sync_upload: If ``True``, the plot will be uploaded synchronously.
-                Otherwise the upload will be asynchronous.
 
         Returns:
             A tuple of the name and size of the saved figure.
@@ -1311,18 +1308,25 @@ class IBMExperimentService:
         if not figure_name.endswith(".svg"):
             figure_name += ".svg"
 
+        if isinstance(figure, str):
+            print("open figure file", figure)
+            with open(figure, "rb") as file:
+                figure = file.read()
+
         with map_api_error(f"Figure {figure_name} creation failed."):
             response = self._api_client.experiment_plot_upload(
-                experiment_id, figure, figure_name, sync_upload=sync_upload
+                experiment_id, figure, figure_name
             )
-        return response["name"], response["size"]
+
+        if response.status_code != 200:
+            return None
+        return figure_name, len(figure)
 
     def update_figure(
         self,
         experiment_id: str,
         figure: Union[str, bytes],
         figure_name: str,
-        sync_upload: bool = True,
     ) -> Tuple[str, int]:
         """Update an existing figure.
 
@@ -1330,8 +1334,6 @@ class IBMExperimentService:
             experiment_id: Experiment ID.
             figure: Name of the figure file or figure data to store.
             figure_name: Name of the figure.
-            sync_upload: If ``True``, the plot will be uploaded synchronously.
-                Otherwise the upload will be asynchronous.
 
         Returns:
             A tuple of the name and size of the saved figure.
@@ -1340,12 +1342,28 @@ class IBMExperimentService:
             IBMExperimentEntryNotFound: If the figure does not exist.
             IBMApiError: If the request to the server failed.
         """
+        if figure_name is None:
+            if isinstance(figure, str):
+                figure_name = figure
+            else:
+                figure_name = "figure_{}.svg".format(datetime.now().isoformat())
+
+        # currently the resultdb enforces files to end with .svg
+        if not figure_name.endswith(".svg"):
+            figure_name += ".svg"
+
+        if isinstance(figure, str):
+            with open(figure, "rb") as file:
+                figure = file.read()
+
         with map_api_error(f"Figure {figure_name} update failed."):
             response = self._api_client.experiment_plot_update(
-                experiment_id, figure, figure_name, sync_upload=sync_upload
+                experiment_id, figure, figure_name
             )
 
-        return response["name"], response["size"]
+        if response.status_code != 200:
+            return None
+        return figure_name, len(figure)
 
     def figure(
         self, experiment_id: str, figure_name: str, file_name: Optional[str] = None

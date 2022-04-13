@@ -31,6 +31,7 @@ class ExperimentRestAdapter:
         "analysis_result": "/analysis_results/{uuid}",
         "plots": "/experiments/{uuid}/plots",
         "plot": "/experiments/{uuid}/plots/{name}",
+        "plot_upload": "/experiments/{uuid}/plots/upload/{name}",
         "files": "/experiments/{uuid}/files",
         "files_upload": "/experiments/{uuid}/files/upload/{path}",
         "files_download": "/experiments/{uuid}/files/{path}",
@@ -312,9 +313,8 @@ class ExperimentRestAdapter:
     def upload_plot(
         self,
         experiment_id: str,
-        plot: Union[bytes, str],
+        plot: bytes,
         plot_name: str,
-        sync_upload: bool = True,
     ) -> Dict:
         """Upload a plot for the experiment.
 
@@ -322,32 +322,26 @@ class ExperimentRestAdapter:
             experiment_id: The experiment the plot belongs to.
             plot: Plot file name or data to upload.
             plot_name: Name of the plot.
-            sync_upload: By default the server will upload the plot file
-                to backend storage asynchronously. Set this to False to use
-                that behavior and not block the upload.
 
         Returns:
             JSON response.
         """
-        url = self.get_url("plots")
-        url = url.format(uuid=experiment_id)
-        headers = {"x-sync-upload": str(sync_upload)}
-        if isinstance(plot, str):
-            with open(plot, "rb") as file:
-                data = {"plot": (plot_name, file)}
-                response = self.session.post(url, files=data, headers=headers).json()
-        else:
-            data = {"plot": (plot_name, plot)}  # type: ignore[dict-item]
-            response = self.session.post(url, files=data, headers=headers).json()
-
+        upload_request_url = self.get_url("plot_upload")
+        upload_request_url = upload_request_url.format(
+            uuid=experiment_id, name=plot_name
+        )
+        upload_url = self.session.get(upload_request_url).json()["url"]
+        response = self.session.put(
+            upload_url, data=plot, headers=self._HEADER_JSON_CONTENT,
+            bare=True
+        )
         return response
 
     def update_plot(
         self,
         experiment_id: str,
-        plot: Union[bytes, str],
+        plot: bytes,
         plot_name: str,
-        sync_upload: bool = True,
     ) -> Dict:
         """Update an experiment plot.
 
@@ -355,25 +349,13 @@ class ExperimentRestAdapter:
             experiment_id: The experiment the plot belongs to.
             plot: Plot file name or data to upload.
             plot_name: Name of the plot to be updated.
-            sync_upload: By default the server will upload the plot file
-                to backend storage asynchronously. Set this to False to use
-                that behavior and not block the upload.
 
         Returns:
             JSON response.
         """
-        url = self.get_url("plot")
-        url = url.format(uuid=experiment_id, name=plot_name)
-        headers = {"x-sync-upload": str(sync_upload)}
-        if isinstance(plot, str):
-            with open(plot, "rb") as file:
-                data = {"plot": (plot_name, file)}
-                response = self.session.put(url, files=data, headers=headers).json()
-        else:
-            data = {"plot": (plot_name, plot)}  # type: ignore[dict-item]
-            response = self.session.put(url, files=data, headers=headers).json()
 
-        return response
+        # with the current server endpoint, upload and update are the same
+        return self.upload_plot(experiment_id, plot, plot_name)
 
     def get_plot(self, experiment_id: str, plot_name: str) -> bytes:
         """Retrieve the specific experiment plot.
