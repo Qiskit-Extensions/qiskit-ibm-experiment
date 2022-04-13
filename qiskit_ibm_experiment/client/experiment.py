@@ -161,9 +161,7 @@ class ExperimentClient:
         Returns:
             JSON response.
         """
-        return self.api.upload_plot(
-            experiment_id, plot, plot_name
-        )
+        return self.api.upload_plot(experiment_id, plot, plot_name)
 
     def experiment_plot_update(
         self,
@@ -181,9 +179,7 @@ class ExperimentClient:
         Returns:
             JSON response.
         """
-        return self.api.update_plot(
-            experiment_id, plot, plot_name
-        )
+        return self.api.update_plot(experiment_id, plot, plot_name)
 
     def experiment_plot_get(self, experiment_id: str, plot_name: str) -> bytes:
         """Retrieve an experiment plot.

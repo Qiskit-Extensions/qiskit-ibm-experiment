@@ -332,8 +332,7 @@ class ExperimentRestAdapter:
         )
         upload_url = self.session.get(upload_request_url).json()["url"]
         response = self.session.put(
-            upload_url, data=plot, headers=self._HEADER_JSON_CONTENT,
-            bare=True
+            upload_url, data=plot, headers=self._HEADER_JSON_CONTENT, bare=True
         )
         return response
 

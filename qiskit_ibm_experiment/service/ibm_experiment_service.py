@@ -1309,7 +1309,6 @@ class IBMExperimentService:
             figure_name += ".svg"
 
         if isinstance(figure, str):
-            print("open figure file", figure)
             with open(figure, "rb") as file:
                 figure = file.read()
 
