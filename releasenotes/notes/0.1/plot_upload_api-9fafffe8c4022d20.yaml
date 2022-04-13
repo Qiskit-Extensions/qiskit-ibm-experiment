@@ -1,0 +1,5 @@
+---
+upgrade:
+  - |
+    Switched plot upload to the new server API.
+
