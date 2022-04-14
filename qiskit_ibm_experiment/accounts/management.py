@@ -18,13 +18,11 @@ from .exceptions import AccountNotFoundError
 from .account import Account
 from .configuration import ProxyConfiguration
 from .storage import save_config, read_config, delete_config
-
-_DEFAULT_ACCOUNT_CONFIG_JSON_FILE = os.path.join(
-    os.path.expanduser("~"), ".qiskit", "qiskit-ibm.json"
+from ..service.constants import (
+    DEFAULT_ACCOUNT_CONFIG_JSON_FILE,
+    DEFAULT_ACCOUNT_NAME,
+    ACCOUNT_CHANNEL,
 )
-_DEFAULT_ACCOUNT_NAME = "default"
-_DEFAULT_ACCOUNT_TYPE: str = "legacy"
-_ACCOUNT_TYPES = ["legacy"]
 
 
 class AccountManager:
@@ -35,7 +33,7 @@ class AccountManager:
         cls,
         token: Optional[str] = None,
         url: Optional[str] = None,
-        name: Optional[str] = _DEFAULT_ACCOUNT_NAME,
+        name: Optional[str] = DEFAULT_ACCOUNT_NAME,
         proxies: Optional[ProxyConfiguration] = None,
         verify: Optional[bool] = None,
         overwrite: Optional[bool] = False,
@@ -43,12 +41,13 @@ class AccountManager:
         """Save account on disk."""
         config_key = name or cls._get_default_account_name()
         return save_config(
-            filename=_DEFAULT_ACCOUNT_CONFIG_JSON_FILE,
+            filename=DEFAULT_ACCOUNT_CONFIG_JSON_FILE,
             name=config_key,
             overwrite=overwrite,
             config=Account(
                 token=token,
                 url=url,
+                channel=ACCOUNT_CHANNEL,
                 proxies=proxies,
                 verify=verify,
             )
@@ -68,7 +67,7 @@ class AccountManager:
 
         def _matching_default(account_name: str) -> bool:
             default_accounts = [
-                _DEFAULT_ACCOUNT_NAME,
+                DEFAULT_ACCOUNT_NAME,
             ]
             if default is None:
                 return True
@@ -110,7 +109,7 @@ class AccountManager:
         """
         if name:
             saved_account = read_config(
-                filename=_DEFAULT_ACCOUNT_CONFIG_JSON_FILE, name=name
+                filename=DEFAULT_ACCOUNT_CONFIG_JSON_FILE, name=name
             )
             if not saved_account:
                 raise AccountNotFoundError(
@@ -122,7 +121,7 @@ class AccountManager:
         if env_account is not None:
             return env_account
 
-        all_config = read_config(filename=_DEFAULT_ACCOUNT_CONFIG_JSON_FILE)
+        all_config = read_config(filename=DEFAULT_ACCOUNT_CONFIG_JSON_FILE)
         account_name = cls._get_default_account_name()
         if account_name in all_config:
             return Account.from_saved_format(all_config[account_name])
@@ -152,4 +151,4 @@ class AccountManager:
 
     @classmethod
     def _get_default_account_name(cls) -> str:
-        return _DEFAULT_ACCOUNT_NAME
+        return DEFAULT_ACCOUNT_NAME
