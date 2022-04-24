@@ -13,8 +13,14 @@
 """Experiment constants."""
 
 import enum
+import os
 
 DEFAULT_BASE_URL = "https://api.quantum-computing.ibm.com"
+DEFAULT_ACCOUNT_CONFIG_JSON_FILE = os.path.join(
+    os.path.expanduser("~"), ".qiskit", "qiskit-ibm.json"
+)
+DEFAULT_ACCOUNT_NAME = "default-ibm-quantum"
+ACCOUNT_CHANNEL = "ibm_quantum"
 
 
 class ExperimentShareLevel(enum.Enum):

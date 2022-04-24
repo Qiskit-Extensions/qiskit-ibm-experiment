@@ -25,6 +25,7 @@ from .constants import (
     RESULT_QUALITY_FROM_API,
     RESULT_QUALITY_TO_API,
     DEFAULT_BASE_URL,
+    ACCOUNT_CHANNEL,
 )
 from .utils import map_api_error, local_to_utc_str, utc_to_local
 from .device_component import DeviceComponent
@@ -106,9 +107,15 @@ class IBMExperimentService:
         if self._account.preferences is None:
             self._account.preferences = copy.deepcopy(self._default_preferences)
         if not self._account.local:
+            if self._account.url is None:
+                self._account.url = url
             db_url = self._account.url + self._DEFAULT_EXPERIMENT_PREFIX
             auth_url = self._account.url + self._DEFAULT_AUTHENTICATION_PREFIX
-
+            if self._account.channel != ACCOUNT_CHANNEL:
+                logger.warning(
+                    "The account does not use the '%s' channel. Authentication will likely fail.",
+                    ACCOUNT_CHANNEL,
+                )
             self.get_access_token(auth_url)
 
             self._additional_params = {
