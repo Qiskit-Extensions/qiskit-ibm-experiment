@@ -79,7 +79,7 @@ class AccountManager:
         # load all accounts
         all_accounts = map(
             lambda kv: (kv[0], Account.from_saved_format(kv[1])),
-            read_config(filename=_DEFAULT_ACCOUNT_CONFIG_JSON_FILE).items(),
+            read_config(filename=DEFAULT_ACCOUNT_CONFIG_JSON_FILE).items(),
         )
 
         # filter based on input parameters
@@ -136,9 +136,7 @@ class AccountManager:
         """Delete account from disk."""
 
         config_key = name or cls._get_default_account_name()
-        return delete_config(
-            name=config_key, filename=_DEFAULT_ACCOUNT_CONFIG_JSON_FILE
-        )
+        return delete_config(name=config_key, filename=DEFAULT_ACCOUNT_CONFIG_JSON_FILE)
 
     @classmethod
     def _from_env_variables(cls) -> Optional[Account]:

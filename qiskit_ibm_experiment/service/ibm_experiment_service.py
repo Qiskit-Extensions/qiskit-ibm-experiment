@@ -113,7 +113,8 @@ class IBMExperimentService:
             auth_url = self._account.url + self._DEFAULT_AUTHENTICATION_PREFIX
             if self._account.channel != ACCOUNT_CHANNEL:
                 logger.warning(
-                    f"The account does not use the '{ACCOUNT_CHANNEL}' channel. Authentication will likely fail."
+                    "The account does not use the '%s' channel. Authentication will likely fail.",
+                    ACCOUNT_CHANNEL,
                 )
             self.get_access_token(auth_url)
 
