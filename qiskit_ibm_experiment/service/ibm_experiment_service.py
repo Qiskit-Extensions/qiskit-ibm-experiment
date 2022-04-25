@@ -29,6 +29,7 @@ from .constants import (
 )
 from .utils import map_api_error, local_to_utc_str, utc_to_local
 from .device_component import DeviceComponent
+from .dataclasses import ExperimentData, AnalysisResultData
 from ..client.experiment import ExperimentClient
 from ..exceptions import RequestsApiError, IBMApiError
 from ..accounts import AccountManager, Account, ProxyConfiguration
@@ -447,7 +448,7 @@ class IBMExperimentService:
         self,
         experiment_id: str,
         json_decoder: Type[json.JSONDecoder] = json.JSONDecoder,
-    ) -> Dict:
+    ) -> ExperimentData:
         """Retrieve a previously stored experiment.
 
         Args:
@@ -463,7 +464,8 @@ class IBMExperimentService:
         """
         with map_api_error(f"Experiment {experiment_id} not found."):
             raw_data = self._api_client.experiment_get(experiment_id)
-        return self._api_to_experiment_data(json.loads(raw_data, cls=json_decoder))
+        experiment_data_dict = self._api_to_experiment_data(json.loads(raw_data, cls=json_decoder))
+        return ExperimentData(**experiment_data_dict)
 
     def experiments(
         self,
@@ -488,7 +490,7 @@ class IBMExperimentService:
         parent_id: Optional[str] = None,
         sort_by: Optional[Union[str, List[str]]] = None,
         **filters: Any,
-    ) -> List[Dict]:
+    ) -> List[ExperimentData]:
         """Retrieve all experiments, with optional filtering.
 
         By default, results returned are as inclusive as possible. For example,
@@ -643,7 +645,8 @@ class IBMExperimentService:
             raw_data = json.loads(response, cls=json_decoder)
             marker = raw_data.get("marker")
             for exp in raw_data["experiments"]:
-                experiments.append(self._api_to_experiment_data(exp))
+                experiment_data_dict = self._api_to_experiment_data(exp)
+                experiments.append(ExperimentData(**experiment_data_dict))
             if limit:
                 limit -= len(raw_data["experiments"])
             if not marker:  # No more experiments to return.
@@ -920,7 +923,7 @@ class IBMExperimentService:
 
     def analysis_result(
         self, result_id: str, json_decoder: Type[json.JSONDecoder] = json.JSONDecoder
-    ) -> Dict:
+    ) -> AnalysisResultData:
         """Retrieve a previously stored analysis result.
 
         Args:
@@ -937,7 +940,8 @@ class IBMExperimentService:
         with map_api_error(f"Analysis result {result_id} not found."):
             raw_data = self._api_client.analysis_result_get(result_id)
 
-        return self._api_to_analysis_result(json.loads(raw_data, cls=json_decoder))
+        analysis_result_data_dict = self._api_to_analysis_result(json.loads(raw_data, cls=json_decoder))
+        return AnalysisResultData(**analysis_result_data_dict)
 
     def analysis_results(
         self,
@@ -959,7 +963,7 @@ class IBMExperimentService:
         creation_datetime_before: Optional[datetime] = None,
         sort_by: Optional[Union[str, List[str]]] = None,
         **filters: Any,
-    ) -> List[Dict]:
+    ) -> List[AnalysisResultData]:
         """Retrieve all analysis results, with optional filtering.
 
         Args:
@@ -1086,7 +1090,8 @@ class IBMExperimentService:
             raw_data = json.loads(response, cls=json_decoder)
             marker = raw_data.get("marker")
             for result in raw_data["analysis_results"]:
-                results.append(self._api_to_analysis_result(result))
+                analysis_result_data_dict = self._api_to_analysis_result(result)
+                results.append(**analysis_result_data_dict)
             if limit:
                 limit -= len(raw_data["analysis_results"])
             if not marker:  # No more experiments to return.

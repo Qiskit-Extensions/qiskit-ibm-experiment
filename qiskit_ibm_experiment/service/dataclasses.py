@@ -1,6 +1,6 @@
 # This code is part of Qiskit.
 #
-# (C) Copyright IBM 2021.
+# (C) Copyright IBM 2022.
 #
 # This code is licensed under the Apache License, Version 2.0. You may
 # obtain a copy of this license in the LICENSE.txt file in the root directory
@@ -14,7 +14,6 @@
 from dataclasses import dataclass
 from typing import Optional, List, Dict, Any
 from datetime import datetime
-from . import ResultQuality
 
 @dataclass
 class ExperimentData:
@@ -44,7 +43,7 @@ class AnalysisResultData:
     result_type: str
     result_data: Dict[str, Any]
     device_components: List[str]
-    quality: ResultQuality
+    quality: "ResultQuality"
     verified: bool
     tags: List[str]
     backend_name: str
