@@ -10,4 +10,22 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""IBM Quantum API connector and utilities."""
+"""
+==============================================
+Client (:mod:`qiskit_ibm_experiment.client`)
+==============================================
+
+.. currentmodule:: qiskit_ibm_experiment.client
+
+Modules related to connections to experiment databases
+
+Classes
+=======
+
+.. autosummary::
+    :toctree: ../stubs/
+
+    ExperimentClient
+"""
+
+from .experiment import ExperimentClient

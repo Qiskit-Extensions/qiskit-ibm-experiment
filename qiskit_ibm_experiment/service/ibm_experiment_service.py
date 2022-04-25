@@ -25,6 +25,7 @@ from .constants import (
     RESULT_QUALITY_FROM_API,
     RESULT_QUALITY_TO_API,
     DEFAULT_BASE_URL,
+    ACCOUNT_CHANNEL,
 )
 from .utils import map_api_error, local_to_utc_str, utc_to_local
 from .device_component import DeviceComponent
@@ -42,7 +43,7 @@ class IBMExperimentService:
     experiment service, which allows you to create, delete, update, query, and
     retrieve experiments, experiment figures, and analysis results.
 
-
+    .. parsed-literal::
         # Retrieve all experiments.
         experiments = experiment_provider.experiments()
 
@@ -83,6 +84,7 @@ class IBMExperimentService:
         name: Optional[str] = None,
         proxies: Optional[dict] = None,
         verify: Optional[bool] = None,
+        local: Optional[bool] = None,
         **kwargs,
     ) -> None:
         """IBMExperimentService constructor.
@@ -100,23 +102,31 @@ class IBMExperimentService:
             name=name,
             proxies=ProxyConfiguration(**proxies) if proxies else None,
             verify=verify,
+            local=local,
         )
         if self._account.preferences is None:
             self._account.preferences = copy.deepcopy(self._default_preferences)
-        db_url = self._account.url + self._DEFAULT_EXPERIMENT_PREFIX
-        auth_url = self._account.url + self._DEFAULT_AUTHENTICATION_PREFIX
+        if not self._account.local:
+            if self._account.url is None:
+                self._account.url = url
+            db_url = self._account.url + self._DEFAULT_EXPERIMENT_PREFIX
+            auth_url = self._account.url + self._DEFAULT_AUTHENTICATION_PREFIX
+            if self._account.channel != ACCOUNT_CHANNEL:
+                logger.warning(
+                    "The account does not use the '%s' channel. Authentication will likely fail.",
+                    ACCOUNT_CHANNEL,
+                )
+            self.get_access_token(auth_url)
 
-        self.get_access_token(auth_url)
-
-        self._additional_params = {
-            "proxies": self._account.proxies.to_request_params()
-            if self._account.proxies is not None
-            else None,
-            "verify": self._account.verify,
-        }
-        self._api_client = ExperimentClient(
-            self._access_token, db_url, self._additional_params
-        )
+            self._additional_params = {
+                "proxies": self._account.proxies.to_request_params()
+                if self._account.proxies is not None
+                else None,
+                "verify": self._account.verify,
+            }
+            self._api_client = ExperimentClient(
+                self._access_token, db_url, self._additional_params
+            )
         self.options = self._default_options
         self.set_option(**kwargs)
 
@@ -191,17 +201,21 @@ class IBMExperimentService:
         name: Optional[str] = None,
         proxies: Optional[ProxyConfiguration] = None,
         verify: Optional[bool] = None,
+        local: Optional[bool] = None,
     ) -> Account:
         """Discover account."""
         account = None
         verify_ = verify or True
         if name:
-            if any([token, url]):
+            if any([token, url, local]):
                 logger.warning(
-                    "Loading account with name %s. Any input 'token', 'url' are ignored.",
+                    "Loading account with name %s. Any input 'token', 'url', 'local' are ignored.",
                     name,
                 )
             account = AccountManager.get(name=name)
+        if local:
+            return Account(local=True)
+
         if token:
             return Account(
                 token=token,
@@ -234,7 +248,7 @@ class IBMExperimentService:
         self,
         experiment_type: str,
         backend_name: str,
-        provider: "IBMProvider",
+        provider: Any,
         metadata: Optional[Dict] = None,
         experiment_id: Optional[str] = None,
         parent_id: Optional[str] = None,
@@ -309,7 +323,7 @@ class IBMExperimentService:
             )
         )
 
-        with map_api_error(f"Experiment {experiment_id} already exists."):
+        with map_api_error(f"Experiment {experiment_id} creation failed."):
             response_data = self._api_client.experiment_upload(
                 json.dumps(data, cls=json_encoder)
             )
@@ -373,7 +387,7 @@ class IBMExperimentService:
             logger.warning("update_experiment() called with nothing to update.")
             return
 
-        with map_api_error(f"Experiment {experiment_id} not found."):
+        with map_api_error(f"Experiment {experiment_id} update failed."):
             self._api_client.experiment_update(
                 experiment_id, json.dumps(data, cls=json_encoder)
             )
@@ -791,7 +805,7 @@ class IBMExperimentService:
             result_id=result_id,
             chisq=chisq,
         )
-        with map_api_error(f"Analysis result {result_id} already exists."):
+        with map_api_error(f"Analysis result {result_id} creation failed."):
             response = self._api_client.analysis_result_create(
                 json.dumps(request, cls=json_encoder)
             )
@@ -839,7 +853,7 @@ class IBMExperimentService:
         request = self._analysis_result_to_api(
             data=result_data, tags=tags, quality=quality, verified=verified, chisq=chisq
         )
-        with map_api_error(f"Analysis result {result_id} not found."):
+        with map_api_error(f"Analysis result {result_id} update failed."):
             self._api_client.analysis_result_update(
                 result_id, json.dumps(request, cls=json_encoder)
             )
@@ -1272,7 +1286,6 @@ class IBMExperimentService:
         experiment_id: str,
         figure: Union[str, bytes],
         figure_name: Optional[str] = None,
-        sync_upload: bool = True,
     ) -> Tuple[str, int]:
         """Store a new figure in the database.
 
@@ -1284,8 +1297,6 @@ class IBMExperimentService:
             figure: Name of the figure file or figure data to store.
             figure_name: Name of the figure. If ``None``, the figure file name, if
                 given, or a generated name is used.
-            sync_upload: If ``True``, the plot will be uploaded synchronously.
-                Otherwise the upload will be asynchronous.
 
         Returns:
             A tuple of the name and size of the saved figure.
@@ -1304,18 +1315,24 @@ class IBMExperimentService:
         if not figure_name.endswith(".svg"):
             figure_name += ".svg"
 
-        with map_api_error(f"Figure {figure_name} already exists."):
+        if isinstance(figure, str):
+            with open(figure, "rb") as file:
+                figure = file.read()
+
+        with map_api_error(f"Figure {figure_name} creation failed."):
             response = self._api_client.experiment_plot_upload(
-                experiment_id, figure, figure_name, sync_upload=sync_upload
+                experiment_id, figure, figure_name
             )
-        return response["name"], response["size"]
+
+        if response.status_code != 200:
+            return None
+        return figure_name, len(figure)
 
     def update_figure(
         self,
         experiment_id: str,
         figure: Union[str, bytes],
         figure_name: str,
-        sync_upload: bool = True,
     ) -> Tuple[str, int]:
         """Update an existing figure.
 
@@ -1323,8 +1340,6 @@ class IBMExperimentService:
             experiment_id: Experiment ID.
             figure: Name of the figure file or figure data to store.
             figure_name: Name of the figure.
-            sync_upload: If ``True``, the plot will be uploaded synchronously.
-                Otherwise the upload will be asynchronous.
 
         Returns:
             A tuple of the name and size of the saved figure.
@@ -1333,12 +1348,28 @@ class IBMExperimentService:
             IBMExperimentEntryNotFound: If the figure does not exist.
             IBMApiError: If the request to the server failed.
         """
-        with map_api_error(f"Figure {figure_name} not found."):
+        if figure_name is None:
+            if isinstance(figure, str):
+                figure_name = figure
+            else:
+                figure_name = "figure_{}.svg".format(datetime.now().isoformat())
+
+        # currently the resultdb enforces files to end with .svg
+        if not figure_name.endswith(".svg"):
+            figure_name += ".svg"
+
+        if isinstance(figure, str):
+            with open(figure, "rb") as file:
+                figure = file.read()
+
+        with map_api_error(f"Figure {figure_name} update failed."):
             response = self._api_client.experiment_plot_update(
-                experiment_id, figure, figure_name, sync_upload=sync_upload
+                experiment_id, figure, figure_name
             )
 
-        return response["name"], response["size"]
+        if response.status_code != 200:
+            return None
+        return figure_name, len(figure)
 
     def figure(
         self, experiment_id: str, figure_name: str, file_name: Optional[str] = None
@@ -1410,7 +1441,9 @@ class IBMExperimentService:
         Raises:
             IBMApiError: If the request to the server failed.
         """
-        with map_api_error(f"No device components found for backend {backend_name}"):
+        with map_api_error(
+            f"Device components call for backend {backend_name} failed."
+        ):
             raw_data = self._api_client.device_components(backend_name)
 
         components = defaultdict(list)
@@ -1421,6 +1454,61 @@ class IBMExperimentService:
             return components[backend_name]
 
         return dict(components)
+
+    def files(self, experiment_id: str) -> str:
+        """Retrieve the file list for an experiment
+
+        Args:
+            experiment_id: Experiment ID.
+
+        Returns:
+            The file list metadata
+
+        Raises:
+            IBMExperimentEntryNotFound: If the experiment does not exist.
+            IBMApiError: If the request to the server failed.
+        """
+        with map_api_error(f"Experiment {experiment_id} file list not received."):
+            data = self._api_client.experiment_files_get(experiment_id)
+        return data
+
+    def file_upload(
+        self, experiment_id: str, file_name: str, file_data: Union[Dict, str]
+    ):
+        """Uploads a data file to the DB
+
+        Args:
+            experiment_id: The experiment the data file belongs to
+            file_name: The expected filename of the data file
+            file_data: The dictionary of data to save, or JSON serialization of it
+
+        Additional info:
+            The filename is expected to end with ".json" (otherwise it will be added)
+            and the data itself should be either a dictionary or a JSON serialization
+            with the default encoder.
+        """
+        # currently the resultdb enforces files to end with .json or .yaml
+        if not file_name.endswith(".json"):
+            file_name += ".json"
+        if isinstance(file_data, Dict):
+            file_data = json.dumps(file_data)
+        self._api_client.experiment_file_upload(experiment_id, file_name, file_data)
+
+    def file_download(self, experiment_id: str, file_name: str) -> Dict:
+        """Downloads a data file from the DB and returns its deserialization
+        Args:
+            experiment_id: The experiment the data file belongs to
+            file_name: The filename of the data file
+        Returns:
+            The JSON deserialization of the data file
+        Additional info:
+            The filename is expected to end with ".json", otherwise
+            it will be added.
+        """
+        if not file_name.endswith(".json"):
+            file_name += ".json"
+        file_data = self._api_client.experiment_file_download(experiment_id, file_name)
+        return file_data
 
     @property
     def preferences(self) -> Dict:

@@ -16,12 +16,11 @@ import logging
 from typing import List, Dict, Optional, Union
 from qiskit_ibm_experiment.client.session import RetrySession
 from .experiment_rest_adapter import ExperimentRestAdapter
-from .base import BaseClient
 
 logger = logging.getLogger(__name__)
 
 
-class ExperimentClient(BaseClient):
+class ExperimentClient:
     """Client for accessing IBM Quantum experiment services."""
 
     def __init__(self, access_token, url, additional_params) -> None:
@@ -151,7 +150,6 @@ class ExperimentClient(BaseClient):
         experiment_id: str,
         plot: Union[bytes, str],
         plot_name: str,
-        sync_upload: bool = True,
     ) -> Dict:
         """Upload an experiment plot.
 
@@ -159,23 +157,17 @@ class ExperimentClient(BaseClient):
             experiment_id: Experiment UUID.
             plot: Plot file name or data to upload.
             plot_name: Name of the plot.
-            sync_upload: By default the server will upload the plot file
-                to backend storage asynchronously. Set this to False to use
-                that behavior and not block the upload.
 
         Returns:
             JSON response.
         """
-        return self.api.upload_plot(
-            experiment_id, plot, plot_name, sync_upload=sync_upload
-        )
+        return self.api.upload_plot(experiment_id, plot, plot_name)
 
     def experiment_plot_update(
         self,
         experiment_id: str,
         plot: Union[bytes, str],
         plot_name: str,
-        sync_upload: bool = True,
     ) -> Dict:
         """Update an experiment plot.
 
@@ -183,16 +175,11 @@ class ExperimentClient(BaseClient):
             experiment_id: Experiment UUID.
             plot: Plot file name or data to upload.
             plot_name: Name of the plot.
-            sync_upload: By default the server will upload the plot file
-                to backend storage asynchronously. Set this to False to use
-                that behavior and not block the upload.
 
         Returns:
             JSON response.
         """
-        return self.api.update_plot(
-            experiment_id, plot, plot_name, sync_upload=sync_upload
-        )
+        return self.api.update_plot(experiment_id, plot, plot_name)
 
     def experiment_plot_get(self, experiment_id: str, plot_name: str) -> bytes:
         """Retrieve an experiment plot.
@@ -314,6 +301,41 @@ class ExperimentClient(BaseClient):
             Analysis result data.
         """
         return self.api.analysis_result(result_id)
+
+    def experiment_files_get(self, experiment_id: str) -> str:
+        """Retrieve experiment related files.
+
+        Args:
+            experiment_id: Experiment ID.
+
+        Returns:
+            Experiment files.
+        """
+        return self.api.files(experiment_id)
+
+    def experiment_file_upload(
+        self, experiment_id: str, file_name: str, file_data: str
+    ):
+        """Uploads a data file to the DB
+
+        Args:
+            experiment_id: Experiment ID.
+            file_name: The intended name of the data file
+            file_data: The contents of the data file
+        """
+        self.api.file_upload(experiment_id, file_name, file_data)
+
+    def experiment_file_download(self, experiment_id: str, file_name: str) -> Dict:
+        """Downloads a data file from the DB
+
+        Args:
+            experiment_id: Experiment ID.
+            file_name: The name of the data file
+
+        Returns:
+            The Dictionary of contents of the file
+        """
+        return self.api.file_download(experiment_id, file_name)
 
     def device_components(self, backend_name: Optional[str]) -> List[Dict]:
         """Return device components for the backend.
