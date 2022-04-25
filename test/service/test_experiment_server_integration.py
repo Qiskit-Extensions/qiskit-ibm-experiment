@@ -1181,8 +1181,7 @@ class TestExperimentServerIntegration(IBMTestCase):
 
     def test_analysis_result_coders(self):
         """Test custom encoder and decoder for an analysis result."""
-        data = {"complex": 2 + 3j, "numpy": np.zeros(2),
-                "numpy_int": np.int64(42)}
+        data = {"complex": 2 + 3j, "numpy": np.zeros(2), "numpy_int": np.int64(42)}
         result_id = self._create_analysis_result(
             result_data=data, json_encoder=ExperimentEncoder
         )
