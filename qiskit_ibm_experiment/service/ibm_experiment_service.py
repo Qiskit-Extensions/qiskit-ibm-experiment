@@ -464,7 +464,9 @@ class IBMExperimentService:
         """
         with map_api_error(f"Experiment {experiment_id} not found."):
             raw_data = self._api_client.experiment_get(experiment_id)
-        experiment_data_dict = self._api_to_experiment_data(json.loads(raw_data, cls=json_decoder))
+        experiment_data_dict = self._api_to_experiment_data(
+            json.loads(raw_data, cls=json_decoder)
+        )
         return ExperimentData(**experiment_data_dict)
 
     def experiments(
@@ -940,7 +942,9 @@ class IBMExperimentService:
         with map_api_error(f"Analysis result {result_id} not found."):
             raw_data = self._api_client.analysis_result_get(result_id)
 
-        analysis_result_data_dict = self._api_to_analysis_result(json.loads(raw_data, cls=json_decoder))
+        analysis_result_data_dict = self._api_to_analysis_result(
+            json.loads(raw_data, cls=json_decoder)
+        )
         return AnalysisResultData(**analysis_result_data_dict)
 
     def analysis_results(
@@ -1257,7 +1261,6 @@ class IBMExperimentService:
             "quality": quality,
             "verified": raw_data.get("verified", False),
             "tags": raw_data.get("tags", []),
-            "service": self,
             **extra_data,
         }
         return out_dict
