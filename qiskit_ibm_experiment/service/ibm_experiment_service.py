@@ -1095,7 +1095,7 @@ class IBMExperimentService:
             marker = raw_data.get("marker")
             for result in raw_data["analysis_results"]:
                 analysis_result_data_dict = self._api_to_analysis_result(result)
-                results.append(**analysis_result_data_dict)
+                results.append(AnalysisResultData(**analysis_result_data_dict))
             if limit:
                 limit -= len(raw_data["analysis_results"])
             if not marker:  # No more experiments to return.

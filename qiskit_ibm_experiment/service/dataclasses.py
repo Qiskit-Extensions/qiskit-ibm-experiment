@@ -18,6 +18,8 @@ from datetime import datetime
 
 @dataclass
 class ExperimentData:
+    """Dataclass for experiments"""
+
     experiment_id: str
     parent_id: Optional[str]
     experiment_type: str
@@ -45,7 +47,7 @@ class ExperimentData:
             ret += f"\nBackend: {self.backend}"
         if self.tags:
             ret += f"\nTags: {self.tags}"
-        ret += f"\nHub\Group\Project: {self.hub}\{self.group}\{self.project}"
+        ret += f"\nHub\\Group\\Project: {self.hub}\\{self.group}\\{self.project}"
         if self.creation_datetime:
             ret += f"\nCreated at: {self.creation_datetime}"
         if self.start_datetime:
@@ -60,9 +62,16 @@ class ExperimentData:
             ret += f"\nFigures: {self.figure_names}"
         return ret
 
+    def __getitem__(self, item):
+        if hasattr(self, item):
+            return getattr(self, item)
+        return None
+
 
 @dataclass
 class AnalysisResultData:
+    """Dataclass for experiment analysis results"""
+
     experiment_id: str
     result_id: str
     result_type: str
@@ -73,6 +82,8 @@ class AnalysisResultData:
     tags: List[str]
     backend_name: str
     creation_datetime: datetime
+    updated_datetime: Optional[datetime] = None
+    chisq: Optional[float] = None
 
     def __str__(self):
         ret = f"Result {self.result_type}"
@@ -83,8 +94,17 @@ class AnalysisResultData:
         ret += f"\nVerified: {self.verified}"
         ret += f"\nDevice components: {self.device_components}"
         ret += f"\nData: {self.result_data}"
+        if self.chisq:
+            ret += f"\nChi Square: {self.chisq}"
         if self.tags:
             ret += f"\nTags: {self.tags}"
         if self.creation_datetime:
             ret += f"\nCreated at: {self.creation_datetime}"
+        if self.updated_datetime:
+            ret += f"\nUpdated at: {self.updated_datetime}"
         return ret
+
+    def __getitem__(self, item):
+        if hasattr(self, item):
+            return getattr(self, item)
+        return None
