@@ -225,7 +225,7 @@ Run integration tests against IBM Quantum
 ```bash
 QISKIT_IBM_USE_STAGING_CREDENTIALS=True
 QISKIT_IBM_STAGING_API_TOKEN=...                                            # IBM Quantum API token
-QISKIT_IBM_STAGING_API_URL=https://auth.quantum-computing.ibm.com/api       # IBM Quantum API URL
+QISKIT_IBM_STAGING_API_URL=https://api-dev.quantum-computing.ibm.com        # IBM Quantum API URL
 ```
 
 Run unit tests

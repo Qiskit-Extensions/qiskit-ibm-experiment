@@ -780,6 +780,48 @@ class TestExperimentServerIntegration(IBMTestCase):
             {result_id1, result_id2}, {res["result_id"] for res in results}
         )
 
+    def test_analysis_results_with_created_at(self):
+        """Test retrieving an analysis result by its created_at timestamp."""
+        ref_start_dt = datetime.now()
+        ref_start_dt = ref_start_dt.replace(tzinfo=tz.tzlocal())
+        exp_id = self._create_experiment(start_datetime=ref_start_dt)
+        result_id = self._create_analysis_result(exp_id=exp_id)
+
+        before_start = ref_start_dt - timedelta(hours=1)
+        after_start = ref_start_dt + timedelta(hours=1)
+        sub_tests = [
+            (before_start, None, True, "before start, None"),
+            (None, after_start, True, "None, after start"),
+            (before_start, after_start, True, "before, after start"),
+            (after_start, None, False, "after start, None"),
+            (None, before_start, False, "None, before start"),
+            (before_start, before_start, False, "before, before start"),
+        ]
+
+        for start_dt, end_dt, expected, title in sub_tests:
+            with self.subTest(title=title):
+                analysis_results = self.service.analysis_results(
+                    experiment_id=exp_id,
+                    creation_datetime_after=start_dt,
+                    creation_datetime_before=end_dt,
+                )
+                found = False
+                for result in analysis_results:
+                    if start_dt:
+                        self.assertGreaterEqual(result["creation_datetime"], start_dt)
+                    if end_dt:
+                        self.assertLessEqual(result["creation_datetime"], end_dt)
+                    if result["result_id"] == result_id:
+                        found = True
+                self.assertEqual(
+                    found,
+                    expected,
+                    "Analysis result {} (not)found unexpectedly when filter using"
+                    "start_dt={}, end_dt={}. Found={}".format(
+                        result_id, start_dt, end_dt, found
+                    ),
+                )
+
     def test_analysis_results_type(self):
         """Test filtering analysis results with type."""
         result_type = "qiskit_test"
