@@ -611,7 +611,7 @@ class TestExperimentServerIntegration(IBMTestCase):
             "end_datetime",
             "updated_datetime",
         ]:
-            if dt_attr in new_exp:
+            if new_exp[dt_attr] is not None:
                 self.assertTrue(new_exp[dt_attr].tzinfo)
 
     def test_update_experiment(self):
@@ -711,7 +711,7 @@ class TestExperimentServerIntegration(IBMTestCase):
             self.assertIsInstance(res["result_data"], dict)
             self.assertTrue(res["result_id"], "{} does not have an uuid!".format(res))
             for dt_attr in ["creation_datetime", "updated_datetime"]:
-                if dt_attr in res:
+                if res["dt_attr"] is not None:
                     self.assertTrue(res[dt_attr].tzinfo)
             if res["result_id"] == result_id:
                 found = True
@@ -1055,7 +1055,6 @@ class TestExperimentServerIntegration(IBMTestCase):
         # Create an analysis_result and get it back to get its creation_datetime value.
         result1_id = self._create_analysis_result()
         result1 = self.service.analysis_result(result1_id)
-        self.assertIn("creation_datetime", result1)
         self.assertIsNotNone(result1["creation_datetime"])
         cdt1 = result1["creation_datetime"]
         # Assert that the UTC timestamp was converted to the local time.
@@ -1208,7 +1207,7 @@ class TestExperimentServerIntegration(IBMTestCase):
             metadata=metadata, json_encoder=ExperimentEncoder
         )
         rexp = self.service.experiment(expr_id, json_decoder=ExperimentDecoder)
-        rmetadata = rexp["metadata"]
+        rmetadata = rexp.metadata
         self.assertEqual(metadata["complex"], rmetadata["complex"])
         self.assertTrue((metadata["numpy"] == rmetadata["numpy"]).all())
 
@@ -1217,7 +1216,7 @@ class TestExperimentServerIntegration(IBMTestCase):
             expr_id, metadata=new_metadata, json_encoder=ExperimentEncoder
         )
         rexp = self.service.experiment(expr_id, json_decoder=ExperimentDecoder)
-        rmetadata = rexp["metadata"]
+        rmetadata = rexp.metadata
         self.assertEqual(new_metadata["complex"], rmetadata["complex"])
         self.assertTrue((new_metadata["numpy"] == rmetadata["numpy"]).all())
 
@@ -1230,7 +1229,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         rresult = self.service.analysis_result(
             result_id, json_decoder=ExperimentDecoder
         )
-        rdata = rresult["result_data"]
+        rdata = rresult.result_data
         self.assertEqual(data["complex"], rdata["complex"])
         self.assertTrue((data["numpy"] == rdata["numpy"]).all())
         self.assertEqual(data["numpy_int"], rdata["numpy_int"])
@@ -1242,7 +1241,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         rresult = self.service.analysis_result(
             result_id, json_decoder=ExperimentDecoder
         )
-        rdata = rresult["result_data"]
+        rdata = rresult.result_data
         self.assertEqual(new_data["complex"], rdata["complex"])
         self.assertTrue((new_data["numpy"] == rdata["numpy"]).all())
         self.assertEqual(new_data["numpy_int"], rdata["numpy_int"])
