@@ -68,14 +68,14 @@ class AnalysisResultData:
 
     experiment_id: str
     result_id: str
-    result_type: str
-    result_data: Dict[str, Any]
-    device_components: List[str]
-    quality: "ResultQuality"
-    verified: bool
-    tags: List[str]
-    backend_name: str
-    creation_datetime: datetime
+    result_type: Optional[str] = None
+    result_data: Optional[Dict[str, Any]] = field(default_factory=lambda: {})
+    device_components: Optional[List[str]] = field(default_factory=lambda: [])
+    quality: Optional[str] = None
+    verified: Optional[bool] = False
+    tags: Optional[List[str]] = field(default_factory=lambda: [])
+    backend_name: Optional[str] = None
+    creation_datetime: Optional[datetime] = None
     updated_datetime: Optional[datetime] = None
     chisq: Optional[float] = None
 
@@ -97,12 +97,3 @@ class AnalysisResultData:
         if self.updated_datetime:
             ret += f"\nUpdated at: {self.updated_datetime}"
         return ret
-
-exp1 = ExperimentData()
-exp2 = ExperimentData()
-exp1.tags.append("foo")
-exp2.tags.append("bar")
-
-print(exp1)
-print("****")
-print(exp2)
