@@ -11,7 +11,7 @@
 # that they have been altered from the originals.
 
 """Dataclasses for returned results"""
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 
@@ -21,19 +21,19 @@ class ExperimentData:
     """Dataclass for experiments"""
 
     experiment_id: str
-    parent_id: Optional[str]
-    experiment_type: str
-    backend: str
-    tags: List[str]
-    job_ids: List[str]
-    share_level: str
-    metadata: Dict[str, str]
-    figure_names: List[str]
-    notes: Optional[str]
-    hub: str
-    group: str
-    project: str
-    owner: str
+    parent_id: Optional[str] = None
+    experiment_type: str = None
+    backend: Optional[str] = None
+    tags: Optional[List[str]] = field(default_factory=lambda: [])
+    job_ids: Optional[List[str]] = field(default_factory=lambda: [])
+    share_level: Optional[str] = None
+    metadata: Optional[Dict[str, str]] = field(default_factory=lambda: {})
+    figure_names: Optional[List[str]] = field(default_factory=lambda: [])
+    notes: Optional[str] = None
+    hub: Optional[str] = None
+    group: Optional[str] = None
+    project: Optional[str] = None
+    owner: Optional[str] = None
     creation_datetime: Optional[datetime] = None
     start_datetime: Optional[datetime] = None
     end_datetime: Optional[datetime] = None
@@ -61,12 +61,6 @@ class ExperimentData:
         if self.figure_names:
             ret += f"\nFigures: {self.figure_names}"
         return ret
-
-    def __getitem__(self, item):
-        if hasattr(self, item):
-            return getattr(self, item)
-        return None
-
 
 @dataclass
 class AnalysisResultData:
@@ -104,7 +98,11 @@ class AnalysisResultData:
             ret += f"\nUpdated at: {self.updated_datetime}"
         return ret
 
-    def __getitem__(self, item):
-        if hasattr(self, item):
-            return getattr(self, item)
-        return None
+exp1 = ExperimentData()
+exp2 = ExperimentData()
+exp1.tags.append("foo")
+exp2.tags.append("bar")
+
+print(exp1)
+print("****")
+print(exp2)

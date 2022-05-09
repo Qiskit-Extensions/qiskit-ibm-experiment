@@ -29,7 +29,7 @@ from .constants import (
 )
 from .utils import map_api_error, local_to_utc_str, utc_to_local
 from .device_component import DeviceComponent
-from .dataclasses import ExperimentData, AnalysisResultData
+from .experiment_dataclasses import ExperimentData, AnalysisResultData
 from ..client.experiment import ExperimentClient
 from ..exceptions import RequestsApiError, IBMApiError
 from ..accounts import AccountManager, Account, ProxyConfiguration
