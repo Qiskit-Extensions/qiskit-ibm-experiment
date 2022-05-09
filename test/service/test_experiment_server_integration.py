@@ -99,7 +99,7 @@ class TestExperimentServerIntegration(IBMTestCase):
 
         found = False
         for exp in experiments:
-            self.assertTrue(exp["experiment_id"], "{} does not have an ID!".format(exp))
+            self.assertTrue(exp.experiment_id, "{} does not have an ID!".format(exp))
             for dt_attr in [
                 "start_datetime",
                 "creation_datetime",
@@ -108,7 +108,7 @@ class TestExperimentServerIntegration(IBMTestCase):
             ]:
                 if getattr(exp, dt_attr, None):
                     self.assertTrue(getattr(exp, dt_attr).tzinfo)
-            if exp["experiment_id"] == exp_id:
+            if exp.experiment_id == exp_id:
                 found = True
         self.assertTrue(found, f"Experiment {exp_id} not found!")
 
@@ -119,8 +119,8 @@ class TestExperimentServerIntegration(IBMTestCase):
 
         found = False
         for exp in backend_experiments:
-            self.assertEqual(self.backend.name(), exp["backend"])
-            if exp["experiment_id"] == exp_id:
+            self.assertEqual(self.backend.name(), exp.backend)
+            if exp.experiment_id == exp_id:
                 found = True
         self.assertTrue(
             found,
@@ -137,8 +137,8 @@ class TestExperimentServerIntegration(IBMTestCase):
 
         found = False
         for exp in backend_experiments:
-            self.assertEqual(exp_type, exp["experiment_type"])
-            if exp["experiment_id"] == exp_id:
+            self.assertEqual(exp_type, exp.experiment_type)
+            if exp.experiment_id == exp_id:
                 found = True
         self.assertTrue(
             found,
@@ -153,7 +153,7 @@ class TestExperimentServerIntegration(IBMTestCase):
 
         found = False
         for exp in experiments:
-            self.assertEqual(parent_id, exp["parent_id"])
+            self.assertEqual(parent_id, exp.parent_id)
             if exp.experiment_id == child_id:
                 found = True
         self.assertTrue(
@@ -294,7 +294,7 @@ class TestExperimentServerIntegration(IBMTestCase):
                 ref_expr_found = False
                 for expr in hgp_experiments:
                     for hgp_key, hgp_val in hgp_kwargs.items():
-                        self.assertEqual(expr[hgp_key], hgp_val)
+                        self.assertEqual(getattr(expr, hgp_key), hgp_val)
                     if expr.experiment_id == exp_id:
                         ref_expr_found = True
                 self.assertTrue(ref_expr_found)
@@ -329,12 +329,12 @@ class TestExperimentServerIntegration(IBMTestCase):
         non_public_experiment_uuids = []
         for experiment in experiments:
             self.assertNotEqual(
-                experiment["share_level"],
+                experiment.share_level,
                 ExperimentShareLevel.PUBLIC.value,
                 "Public experiment should not be returned with exclude_public filter: %s"
                 % experiment,
             )
-            non_public_experiment_uuids.append(experiment["experiment_id"])
+            non_public_experiment_uuids.append(experiment.experiment_id)
         self.assertIn(
             private_exp_id,
             non_public_experiment_uuids,
@@ -360,12 +360,12 @@ class TestExperimentServerIntegration(IBMTestCase):
         public_experiment_uuids = []
         for experiment in experiments:
             self.assertEqual(
-                experiment["share_level"],
+                experiment.share_level,
                 ExperimentShareLevel.PUBLIC.value,
                 "Only public experiments should be returned with public_only filter: %s"
                 % experiment,
             )
-            public_experiment_uuids.append(experiment["experiment_id"])
+            public_experiment_uuids.append(experiment.experiment_id)
         self.assertIn(
             public_exp_id,
             public_experiment_uuids,
@@ -394,7 +394,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         # there is at least one experiment owned by another user in the integration test
         # environment though.
         exp_id = self._create_experiment()
-        exp_owner = self.service.experiment(exp_id)["owner"]
+        exp_owner = self.service.experiment(exp_id).owner
 
         not_my_experiments = self.get_experiments(exclude_mine=True)
         # The experiment we just created should not be in the set.
@@ -421,12 +421,12 @@ class TestExperimentServerIntegration(IBMTestCase):
         # there is at least one experiment owned by another user in the integration test
         # environment though.
         exp_id = self._create_experiment()
-        exp_owner = self.service.experiment(exp_id)["owner"]
+        exp_owner = self.service.experiment(exp_id).owner
         my_experiments = self.get_experiments(mine_only=True)
         my_experiment_uuids = []
         for experiment in my_experiments:
             self.assertEqual(
-                experiment["owner"],
+                experiment.owner,
                 exp_owner,  # pylint: disable=no-member
                 "Only my experiments should be returned with mine_only filter: %s"
                 % experiment.experiment_id,
@@ -457,7 +457,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         exp_id = self._create_experiment(tags=tags)
         experiments = self.get_experiments(limit=None, tags=tags)
         self.assertEqual(1, len(experiments))
-        self.assertEqual(exp_id, experiments[0]["experiment_id"])
+        self.assertEqual(exp_id, experiments[0].experiment_id)
 
     def test_experiments_with_sort_by(self):
         """Test retrieving experiments with sort_by."""
@@ -498,7 +498,7 @@ class TestExperimentServerIntegration(IBMTestCase):
                     experiment_type=self.default_exp_type,
                 )
                 self.assertEqual(
-                    expected, [exp["experiment_id"] for exp in experiments]
+                    expected, [exp.experiment_id for exp in experiments]
                 )
 
     def test_experiments_with_bad_sort_by(self):
@@ -562,9 +562,9 @@ class TestExperimentServerIntegration(IBMTestCase):
         """Test retrieving an experiment by its ID."""
         exp_id = self._create_experiment()
         rexp = self.service.experiment(exp_id)
-        self.assertEqual(exp_id, rexp["experiment_id"])
+        self.assertEqual(exp_id, rexp.experiment_id)
         for attr in ["hub", "group", "project", "owner", "share_level"]:
-            self.assertIsNotNone(rexp[attr], "{} does not have a {}".format(rexp, attr))
+            self.assertIsNotNone(getattr(rexp, attr), "{} does not have a {}".format(rexp, attr))
 
     def test_upload_experiment(self):
         """Test uploading an experiment."""
@@ -629,12 +629,12 @@ class TestExperimentServerIntegration(IBMTestCase):
         )
 
         rexp = self.service.experiment(new_exp_id)
-        self.assertEqual({"foo": "bar"}, rexp["metadata"])
-        self.assertEqual(["job1", "job2"], rexp["job_ids"])
-        self.assertEqual(["qiskit_test"], rexp["tags"])
-        self.assertEqual("some notes", rexp["notes"])
-        self.assertEqual(ExperimentShareLevel.PROJECT.value, rexp["share_level"])
-        self.assertTrue(rexp["end_datetime"])
+        self.assertEqual({"foo": "bar"}, rexp.metadata)
+        self.assertEqual(["job1", "job2"], rexp.job_ids)
+        self.assertEqual(["qiskit_test"], rexp.tags)
+        self.assertEqual("some notes", rexp.notes)
+        self.assertEqual(ExperimentShareLevel.PROJECT.value, rexp.share_level)
+        self.assertTrue(rexp.end_datetime)
 
     def test_delete_experiment(self):
         """Test deleting an experiment."""
@@ -711,8 +711,8 @@ class TestExperimentServerIntegration(IBMTestCase):
             self.assertIsInstance(res.result_data, dict)
             self.assertTrue(res.result_id, "{} does not have an uuid!".format(res))
             for dt_attr in ["creation_datetime", "updated_datetime"]:
-                if hasattr(res, dt_attr):
-                    self.assertTrue(getattr(res, dt_attr).tzinfo)
+                result_datetime = getattr(res, dt_attr)
+                self.assertTrue(result_datetime is None or result_datetime.tzinfo)
             if res.result_id == result_id:
                 found = True
         self.assertTrue(found)
@@ -856,8 +856,8 @@ class TestExperimentServerIntegration(IBMTestCase):
 
                 found = False
                 for res in results:
-                    self.assertIn(filter_type, res["result_type"])
-                    if res["result_id"] == result_id:
+                    self.assertIn(filter_type, res.result_type)
+                    if res.result_id == result_id:
                         found = True
                 self.assertTrue(
                     found,
@@ -909,8 +909,8 @@ class TestExperimentServerIntegration(IBMTestCase):
                     qual_set.append(qual)
                 res_ids = set()
                 for res in results:
-                    self.assertIn(res["quality"], qual_set)
-                    res_ids.add(res["result_id"])
+                    self.assertIn(res.quality, qual_set)
+                    res_ids.add(res.result_id)
                 self.assertTrue(
                     expected <= res_ids,
                     f"Result {expected} not returned "
@@ -921,7 +921,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         """Test filtering analysis results with backend name."""
         result_id = self._create_analysis_result()
         results = self.service.analysis_results(backend_name=self.backend.name())
-        self.assertIn(result_id, [res["result_id"] for res in results])
+        self.assertIn(result_id, [res.result_id for res in results])
 
     def test_analysis_results_verified(self):
         """Test filtering analysis results with verified."""
@@ -929,8 +929,8 @@ class TestExperimentServerIntegration(IBMTestCase):
         results = self.service.analysis_results(verified=True)
         found = False
         for res in results:
-            self.assertTrue(res["verified"])
-            if res["result_id"] == result_id:
+            self.assertTrue(res.verified)
+            if res.result_id == result_id:
                 found = True
         self.assertTrue(
             found, f"Result {result_id} not found when " f"filtering with verified=True"
@@ -957,16 +957,16 @@ class TestExperimentServerIntegration(IBMTestCase):
                 )
                 res_found = False
                 for res in results:
-                    msg = "Tags {} not fond in result tags {}".format(tags, res["tags"])
+                    msg = "Tags {} not fond in result tags {}".format(tags, res.tags)
                     if operator == "AND":
                         self.assertTrue(
-                            all(f_tag in res["tags"] for f_tag in tags), msg
+                            all(f_tag in res.tags for f_tag in tags), msg
                         )
                     else:
                         self.assertTrue(
-                            any(f_tag in res["tags"] for f_tag in tags), msg
+                            any(f_tag in res.tags for f_tag in tags), msg
                         )
-                    if res["result_id"] == result_id:
+                    if res.result_id == result_id:
                         res_found = True
                 self.assertTrue(
                     res_found == found,
@@ -987,7 +987,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         result_id = self._create_analysis_result(tags=tags)
         results = self.service.analysis_results(limit=None, tags=tags)
         self.assertEqual(1, len(results))
-        self.assertEqual(result_id, results[0]["result_id"])
+        self.assertEqual(result_id, results[0].result_id)
 
     def test_analysis_results_with_sort_by(self):
         """Test retrieving analysis results with sort_by."""
@@ -1039,7 +1039,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         for sort_by, expected in subtests:
             with self.subTest(sort_by=sort_by):
                 results = self.service.analysis_results(tags=tags, sort_by=sort_by)
-                self.assertEqual(expected, [res["result_id"] for res in results])
+                self.assertEqual(expected, [res.result_id for res in results])
 
     def test_analysis_results_with_bad_sort_by(self):
         """Test retrieving analysis results with bad sort_by."""
@@ -1055,8 +1055,8 @@ class TestExperimentServerIntegration(IBMTestCase):
         # Create an analysis_result and get it back to get its creation_datetime value.
         result1_id = self._create_analysis_result()
         result1 = self.service.analysis_result(result1_id)
-        self.assertIsNotNone(result1["creation_datetime"])
-        cdt1 = result1["creation_datetime"]
+        self.assertIsNotNone(result1.creation_datetime)
+        cdt1 = result1.creation_datetime
         # Assert that the UTC timestamp was converted to the local time.
         self.assertIsNotNone(cdt1.tzinfo)
         self.log.debug(
@@ -1072,12 +1072,12 @@ class TestExperimentServerIntegration(IBMTestCase):
         # Chances are that we should only get exactly one analysis result
         # back but to be safe check for at least 1.
         self.assertGreaterEqual(len(results), 1, results)
-        result_ids = [r["result_id"] for r in results]
+        result_ids = [r.result_id for r in results]
         self.assertIn(result1_id, result_ids)
         # Create another analysis result on the same experiment.
-        result2_id = self._create_analysis_result(exp_id=result1["experiment_id"])
+        result2_id = self._create_analysis_result(exp_id=result1.experiment_id)
         result2 = self.service.analysis_result(result2_id)
-        cdt2 = result2["creation_datetime"]
+        cdt2 = result2.creation_datetime
         # self.log.debug('Created second analysis result %s with creation_datetime %s',
         #                result2_id, cdt2.isoformat())
         # Get both results using their creation timestamps as a range.
@@ -1085,7 +1085,7 @@ class TestExperimentServerIntegration(IBMTestCase):
             creation_datetime_after=cdt1, creation_datetime_before=cdt2
         )
         self.assertGreaterEqual(len(results), 2, results)
-        result_ids = [r["result_id"] for r in results]
+        result_ids = [r.result_id for r in results]
         for result_id in [result1_id, result2_id]:
             self.assertIn(result_id, result_ids)
 
@@ -1144,7 +1144,7 @@ class TestExperimentServerIntegration(IBMTestCase):
                 elif isinstance(figure, str):
                     self.assertEqual(figure, name)
                 expr = self.service.experiment(expr_id)
-                self.assertIn(name, expr["figure_names"])
+                self.assertIn(name, expr.figure_names)
 
     def test_figure(self):
         """Test getting a figure."""
