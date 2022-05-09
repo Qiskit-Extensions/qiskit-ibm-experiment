@@ -154,7 +154,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         found = False
         for exp in experiments:
             self.assertEqual(parent_id, exp["parent_id"])
-            if exp["experiment_id"] == child_id:
+            if exp.experiment_id == child_id:
                 found = True
         self.assertTrue(
             found,
@@ -171,7 +171,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         experiments = self.get_experiments(
             experiment_type="foo", experiment_type_operator="like"
         )
-        self.assertNotIn(exp_id, [exp["experiment_id"] for exp in experiments])
+        self.assertNotIn(exp_id, [exp.experiment_id for exp in experiments])
 
         subtests = ["qiskit", "test"]
         for filter_type in subtests:
@@ -182,9 +182,9 @@ class TestExperimentServerIntegration(IBMTestCase):
                 found = False
                 for exp in experiments:
                     self.assertTrue(
-                        re.match(f".*{filter_type}.*", exp["experiment_type"])
+                        re.match(f".*{filter_type}.*", exp.experiment_type)
                     )
-                    if exp["experiment_id"] == exp_id:
+                    if exp.experiment_id == exp_id:
                         found = True
                 self.assertTrue(
                     found,
@@ -224,10 +224,10 @@ class TestExperimentServerIntegration(IBMTestCase):
                 found = False
                 for exp in backend_experiments:
                     if start_dt:
-                        self.assertGreaterEqual(exp["start_datetime"], start_dt)
+                        self.assertGreaterEqual(exp.start_datetime, start_dt)
                     if end_dt:
-                        self.assertLessEqual(exp["start_datetime"], end_dt)
-                    if exp["experiment_id"] == exp_id:
+                        self.assertLessEqual(exp.start_datetime, end_dt)
+                    if exp.experiment_id == exp_id:
                         found = True
                 self.assertEqual(
                     found,
@@ -258,17 +258,17 @@ class TestExperimentServerIntegration(IBMTestCase):
                 ref_expr_found = False
                 for expr in experiments:
                     msg = "Tags {} not fond in experiment tags {}".format(
-                        tags, expr["tags"]
+                        tags, expr.tags
                     )
                     if operator == "AND":
                         self.assertTrue(
-                            all(f_tag in expr["tags"] for f_tag in tags), msg
+                            all(f_tag in expr.tags for f_tag in tags), msg
                         )
                     else:
                         self.assertTrue(
-                            any(f_tag in expr["tags"] for f_tag in tags), msg
+                            any(f_tag in expr.tags for f_tag in tags), msg
                         )
-                    if expr["experiment_id"] == exp_id:
+                    if expr.experiment_id == exp_id:
                         ref_expr_found = True
                 self.assertTrue(
                     ref_expr_found == found,
@@ -295,7 +295,7 @@ class TestExperimentServerIntegration(IBMTestCase):
                 for expr in hgp_experiments:
                     for hgp_key, hgp_val in hgp_kwargs.items():
                         self.assertEqual(expr[hgp_key], hgp_val)
-                    if expr["experiment_id"] == exp_id:
+                    if expr.experiment_id == exp_id:
                         ref_expr_found = True
                 self.assertTrue(ref_expr_found)
 
@@ -429,9 +429,9 @@ class TestExperimentServerIntegration(IBMTestCase):
                 experiment["owner"],
                 exp_owner,  # pylint: disable=no-member
                 "Only my experiments should be returned with mine_only filter: %s"
-                % experiment["experiment_id"],
+                % experiment.experiment_id,
             )
-            my_experiment_uuids.append(experiment["experiment_id"])
+            my_experiment_uuids.append(experiment.experiment_id)
         self.assertIn(
             exp_id,
             my_experiment_uuids,
@@ -524,7 +524,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         experiments = self.get_experiments(device_components=self.device_components)
         self.assertIn(
             expr_id,
-            [expr["experiment_id"] for expr in experiments],
+            [expr.experiment_id for expr in experiments],
             f"Experiment {expr_id} not found when filtering with "
             f"device components {self.device_components}",
         )
@@ -546,7 +546,7 @@ class TestExperimentServerIntegration(IBMTestCase):
 
         self.assertIn(
             expr_id,
-            [expr["experiment_id"] for expr in experiments],
+            [expr.experiment_id for expr in experiments],
             f"Experiment {expr_id} not found when filtering with "
             f"device components {device_components[:2]}",
         )
@@ -586,23 +586,23 @@ class TestExperimentServerIntegration(IBMTestCase):
         new_exp = self.service.experiment(new_exp_id)
 
         credentials = self.provider.credentials
-        self.assertEqual(credentials.hub, new_exp["hub"])  # pylint: disable=no-member
+        self.assertEqual(credentials.hub, new_exp.hub)  # pylint: disable=no-member
         self.assertEqual(
-            credentials.group, new_exp["group"]
+            credentials.group, new_exp.group
         )  # pylint: disable=no-member
         self.assertEqual(
-            credentials.project, new_exp["project"]
+            credentials.project, new_exp.project
         )  # pylint: disable=no-member
-        self.assertEqual("qiskit_test", new_exp["experiment_type"])
-        self.assertEqual(self.backend.name(), new_exp["backend"])
-        self.assertEqual({"foo": "bar"}, new_exp["metadata"])
-        self.assertEqual(["job1", "job2"], new_exp["job_ids"])
-        self.assertEqual(["qiskit_test"], new_exp["tags"])
-        self.assertEqual("some notes", new_exp["notes"])
-        self.assertEqual(ExperimentShareLevel.PROJECT.value, new_exp["share_level"])
-        self.assertTrue(new_exp["creation_datetime"])
+        self.assertEqual("qiskit_test", new_exp.experiment_type)
+        self.assertEqual(self.backend.name(), new_exp.backend)
+        self.assertEqual({"foo": "bar"}, new_exp.metadata)
+        self.assertEqual(["job1", "job2"], new_exp.job_ids)
+        self.assertEqual(["qiskit_test"], new_exp.tags)
+        self.assertEqual("some notes", new_exp.notes)
+        self.assertEqual(ExperimentShareLevel.PROJECT.value, new_exp.share_level)
+        self.assertTrue(new_exp.creation_datetime)
         self.assertIsNotNone(
-            new_exp["owner"], "Owner should be set"
+            new_exp.owner, "Owner should be set"
         )  # pylint: disable=no-member
 
         for dt_attr in [
@@ -611,8 +611,8 @@ class TestExperimentServerIntegration(IBMTestCase):
             "end_datetime",
             "updated_datetime",
         ]:
-            if new_exp[dt_attr] is not None:
-                self.assertTrue(new_exp[dt_attr].tzinfo)
+            datetime_attr = getattr(new_exp, dt_attr)
+            self.assertTrue(datetime_attr is None or datetime_attr.tzinfo)
 
     def test_update_experiment(self):
         """Test updating an experiment."""
@@ -666,17 +666,17 @@ class TestExperimentServerIntegration(IBMTestCase):
         )
 
         rresult = self.service.analysis_result(aresult_id)
-        self.assertEqual(exp_id, rresult["experiment_id"])
-        self.assertEqual("qiskit_test", rresult["result_type"])
-        self.assertEqual(fit, rresult["result_data"])
+        self.assertEqual(exp_id, rresult.experiment_id)
+        self.assertEqual("qiskit_test", rresult.result_type)
+        self.assertEqual(fit, rresult.result_data)
         self.assertEqual(
-            self.device_components, [str(comp) for comp in rresult["device_components"]]
+            self.device_components, [str(comp) for comp in rresult.device_components]
         )
-        self.assertEqual(["qiskit_test"], rresult["tags"])
-        self.assertEqual(ResultQuality.GOOD, rresult["quality"])
-        self.assertTrue(rresult["verified"])
-        self.assertEqual(result_id, rresult["result_id"])
-        self.assertEqual(chisq, rresult["chisq"])
+        self.assertEqual(["qiskit_test"], rresult.tags)
+        self.assertEqual(ResultQuality.GOOD, rresult.quality)
+        self.assertTrue(rresult.verified)
+        self.assertEqual(result_id, rresult.result_id)
+        self.assertEqual(chisq, rresult.chisq)
 
     def test_update_analysis_result(self):
         """Test updating an analysis result."""
@@ -694,12 +694,12 @@ class TestExperimentServerIntegration(IBMTestCase):
         )
 
         rresult = self.service.analysis_result(result_id)
-        self.assertEqual(result_id, rresult["result_id"])
-        self.assertEqual(fit, rresult["result_data"])
-        self.assertEqual(["qiskit_test"], rresult["tags"])
-        self.assertEqual(ResultQuality.GOOD, rresult["quality"])
-        self.assertTrue(rresult["verified"])
-        self.assertEqual(chisq, rresult["chisq"])
+        self.assertEqual(result_id, rresult.result_id)
+        self.assertEqual(fit, rresult.result_data)
+        self.assertEqual(["qiskit_test"], rresult.tags)
+        self.assertEqual(ResultQuality.GOOD, rresult.quality)
+        self.assertTrue(rresult.verified)
+        self.assertEqual(chisq, rresult.chisq)
 
     def test_analysis_results(self):
         """Test retrieving all analysis results."""
@@ -707,13 +707,13 @@ class TestExperimentServerIntegration(IBMTestCase):
         results = self.service.analysis_results()
         found = False
         for res in results:
-            self.assertIsInstance(res["verified"], bool)
-            self.assertIsInstance(res["result_data"], dict)
-            self.assertTrue(res["result_id"], "{} does not have an uuid!".format(res))
+            self.assertIsInstance(res.verified, bool)
+            self.assertIsInstance(res.result_data, dict)
+            self.assertTrue(res.result_id, "{} does not have an uuid!".format(res))
             for dt_attr in ["creation_datetime", "updated_datetime"]:
-                if res["dt_attr"] is not None:
-                    self.assertTrue(res[dt_attr].tzinfo)
-            if res["result_id"] == result_id:
+                if hasattr(res, dt_attr):
+                    self.assertTrue(getattr(res, dt_attr).tzinfo)
+            if res.result_id == result_id:
                 found = True
         self.assertTrue(found)
 
@@ -729,9 +729,9 @@ class TestExperimentServerIntegration(IBMTestCase):
         found = False
         for res in results:
             self.assertEqual(
-                self.device_components, [str(comp) for comp in res["device_components"]]
+                self.device_components, [str(comp) for comp in res.device_components]
             )
-            if res["result_id"] == result_id:
+            if res.result_id == result_id:
                 found = True
         self.assertTrue(
             found,
@@ -758,9 +758,9 @@ class TestExperimentServerIntegration(IBMTestCase):
         for res in results:
             self.assertTrue(
                 set(device_components[:2])
-                <= {str(comp) for comp in res["device_components"]}
+                <= {str(comp) for comp in res.device_components}
             )
-            if res["result_id"] == result_id:
+            if res.result_id == result_id:
                 found = True
         self.assertTrue(
             found,
@@ -777,7 +777,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         results = self.service.analysis_results(experiment_id=expr_id)
         self.assertEqual(2, len(results))
         self.assertEqual(
-            {result_id1, result_id2}, {res["result_id"] for res in results}
+            {result_id1, result_id2}, {res.result_id for res in results}
         )
 
     def test_analysis_results_with_created_at(self):
@@ -808,10 +808,10 @@ class TestExperimentServerIntegration(IBMTestCase):
                 found = False
                 for result in analysis_results:
                     if start_dt:
-                        self.assertGreaterEqual(result["creation_datetime"], start_dt)
+                        self.assertGreaterEqual(result.creation_datetime, start_dt)
                     if end_dt:
-                        self.assertLessEqual(result["creation_datetime"], end_dt)
-                    if result["result_id"] == result_id:
+                        self.assertLessEqual(result.creation_datetime, end_dt)
+                    if result.result_id == result_id:
                         found = True
                 self.assertEqual(
                     found,
@@ -829,8 +829,8 @@ class TestExperimentServerIntegration(IBMTestCase):
         results = self.service.analysis_results(result_type=result_type)
         found = False
         for res in results:
-            self.assertEqual(result_type, res["result_type"])
-            if res["result_id"] == result_id:
+            self.assertEqual(result_type, res.result_type)
+            if res.result_id == result_id:
                 found = True
         self.assertTrue(
             found,
