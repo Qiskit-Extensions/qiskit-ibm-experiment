@@ -25,10 +25,10 @@ from .constants import (
     RESULT_QUALITY_FROM_API,
     RESULT_QUALITY_TO_API,
     DEFAULT_BASE_URL,
-    ACCOUNT_CHANNEL,
 )
 from .utils import map_api_error, local_to_utc_str, utc_to_local
 from .device_component import DeviceComponent
+from .experiment_dataclasses import ExperimentData, AnalysisResultData
 from ..client.experiment import ExperimentClient
 from ..exceptions import RequestsApiError, IBMApiError
 from ..accounts import AccountManager, Account, ProxyConfiguration
@@ -74,8 +74,8 @@ class IBMExperimentService:
 
     _default_preferences = {"auto_save": False}
     _default_options = {"prompt_for_delete": True}
-    _DEFAULT_AUTHENTICATION_PREFIX = "/v2/users/loginWithToken"
-    _DEFAULT_EXPERIMENT_PREFIX = "/resultsdb"
+    _AUTHENTICATION_CMD = "/users/loginWithToken"
+    _USER_DATA_CMD = "/users/me"
 
     def __init__(
         self,
@@ -109,14 +109,8 @@ class IBMExperimentService:
         if not self._account.local:
             if self._account.url is None:
                 self._account.url = url
-            db_url = self._account.url + self._DEFAULT_EXPERIMENT_PREFIX
-            auth_url = self._account.url + self._DEFAULT_AUTHENTICATION_PREFIX
-            if self._account.channel != ACCOUNT_CHANNEL:
-                logger.warning(
-                    "The account does not use the '%s' channel. Authentication will likely fail.",
-                    ACCOUNT_CHANNEL,
-                )
-            self.get_access_token(auth_url)
+            self.get_access_token()
+            db_url = self.get_db_url()
 
             self._additional_params = {
                 "proxies": self._account.proxies.to_request_params()
@@ -136,7 +130,7 @@ class IBMExperimentService:
             if name in self.options:
                 self.options[name] = value
 
-    def get_access_token(self, auth_url, api_token=None):
+    def get_access_token(self, api_token=None):
         """Authenticates to the server with the API token, receiving access token
         for the current session"""
         if api_token is None:
@@ -146,8 +140,9 @@ class IBMExperimentService:
                 raise IBMApiError("No API token; cannot connect to service")
         headers = {"accept": "application/json", "Content-Type": "application/json"}
         data = {"apiToken": api_token}
+        url = self._account.url + self._AUTHENTICATION_CMD
         try:
-            response = requests.post(url=auth_url, json=data, headers=headers)
+            response = requests.post(url=url, json=data, headers=headers)
             access_token = response.json()["id"]
         except KeyError:
             raise IBMApiError(
@@ -157,6 +152,25 @@ class IBMExperimentService:
             )
         self._access_token = access_token
         return access_token
+
+    def get_db_url(self):
+        """Receive the url for the database API from the server"""
+        headers = {
+            "accept": "application/json",
+            "Content-Type": "application/json",
+            "X-Access-Token": self._access_token,
+        }
+        url = self._account.url + self._USER_DATA_CMD
+        try:
+            response = requests.get(url=url, headers=headers)
+            db_url = response.json()["urls"]["services"]["resultsDB"]
+            return db_url
+        except KeyError:
+            raise IBMApiError(
+                "Unable to retrieve the API url for the database (request returned {})".format(
+                    response.json()
+                )
+            )
 
     @classmethod
     def save_account(
@@ -447,7 +461,7 @@ class IBMExperimentService:
         self,
         experiment_id: str,
         json_decoder: Type[json.JSONDecoder] = json.JSONDecoder,
-    ) -> Dict:
+    ) -> ExperimentData:
         """Retrieve a previously stored experiment.
 
         Args:
@@ -463,7 +477,10 @@ class IBMExperimentService:
         """
         with map_api_error(f"Experiment {experiment_id} not found."):
             raw_data = self._api_client.experiment_get(experiment_id)
-        return self._api_to_experiment_data(json.loads(raw_data, cls=json_decoder))
+        experiment_data_dict = self._api_to_experiment_data(
+            json.loads(raw_data, cls=json_decoder)
+        )
+        return ExperimentData(**experiment_data_dict)
 
     def experiments(
         self,
@@ -488,7 +505,7 @@ class IBMExperimentService:
         parent_id: Optional[str] = None,
         sort_by: Optional[Union[str, List[str]]] = None,
         **filters: Any,
-    ) -> List[Dict]:
+    ) -> List[ExperimentData]:
         """Retrieve all experiments, with optional filtering.
 
         By default, results returned are as inclusive as possible. For example,
@@ -643,7 +660,8 @@ class IBMExperimentService:
             raw_data = json.loads(response, cls=json_decoder)
             marker = raw_data.get("marker")
             for exp in raw_data["experiments"]:
-                experiments.append(self._api_to_experiment_data(exp))
+                experiment_data_dict = self._api_to_experiment_data(exp)
+                experiments.append(ExperimentData(**experiment_data_dict))
             if limit:
                 limit -= len(raw_data["experiments"])
             if not marker:  # No more experiments to return.
@@ -920,7 +938,7 @@ class IBMExperimentService:
 
     def analysis_result(
         self, result_id: str, json_decoder: Type[json.JSONDecoder] = json.JSONDecoder
-    ) -> Dict:
+    ) -> AnalysisResultData:
         """Retrieve a previously stored analysis result.
 
         Args:
@@ -937,7 +955,10 @@ class IBMExperimentService:
         with map_api_error(f"Analysis result {result_id} not found."):
             raw_data = self._api_client.analysis_result_get(result_id)
 
-        return self._api_to_analysis_result(json.loads(raw_data, cls=json_decoder))
+        analysis_result_data_dict = self._api_to_analysis_result(
+            json.loads(raw_data, cls=json_decoder)
+        )
+        return AnalysisResultData(**analysis_result_data_dict)
 
     def analysis_results(
         self,
@@ -959,7 +980,7 @@ class IBMExperimentService:
         creation_datetime_before: Optional[datetime] = None,
         sort_by: Optional[Union[str, List[str]]] = None,
         **filters: Any,
-    ) -> List[Dict]:
+    ) -> List[AnalysisResultData]:
         """Retrieve all analysis results, with optional filtering.
 
         Args:
@@ -1086,7 +1107,8 @@ class IBMExperimentService:
             raw_data = json.loads(response, cls=json_decoder)
             marker = raw_data.get("marker")
             for result in raw_data["analysis_results"]:
-                results.append(self._api_to_analysis_result(result))
+                analysis_result_data_dict = self._api_to_analysis_result(result)
+                results.append(AnalysisResultData(**analysis_result_data_dict))
             if limit:
                 limit -= len(raw_data["analysis_results"])
             if not marker:  # No more experiments to return.
@@ -1252,7 +1274,6 @@ class IBMExperimentService:
             "quality": quality,
             "verified": raw_data.get("verified", False),
             "tags": raw_data.get("tags", []),
-            "service": self,
             **extra_data,
         }
         return out_dict
