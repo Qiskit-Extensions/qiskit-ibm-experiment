@@ -181,9 +181,7 @@ class TestExperimentServerIntegration(IBMTestCase):
                 )
                 found = False
                 for exp in experiments:
-                    self.assertTrue(
-                        re.match(f".*{filter_type}.*", exp.experiment_type)
-                    )
+                    self.assertTrue(re.match(f".*{filter_type}.*", exp.experiment_type))
                     if exp.experiment_id == exp_id:
                         found = True
                 self.assertTrue(
@@ -261,13 +259,9 @@ class TestExperimentServerIntegration(IBMTestCase):
                         tags, expr.tags
                     )
                     if operator == "AND":
-                        self.assertTrue(
-                            all(f_tag in expr.tags for f_tag in tags), msg
-                        )
+                        self.assertTrue(all(f_tag in expr.tags for f_tag in tags), msg)
                     else:
-                        self.assertTrue(
-                            any(f_tag in expr.tags for f_tag in tags), msg
-                        )
+                        self.assertTrue(any(f_tag in expr.tags for f_tag in tags), msg)
                     if expr.experiment_id == exp_id:
                         ref_expr_found = True
                 self.assertTrue(
@@ -497,9 +491,7 @@ class TestExperimentServerIntegration(IBMTestCase):
                     experiment_type_operator="like",
                     experiment_type=self.default_exp_type,
                 )
-                self.assertEqual(
-                    expected, [exp.experiment_id for exp in experiments]
-                )
+                self.assertEqual(expected, [exp.experiment_id for exp in experiments])
 
     def test_experiments_with_bad_sort_by(self):
         """Test retrieving experiments with bad sort_by."""
@@ -564,7 +556,9 @@ class TestExperimentServerIntegration(IBMTestCase):
         rexp = self.service.experiment(exp_id)
         self.assertEqual(exp_id, rexp.experiment_id)
         for attr in ["hub", "group", "project", "owner", "share_level"]:
-            self.assertIsNotNone(getattr(rexp, attr), "{} does not have a {}".format(rexp, attr))
+            self.assertIsNotNone(
+                getattr(rexp, attr), "{} does not have a {}".format(rexp, attr)
+            )
 
     def test_upload_experiment(self):
         """Test uploading an experiment."""
@@ -587,9 +581,7 @@ class TestExperimentServerIntegration(IBMTestCase):
 
         credentials = self.provider.credentials
         self.assertEqual(credentials.hub, new_exp.hub)  # pylint: disable=no-member
-        self.assertEqual(
-            credentials.group, new_exp.group
-        )  # pylint: disable=no-member
+        self.assertEqual(credentials.group, new_exp.group)  # pylint: disable=no-member
         self.assertEqual(
             credentials.project, new_exp.project
         )  # pylint: disable=no-member
@@ -776,9 +768,7 @@ class TestExperimentServerIntegration(IBMTestCase):
 
         results = self.service.analysis_results(experiment_id=expr_id)
         self.assertEqual(2, len(results))
-        self.assertEqual(
-            {result_id1, result_id2}, {res.result_id for res in results}
-        )
+        self.assertEqual({result_id1, result_id2}, {res.result_id for res in results})
 
     def test_analysis_results_with_created_at(self):
         """Test retrieving an analysis result by its created_at timestamp."""
@@ -959,13 +949,9 @@ class TestExperimentServerIntegration(IBMTestCase):
                 for res in results:
                     msg = "Tags {} not fond in result tags {}".format(tags, res.tags)
                     if operator == "AND":
-                        self.assertTrue(
-                            all(f_tag in res.tags for f_tag in tags), msg
-                        )
+                        self.assertTrue(all(f_tag in res.tags for f_tag in tags), msg)
                     else:
-                        self.assertTrue(
-                            any(f_tag in res.tags for f_tag in tags), msg
-                        )
+                        self.assertTrue(any(f_tag in res.tags for f_tag in tags), msg)
                     if res.result_id == result_id:
                         res_found = True
                 self.assertTrue(

@@ -25,7 +25,6 @@ from .constants import (
     RESULT_QUALITY_FROM_API,
     RESULT_QUALITY_TO_API,
     DEFAULT_BASE_URL,
-    ACCOUNT_CHANNEL,
 )
 from .utils import map_api_error, local_to_utc_str, utc_to_local
 from .device_component import DeviceComponent
@@ -155,13 +154,16 @@ class IBMExperimentService:
         return access_token
 
     def get_db_url(self):
-        headers = {"accept": "application/json",
-                   "Content-Type": "application/json",
-                   "X-Access-Token": self._access_token}
+        """Receive the url for the database API from the server"""
+        headers = {
+            "accept": "application/json",
+            "Content-Type": "application/json",
+            "X-Access-Token": self._access_token,
+        }
         url = self._account.url + self._USER_DATA_CMD
         try:
             response = requests.get(url=url, headers=headers)
-            db_url = response.json()['urls']['services']['resultsDB']
+            db_url = response.json()["urls"]["services"]["resultsDB"]
             return db_url
         except KeyError:
             raise IBMApiError(

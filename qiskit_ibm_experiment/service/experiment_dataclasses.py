@@ -62,6 +62,7 @@ class ExperimentData:
             ret += f"\nFigures: {self.figure_names}"
         return ret
 
+
 @dataclass
 class AnalysisResultData:
     """Dataclass for experiment analysis results"""
