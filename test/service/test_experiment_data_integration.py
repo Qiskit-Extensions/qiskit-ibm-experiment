@@ -71,7 +71,7 @@ class TestExperimentDataIntegration(IBMTestCase):
         """Get the provider for the class."""
         cls.provider = IBMQ.enable_account(
             token=os.getenv("QISKIT_IBM_STAGING_API_TOKEN"),
-            url=os.getenv("QISKIT_IBM_STAGING_API_URL") + "/v2",
+            url=os.getenv("QISKIT_IBM_STAGING_API_URL"),
         )
         cls.backend = least_busy(
             cls.provider.backends(simulator=False, min_num_qubits=5)

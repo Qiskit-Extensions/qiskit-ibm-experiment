@@ -75,8 +75,8 @@ class IBMExperimentService:
 
     _default_preferences = {"auto_save": False}
     _default_options = {"prompt_for_delete": True}
-    _DEFAULT_AUTHENTICATION_PREFIX = "/v2/users/loginWithToken"
-    _DEFAULT_EXPERIMENT_PREFIX = "/resultsdb"
+    _AUTHENTICATION_CMD = "/users/loginWithToken"
+    _USER_DATA_CMD = "/users/me"
 
     def __init__(
         self,
@@ -110,14 +110,8 @@ class IBMExperimentService:
         if not self._account.local:
             if self._account.url is None:
                 self._account.url = url
-            db_url = self._account.url + self._DEFAULT_EXPERIMENT_PREFIX
-            auth_url = self._account.url + self._DEFAULT_AUTHENTICATION_PREFIX
-            if self._account.channel != ACCOUNT_CHANNEL:
-                logger.warning(
-                    "The account does not use the '%s' channel. Authentication will likely fail.",
-                    ACCOUNT_CHANNEL,
-                )
-            self.get_access_token(auth_url)
+            self.get_access_token()
+            db_url = self.get_db_url()
 
             self._additional_params = {
                 "proxies": self._account.proxies.to_request_params()
@@ -137,7 +131,7 @@ class IBMExperimentService:
             if name in self.options:
                 self.options[name] = value
 
-    def get_access_token(self, auth_url, api_token=None):
+    def get_access_token(self, api_token=None):
         """Authenticates to the server with the API token, receiving access token
         for the current session"""
         if api_token is None:
@@ -147,8 +141,9 @@ class IBMExperimentService:
                 raise IBMApiError("No API token; cannot connect to service")
         headers = {"accept": "application/json", "Content-Type": "application/json"}
         data = {"apiToken": api_token}
+        url = self._account.url + self._AUTHENTICATION_CMD
         try:
-            response = requests.post(url=auth_url, json=data, headers=headers)
+            response = requests.post(url=url, json=data, headers=headers)
             access_token = response.json()["id"]
         except KeyError:
             raise IBMApiError(
@@ -158,6 +153,22 @@ class IBMExperimentService:
             )
         self._access_token = access_token
         return access_token
+
+    def get_db_url(self):
+        headers = {"accept": "application/json",
+                   "Content-Type": "application/json",
+                   "X-Access-Token": self._access_token}
+        url = self._account.url + self._USER_DATA_CMD
+        try:
+            response = requests.get(url=url, headers=headers)
+            db_url = response.json()['urls']['services']['resultsDB']
+            return db_url
+        except KeyError:
+            raise IBMApiError(
+                "Unable to retrieve the API url for the database (request returned {})".format(
+                    response.json()
+                )
+            )
 
     @classmethod
     def save_account(
