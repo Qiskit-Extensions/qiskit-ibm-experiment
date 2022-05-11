@@ -60,7 +60,9 @@ import logging
 from .service import IBMExperimentService
 
 from .exceptions import *
+from .service.constants import ResultQuality
 from .service.utils import setup_logger
+from .service.experiment_dataclasses import ExperimentData, AnalysisResultData
 from .version import __version__
 
 
