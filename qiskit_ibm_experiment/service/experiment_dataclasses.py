@@ -24,11 +24,11 @@ class ExperimentData:
     parent_id: Optional[str] = None
     experiment_type: str = None
     backend: Optional[str] = None
-    tags: Optional[List[str]] = field(default_factory=lambda: [])
-    job_ids: Optional[List[str]] = field(default_factory=lambda: [])
+    tags: Optional[List[str]] = field(default_factory=list)
+    job_ids: Optional[List[str]] = field(default_factory=list)
     share_level: Optional[str] = None
-    metadata: Optional[Dict[str, str]] = field(default_factory=lambda: {})
-    figure_names: Optional[List[str]] = field(default_factory=lambda: [])
+    metadata: Optional[Dict[str, str]] = field(default_factory=dict)
+    figure_names: Optional[List[str]] = field(default_factory=list)
     notes: Optional[str] = None
     hub: Optional[str] = None
     group: Optional[str] = None
@@ -70,11 +70,11 @@ class AnalysisResultData:
     experiment_id: str
     result_id: str
     result_type: Optional[str] = None
-    result_data: Optional[Dict[str, Any]] = field(default_factory=lambda: {})
-    device_components: Optional[List[str]] = field(default_factory=lambda: [])
+    result_data: Optional[Dict[str, Any]] = field(default_factory=dict)
+    device_components: Optional[List[str]] = field(default_factory=list)
     quality: Optional[str] = None
     verified: Optional[bool] = False
-    tags: Optional[List[str]] = field(default_factory=lambda: [])
+    tags: Optional[List[str]] = field(default_factory=list)
     backend_name: Optional[str] = None
     creation_datetime: Optional[datetime] = None
     updated_datetime: Optional[datetime] = None
