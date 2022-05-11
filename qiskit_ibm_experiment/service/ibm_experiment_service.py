@@ -785,7 +785,7 @@ class IBMExperimentService:
         """
 
         request = self._analysis_result_to_api(data)
-        with map_api_error(f"Analysis result {result_id} creation failed."):
+        with map_api_error(f"Analysis result {data.result_id} creation failed."):
             response = self._api_client.analysis_result_create(
                 json.dumps(request, cls=json_encoder)
             )
@@ -793,14 +793,8 @@ class IBMExperimentService:
 
     def update_analysis_result(
         self,
-        result_id: str,
-        result_data: Optional[Dict] = None,
-        tags: Optional[List[str]] = None,
-        quality: Union[ResultQuality, str] = None,
-        verified: bool = None,
-        chisq: Optional[float] = None,
+        data: AnalysisResultData,
         json_encoder: Type[json.JSONEncoder] = json.JSONEncoder,
-        **kwargs: Any,
     ) -> None:
         """Update an existing analysis result.
 
@@ -819,23 +813,11 @@ class IBMExperimentService:
             IBMExperimentEntryNotFound: If the analysis result does not exist.
             IBMApiError: If the request to the server failed.
         """
-        # pylint: disable=arguments-differ
-        if kwargs:
-            logger.info(
-                "Keywords %s are not supported by IBM Quantum experiment service "
-                "and will be ignored.",
-                kwargs.keys(),
-            )
 
-        if isinstance(quality, str):
-            quality = ResultQuality(quality.upper())
-
-        request = self._analysis_result_to_api(
-            data=result_data, tags=tags, quality=quality, verified=verified, chisq=chisq
-        )
-        with map_api_error(f"Analysis result {result_id} update failed."):
+        request = self._analysis_result_to_api(data)
+        with map_api_error(f"Analysis result {data.result_id} update failed."):
             self._api_client.analysis_result_update(
-                result_id, json.dumps(request, cls=json_encoder)
+                data.result_id, json.dumps(request, cls=json_encoder)
             )
 
     def _confirm_delete(self, msg: str) -> bool:
