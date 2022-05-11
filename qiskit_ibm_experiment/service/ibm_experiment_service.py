@@ -260,19 +260,9 @@ class IBMExperimentService:
 
     def create_experiment(
         self,
-        experiment_type: str,
-        backend_name: str,
+        data: ExperimentData,
         provider: Any,
-        metadata: Optional[Dict] = None,
-        experiment_id: Optional[str] = None,
-        parent_id: Optional[str] = None,
-        job_ids: Optional[List[str]] = None,
-        tags: Optional[List[str]] = None,
-        notes: Optional[str] = None,
-        share_level: Optional[Union[str, ExperimentShareLevel]] = None,
-        start_datetime: Optional[Union[str, datetime]] = None,
         json_encoder: Type[json.JSONEncoder] = json.JSONEncoder,
-        **kwargs: Any,
     ) -> str:
         """Create a new experiment in the database.
 
@@ -310,51 +300,21 @@ class IBMExperimentService:
             IBMApiError: If the request to the server failed.
         """
         # pylint: disable=arguments-differ
-        if kwargs:
-            logger.info(
-                "Keywords %s are not supported by IBM Quantum experiment service "
-                "and will be ignored.",
-                kwargs.keys(),
-            )
 
-        data = {
-            "type": experiment_type,
-            "device_name": backend_name,
+        api_data = self._experiment_data_to_api(data)
+        api_data.update({
             "hub_id": provider.credentials.hub,
             "group_id": provider.credentials.group,
             "project_id": provider.credentials.project,
-        }
-        data.update(
-            self._experiment_data_to_api(
-                metadata=metadata,
-                experiment_id=experiment_id,
-                parent_id=parent_id,
-                job_ids=job_ids,
-                tags=tags,
-                notes=notes,
-                share_level=share_level,
-                start_dt=start_datetime,
-            )
-        )
+        })
 
-        with map_api_error(f"Experiment {experiment_id} creation failed."):
+        with map_api_error(f"Experiment {data.experiment_id} creation failed."):
             response_data = self._api_client.experiment_upload(
-                json.dumps(data, cls=json_encoder)
+                json.dumps(api_data, cls=json_encoder)
             )
         return response_data["uuid"]
 
-    def update_experiment(
-        self,
-        experiment_id: str,
-        metadata: Optional[Dict] = None,
-        job_ids: Optional[List[str]] = None,
-        notes: Optional[str] = None,
-        tags: Optional[List[str]] = None,
-        share_level: Optional[Union[str, ExperimentShareLevel]] = None,
-        end_datetime: Optional[Union[str, datetime]] = None,
-        json_encoder: Type[json.JSONEncoder] = json.JSONEncoder,
-        **kwargs: Any,
-    ) -> None:
+    def update_experiment(self, data: ExperimentData, json_encoder: Type[json.JSONEncoder] = json.JSONEncoder) -> None:
         """Update an existing experiment.
 
         Args:
@@ -381,43 +341,20 @@ class IBMExperimentService:
             IBMExperimentEntryNotFound: If the experiment does not exist.
             IBMApiError: If the request to the server failed.
         """
-        # pylint: disable=arguments-differ
-        if kwargs:
-            logger.info(
-                "Keywords %s are not supported by IBM Quantum experiment service "
-                "and will be ignored.",
-                kwargs.keys(),
-            )
 
-        data = self._experiment_data_to_api(
-            metadata=metadata,
-            job_ids=job_ids,
-            tags=tags,
-            notes=notes,
-            share_level=share_level,
-            end_dt=end_datetime,
-        )
+        api_data = self._experiment_data_to_api(data)
+        if 'uuid' in api_data:
+            del api_data['uuid'] # the uuid is passed separately
         if not data:
             logger.warning("update_experiment() called with nothing to update.")
             return
 
-        with map_api_error(f"Experiment {experiment_id} update failed."):
+        with map_api_error(f"Experiment {data.experiment_id} update failed."):
             self._api_client.experiment_update(
-                experiment_id, json.dumps(data, cls=json_encoder)
+                data.experiment_id, json.dumps(api_data, cls=json_encoder)
             )
 
-    def _experiment_data_to_api(
-        self,
-        metadata: Optional[Dict] = None,
-        experiment_id: Optional[str] = None,
-        parent_id: Optional[str] = None,
-        job_ids: Optional[List[str]] = None,
-        tags: Optional[List[str]] = None,
-        notes: Optional[str] = None,
-        share_level: Optional[Union[str, ExperimentShareLevel]] = None,
-        start_dt: Optional[Union[str, datetime]] = None,
-        end_dt: Optional[Union[str, datetime]] = None,
-    ) -> Dict:
+    def _experiment_data_to_api(self, data: ExperimentData) -> Dict:
         """Convert experiment data to API request data.
 
         Args:
@@ -434,28 +371,33 @@ class IBMExperimentService:
         Returns:
             API request data.
         """
-        data = {}  # type: Dict[str, Any]
-        if metadata:
-            data["extra"] = metadata
-        if experiment_id:
-            data["uuid"] = experiment_id
-        if parent_id:
-            data["parent_experiment_uuid"] = parent_id
-        if share_level:
+        out = {}  # type: Dict[str, Any]
+        if data.experiment_type:
+            out["type"] = data.experiment_type
+        if data.backend:
+            out["device_name"] = data.backend
+        if data.metadata:
+            out["extra"] = data.metadata
+        if data.experiment_id:
+            out["uuid"] = data.experiment_id
+        if data.parent_id:
+            out["parent_experiment_uuid"] = data.parent_id
+        if data.share_level:
+            share_level = data.share_level
             if isinstance(share_level, str):
-                share_level = ExperimentShareLevel(share_level.lower())
-            data["visibility"] = share_level.value
-        if tags:
-            data["tags"] = tags
-        if job_ids:
-            data["jobs"] = job_ids
-        if notes:
-            data["notes"] = notes
-        if start_dt:
-            data["start_time"] = local_to_utc_str(start_dt)
-        if end_dt:
-            data["end_time"] = local_to_utc_str(end_dt)
-        return data
+                share_level = ExperimentShareLevel(data.share_level.lower())
+            out["visibility"] = share_level.value
+        if data.tags:
+            out["tags"] = data.tags
+        if data.job_ids:
+            out["jobs"] = data.job_ids
+        if data.notes:
+            out["notes"] = data.notes
+        if data.start_datetime:
+            out["start_time"] = local_to_utc_str(data.start_datetime)
+        if data.end_datetime:
+            out["end_time"] = local_to_utc_str(data.end_datetime)
+        return out
 
     def experiment(
         self,

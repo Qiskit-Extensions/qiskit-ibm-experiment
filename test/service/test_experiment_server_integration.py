@@ -565,7 +565,7 @@ class TestExperimentServerIntegration(IBMTestCase):
     def test_upload_experiment(self):
         """Test uploading an experiment."""
         exp_id = str(uuid.uuid4())
-        new_exp_id = self.service.create_experiment(
+        new_exp_id = self.service.create_experiment(ExperimentData(
             experiment_type="qiskit_test",
             backend_name=self.backend.name(),
             provider=self.provider,
@@ -576,7 +576,7 @@ class TestExperimentServerIntegration(IBMTestCase):
             notes="some notes",
             share_level=ExperimentShareLevel.PROJECT,
             start_datetime=datetime.now(),
-        )
+        ))
         self.experiments_to_delete.append(new_exp_id)
         self.assertEqual(exp_id, new_exp_id)
         new_exp = self.service.experiment(new_exp_id)
@@ -612,7 +612,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         """Test updating an experiment."""
         new_exp_id = self._create_experiment()
 
-        self.service.update_experiment(
+        self.service.update_experiment(ExperimentData(
             experiment_id=new_exp_id,
             metadata={"foo": "bar"},
             job_ids=["job1", "job2"],
@@ -620,7 +620,7 @@ class TestExperimentServerIntegration(IBMTestCase):
             notes="some notes",
             share_level=ExperimentShareLevel.PROJECT,
             end_datetime=datetime.now(),
-        )
+        ))
 
         rexp = self.service.experiment(new_exp_id)
         self.assertEqual({"foo": "bar"}, rexp.metadata)
@@ -1200,8 +1200,8 @@ class TestExperimentServerIntegration(IBMTestCase):
         self.assertTrue((metadata["numpy"] == rmetadata["numpy"]).all())
 
         new_metadata = {"complex": 4 + 5j, "numpy": np.ones(3)}
-        self.service.update_experiment(
-            expr_id, metadata=new_metadata, json_encoder=ExperimentEncoder
+        self.service.update_experiment(ExperimentData(
+            expr_id, metadata=new_metadata), json_encoder=ExperimentEncoder
         )
         rexp = self.service.experiment(expr_id, json_decoder=ExperimentDecoder)
         rmetadata = rexp.metadata
@@ -1270,17 +1270,18 @@ class TestExperimentServerIntegration(IBMTestCase):
         self,
         experiment_type: Optional[str] = None,
         backend_name: Optional[str] = None,
+        json_encoder: Optional[json.JSONEncoder] = None,
         **kwargs,
+
     ) -> str:
         """Create a new experiment."""
         experiment_type = experiment_type or "qiskit_test"
         backend_name = backend_name or self.backend.name()
-        exp_id = self.service.create_experiment(
+        exp_id = self.service.create_experiment(ExperimentData(
             experiment_type=experiment_type,
-            backend_name=backend_name,
-            provider=self.provider,
+            backend=backend_name,
             **kwargs,
-        )
+        ), provider=self.provider, json_encoder=json_encoder)
         self.experiments_to_delete.append(exp_id)
         return exp_id
 
@@ -1320,12 +1321,15 @@ class TestExperimentServerIntegration(IBMTestCase):
 
         return backend_name, device_components
 
-#
+
 # if __name__ == "__main__":
 #     unittest.main()
 
 def suite():
     suite = unittest.TestSuite()
+    suite.addTest(TestExperimentServerIntegration('test_upload_experiment'))
+    suite.addTest(TestExperimentServerIntegration('test_experiment_coders'))
+    suite.addTest(TestExperimentServerIntegration('test_update_experiment'))
     suite.addTest(TestExperimentServerIntegration('test_experiments_with_start_time'))
     return suite
 
