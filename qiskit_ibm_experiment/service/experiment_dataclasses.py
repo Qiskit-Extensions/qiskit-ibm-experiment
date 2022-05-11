@@ -11,6 +11,7 @@
 # that they have been altered from the originals.
 
 """Dataclasses for returned results"""
+import uuid
 from dataclasses import dataclass, field
 from typing import Optional, List, Dict, Union, Any
 from datetime import datetime
@@ -22,7 +23,7 @@ from .device_component import DeviceComponent
 class ExperimentData:
     """Dataclass for experiments"""
 
-    experiment_id: str
+    experiment_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     parent_id: Optional[str] = None
     experiment_type: str = None
     backend: Optional[str] = None
@@ -69,8 +70,8 @@ class ExperimentData:
 class AnalysisResultData:
     """Dataclass for experiment analysis results"""
 
-    experiment_id: str
-    result_id: str
+    result_id: Optional[str] = field(default_factory=lambda: str(uuid.uuid4()))
+    experiment_id: Optional[str] = None
     result_type: Optional[str] = None
     result_data: Optional[Dict[str, Any]] = field(default_factory=dict)
     device_components: Optional[Union[List[Union[str, DeviceComponent]], str, DeviceComponent]] = field(default_factory=list)

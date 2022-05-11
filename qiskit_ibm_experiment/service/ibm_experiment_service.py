@@ -815,6 +815,8 @@ class IBMExperimentService:
         """
 
         request = self._analysis_result_to_api(data)
+        if 'uuid' in request:
+            del request['uuid'] # the uuid is passed separately
         with map_api_error(f"Analysis result {data.result_id} update failed."):
             self._api_client.analysis_result_update(
                 data.result_id, json.dumps(request, cls=json_encoder)
@@ -844,9 +846,10 @@ class IBMExperimentService:
             out["experiment_uuid"] = data.experiment_id
         if data.device_components:
             components = []
-            if not isinstance(data.device_components, list):
-                device_components = [data.device_components]
-            for comp in device_components:
+            device_components_list = data.device_components
+            if not isinstance(device_components_list, list):
+                device_components_list = [device_components_list]
+            for comp in device_components_list:
                 components.append(str(comp))
             out["device_components"] = components
         if data.result_data:

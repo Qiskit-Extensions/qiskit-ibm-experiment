@@ -15,6 +15,7 @@
 import os
 import uuid
 import unittest
+import json
 from unittest import mock, SkipTest, skipIf
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
@@ -27,6 +28,7 @@ from qiskit.providers.ibmq import IBMQFactory, least_busy
 from qiskit_ibm_experiment.service import ResultQuality, ExperimentShareLevel
 from qiskit_ibm_experiment import IBMExperimentEntryNotFound
 from qiskit_ibm_experiment import IBMExperimentService
+from qiskit_ibm_experiment import ExperimentData, AnalysisResultData
 
 
 @skipIf(
@@ -230,7 +232,7 @@ class TestExperimentServerIntegration(IBMTestCase):
                 self.assertEqual(
                     found,
                     expected,
-                    "Experiment {} (not)found unexpectedly when filter using"
+                    "Experiment {} (not)found unexpectedly when filter using "
                     "start_dt={}, end_dt={}. Found={}".format(
                         exp_id, start_dt, end_dt, found
                     ),
@@ -645,7 +647,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         fit = dict(value=41.456, variance=4.051)
         result_id = str(uuid.uuid4())
         chisq = 1.3253
-        aresult_id = self.service.create_analysis_result(
+        aresult_id = self.service.create_analysis_result(AnalysisResultData(
             experiment_id=exp_id,
             result_type="qiskit_test",
             result_data=fit,
@@ -655,7 +657,7 @@ class TestExperimentServerIntegration(IBMTestCase):
             verified=True,
             result_id=result_id,
             chisq=chisq,
-        )
+        ))
 
         rresult = self.service.analysis_result(aresult_id)
         self.assertEqual(exp_id, rresult.experiment_id)
@@ -676,14 +678,14 @@ class TestExperimentServerIntegration(IBMTestCase):
         fit = dict(value=41.456, variance=4.051)
         chisq = 1.3253
 
-        self.service.update_analysis_result(
+        self.service.update_analysis_result(AnalysisResultData(
             result_id=result_id,
             result_data=fit,
             tags=["qiskit_test"],
             quality=ResultQuality.GOOD,
             verified=True,
             chisq=chisq,
-        )
+        ))
 
         rresult = self.service.analysis_result(result_id)
         self.assertEqual(result_id, rresult.result_id)
@@ -1221,8 +1223,9 @@ class TestExperimentServerIntegration(IBMTestCase):
         self.assertEqual(data["numpy_int"], rdata["numpy_int"])
 
         new_data = {"complex": 4 + 5j, "numpy": np.ones(3), "numpy_int": np.int64(127)}
-        self.service.update_analysis_result(
-            result_id, result_data=new_data, json_encoder=ExperimentEncoder
+        self.service.update_analysis_result(AnalysisResultData(
+            result_id=result_id, result_data=new_data),
+            json_encoder=ExperimentEncoder
         )
         rresult = self.service.analysis_result(
             result_id, json_decoder=ExperimentDecoder
@@ -1286,18 +1289,19 @@ class TestExperimentServerIntegration(IBMTestCase):
         exp_id: Optional[str] = None,
         result_type: Optional[str] = None,
         result_data: Optional[Dict] = None,
+        json_encoder: Optional[json.JSONEncoder] = None,
         **kwargs: Any,
     ):
         """Create a simple analysis result."""
         experiment_id = exp_id or self._create_experiment()
         result_type = result_type or "qiskit_test"
         result_data = result_data or {}
-        aresult_id = self.service.create_analysis_result(
+        aresult_id = self.service.create_analysis_result(AnalysisResultData(
             experiment_id=experiment_id,
             result_data=result_data,
             result_type=result_type,
             **kwargs,
-        )
+        ), json_encoder=json_encoder)
         return aresult_id
 
     def _find_backend_device_components(self, min_components):
@@ -1316,6 +1320,15 @@ class TestExperimentServerIntegration(IBMTestCase):
 
         return backend_name, device_components
 
+#
+# if __name__ == "__main__":
+#     unittest.main()
 
-if __name__ == "__main__":
-    unittest.main()
+def suite():
+    suite = unittest.TestSuite()
+    suite.addTest(TestExperimentServerIntegration('test_experiments_with_start_time'))
+    return suite
+
+if __name__ == '__main__':
+    runner = unittest.TextTestRunner()
+    runner.run(suite())
