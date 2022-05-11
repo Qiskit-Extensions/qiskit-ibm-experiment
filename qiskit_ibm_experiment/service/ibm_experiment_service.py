@@ -756,19 +756,8 @@ class IBMExperimentService:
 
     def create_analysis_result(
         self,
-        experiment_id: str,
-        result_data: Dict,
-        result_type: str,
-        device_components: Optional[
-            Union[List[Union[str, DeviceComponent]], str, DeviceComponent]
-        ] = None,
-        tags: Optional[List[str]] = None,
-        quality: Union[ResultQuality, str] = ResultQuality.UNKNOWN,
-        verified: bool = False,
-        result_id: Optional[str] = None,
-        chisq: Optional[float] = None,
+        data: AnalysisResultData,
         json_encoder: Type[json.JSONEncoder] = json.JSONEncoder,
-        **kwargs: Any,
     ) -> str:
         """Create a new analysis result in the database.
 
@@ -794,35 +783,8 @@ class IBMExperimentService:
             IBMExperimentEntryExists: If the analysis result already exits.
             IBMApiError: If the request to the server failed.
         """
-        # pylint: disable=arguments-differ
-        if kwargs:
-            logger.info(
-                "Keywords %s are not supported by IBM Quantum experiment service "
-                "and will be ignored.",
-                kwargs.keys(),
-            )
 
-        components = []
-        if device_components:
-            if not isinstance(device_components, list):
-                device_components = [device_components]
-            for comp in device_components:
-                components.append(str(comp))
-
-        if isinstance(quality, str):
-            quality = ResultQuality(quality.upper())
-
-        request = self._analysis_result_to_api(
-            experiment_id=experiment_id,
-            device_components=components,
-            data=result_data,
-            result_type=result_type,
-            tags=tags,
-            quality=quality,
-            verified=verified,
-            result_id=result_id,
-            chisq=chisq,
-        )
+        request = self._analysis_result_to_api(data)
         with map_api_error(f"Analysis result {result_id} creation failed."):
             response = self._api_client.analysis_result_create(
                 json.dumps(request, cls=json_encoder)
@@ -886,54 +848,42 @@ class IBMExperimentService:
             return False
         return True
 
-    def _analysis_result_to_api(
-        self,
-        experiment_id: Optional[str] = None,
-        device_components: Optional[List[str]] = None,
-        data: Optional[Dict] = None,
-        result_type: Optional[str] = None,
-        tags: Optional[List[str]] = None,
-        quality: Optional[ResultQuality] = None,
-        verified: Optional[bool] = None,
-        result_id: Optional[str] = None,
-        chisq: Optional[float] = None,
-    ) -> Dict:
+    def _analysis_result_to_api(self, data: AnalysisResultData) -> Dict:
         """Convert analysis result fields to server format.
 
         Args:
-            experiment_id: ID of the experiment this result is for.
-            data: Result data to be stored.
-            result_type: Analysis result type.
-            device_components: Target device components, such as qubits.
-            tags: Tags to be associated with the analysis result.
-            quality: Quality of this analysis.
-            verified: Whether the result quality has been verified.
-            result_id: Analysis result ID. It must be in the ``uuid4`` format.
-                One will be generated if not supplied.
-            chisq: chi^2 decimal value of the fit.
+            data: The analysis result data
 
         Returns:
             API request data.
         """
         out = {}  # type: Dict[str, Any]
-        if experiment_id:
-            out["experiment_uuid"] = experiment_id
-        if device_components:
-            out["device_components"] = device_components
-        if data:
-            out["fit"] = data
-        if result_type:
-            out["type"] = result_type
-        if tags:
-            out["tags"] = tags
-        if quality:
+        if data.experiment_id:
+            out["experiment_uuid"] = data.experiment_id
+        if data.device_components:
+            components = []
+            if not isinstance(data.device_components, list):
+                device_components = [data.device_components]
+            for comp in device_components:
+                components.append(str(comp))
+            out["device_components"] = components
+        if data.result_data:
+            out["fit"] = data.result_data
+        if data.result_type:
+            out["type"] = data.result_type
+        if data.tags:
+            out["tags"] = data.tags
+        if data.quality:
+            quality = data.quality
+            if isinstance(quality, str):
+                quality = ResultQuality(data.quality.upper())
             out["quality"] = RESULT_QUALITY_TO_API[quality]
-        if verified is not None:
-            out["verified"] = verified
-        if result_id:
-            out["uuid"] = result_id
-        if chisq:
-            out["chisq"] = chisq
+        if data.verified is not None:
+            out["verified"] = data.verified
+        if data.result_id:
+            out["uuid"] = data.result_id
+        if data.chisq:
+            out["chisq"] = data.chisq
         return out
 
     def analysis_result(

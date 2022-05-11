@@ -12,8 +12,10 @@
 
 """Dataclasses for returned results"""
 from dataclasses import dataclass, field
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Union, Any
 from datetime import datetime
+from .constants import ResultQuality
+from .device_component import DeviceComponent
 
 
 @dataclass
@@ -71,8 +73,8 @@ class AnalysisResultData:
     result_id: str
     result_type: Optional[str] = None
     result_data: Optional[Dict[str, Any]] = field(default_factory=dict)
-    device_components: Optional[List[str]] = field(default_factory=list)
-    quality: Optional[str] = None
+    device_components: Optional[Union[List[Union[str, DeviceComponent]], str, DeviceComponent]] = field(default_factory=list)
+    quality: Optional[ResultQuality] = ResultQuality.UNKNOWN
     verified: Optional[bool] = False
     tags: Optional[List[str]] = field(default_factory=list)
     backend_name: Optional[str] = None
