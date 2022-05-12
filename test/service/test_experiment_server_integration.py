@@ -567,8 +567,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         exp_id = str(uuid.uuid4())
         new_exp_id = self.service.create_experiment(ExperimentData(
             experiment_type="qiskit_test",
-            backend_name=self.backend.name(),
-            provider=self.provider,
+            backend=self.backend.name(),
             metadata={"foo": "bar"},
             experiment_id=exp_id,
             job_ids=["job1", "job2"],
@@ -576,7 +575,7 @@ class TestExperimentServerIntegration(IBMTestCase):
             notes="some notes",
             share_level=ExperimentShareLevel.PROJECT,
             start_datetime=datetime.now(),
-        ))
+        ), provider=self.provider)
         self.experiments_to_delete.append(new_exp_id)
         self.assertEqual(exp_id, new_exp_id)
         new_exp = self.service.experiment(new_exp_id)
@@ -1322,17 +1321,17 @@ class TestExperimentServerIntegration(IBMTestCase):
         return backend_name, device_components
 
 
-# if __name__ == "__main__":
-#     unittest.main()
+if __name__ == "__main__":
+    unittest.main()
 
-def suite():
-    suite = unittest.TestSuite()
-    suite.addTest(TestExperimentServerIntegration('test_upload_experiment'))
-    suite.addTest(TestExperimentServerIntegration('test_experiment_coders'))
-    suite.addTest(TestExperimentServerIntegration('test_update_experiment'))
-    suite.addTest(TestExperimentServerIntegration('test_experiments_with_start_time'))
-    return suite
-
-if __name__ == '__main__':
-    runner = unittest.TextTestRunner()
-    runner.run(suite())
+# def suite():
+#     suite = unittest.TestSuite()
+#     # suite.addTest(TestExperimentServerIntegration('test_upload_experiment'))
+#     # suite.addTest(TestExperimentServerIntegration('test_experiment_coders'))
+#     # suite.addTest(TestExperimentServerIntegration('test_update_experiment'))
+#     suite.addTest(TestExperimentServerIntegration('test_experiments_with_start_time'))
+#     return suite
+#
+# if __name__ == '__main__':
+#     runner = unittest.TextTestRunner()
+#     runner.run(suite())

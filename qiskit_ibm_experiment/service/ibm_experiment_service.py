@@ -141,15 +141,13 @@ class IBMExperimentService:
         headers = {"accept": "application/json", "Content-Type": "application/json"}
         data = {"apiToken": api_token}
         url = self._account.url + self._AUTHENTICATION_CMD
-        try:
-            response = requests.post(url=url, json=data, headers=headers)
-            access_token = response.json()["id"]
-        except KeyError:
+        response = requests.post(url=url, json=data, headers=headers)
+        access_token = response.json().get("id", None)
+        if access_token is None:
             raise IBMApiError(
                 "Did not receive access token (request returned {})".format(
                     response.json()
-                )
-            )
+            ))
         self._access_token = access_token
         return access_token
 
