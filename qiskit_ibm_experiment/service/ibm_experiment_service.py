@@ -259,7 +259,7 @@ class IBMExperimentService:
     def create_experiment(
         self,
         data: ExperimentData,
-        provider: Any,
+        provider: Optional[Any] = None,
         json_encoder: Type[json.JSONEncoder] = json.JSONEncoder,
     ) -> str:
         """Create a new experiment in the database.
@@ -299,12 +299,16 @@ class IBMExperimentService:
         """
         # pylint: disable=arguments-differ
 
+        if provider is not None:
+            # attempt to get hub/group/project data from the provider
+            data.hub = provider.credentials.hub
+            data.group = provider.credentials.group
+            data.project = provider.credentials.project
+
         api_data = self._experiment_data_to_api(data)
-        api_data.update({
-            "hub_id": provider.credentials.hub,
-            "group_id": provider.credentials.group,
-            "project_id": provider.credentials.project,
-        })
+
+        if "hub_id" not in api_data or "group_id" not in api_data or "project_id" not in api_data:
+            logger.warning("create_experiment() called without hub/group/project data (passing a provider parameter enables inference of these values)")
 
         with map_api_error(f"Experiment {data.experiment_id} creation failed."):
             response_data = self._api_client.experiment_upload(
@@ -341,8 +345,11 @@ class IBMExperimentService:
         """
 
         api_data = self._experiment_data_to_api(data)
-        if 'uuid' in api_data:
-            del api_data['uuid'] # the uuid is passed separately
+        unused_fields = ['uuid', 'experiment_uuid', 'device_components']
+        for field_name in unused_fields:
+            if field_name in api_data:
+                del api_data[field_name]
+
         if not data:
             logger.warning("update_experiment() called with nothing to update.")
             return
@@ -380,6 +387,12 @@ class IBMExperimentService:
             out["uuid"] = data.experiment_id
         if data.parent_id:
             out["parent_experiment_uuid"] = data.parent_id
+        if data.hub:
+            out["hub_id"] = data.hub
+        if data.group:
+            out["group_id"] = data.group
+        if data.project:
+            out["project_id"] = data.project
         if data.share_level:
             share_level = data.share_level
             if isinstance(share_level, str):
