@@ -345,7 +345,7 @@ class IBMExperimentService:
         """
 
         api_data = self._experiment_data_to_api(data)
-        unused_fields = ['uuid', 'experiment_uuid', 'device_components']
+        unused_fields = ['uuid', 'device_name', 'group_id', 'hub_id', 'project_id', 'type']
         for field_name in unused_fields:
             if field_name in api_data:
                 del api_data[field_name]
@@ -768,8 +768,10 @@ class IBMExperimentService:
         """
 
         request = self._analysis_result_to_api(data)
-        if 'uuid' in request:
-            del request['uuid'] # the uuid is passed separately
+        unused_fields = ['uuid', 'experiment_uuid', 'device_components', 'type']
+        for field_name in unused_fields:
+            if field_name in request:
+                del request[field_name]
         with map_api_error(f"Analysis result {data.result_id} update failed."):
             self._api_client.analysis_result_update(
                 data.result_id, json.dumps(request, cls=json_encoder)
