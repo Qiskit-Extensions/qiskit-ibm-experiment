@@ -30,7 +30,7 @@ from .utils import map_api_error, local_to_utc_str, utc_to_local
 from .device_component import DeviceComponent
 from .experiment_dataclasses import ExperimentData, AnalysisResultData
 from ..client.experiment import ExperimentClient
-from ..exceptions import RequestsApiError, IBMApiError
+from ..exceptions import RequestsApiError, IBMApiError, IBMExperimentEntryExists, IBMExperimentEntryNotFound
 from ..accounts import AccountManager, Account, ProxyConfiguration
 
 logger = logging.getLogger(__name__)
@@ -715,19 +715,8 @@ class IBMExperimentService:
         """Create a new analysis result in the database.
 
         Args:
-            experiment_id: ID of the experiment this result is for.
-            result_data: Result data to be stored.
-            result_type: Analysis result type.
-            device_components: Target device components, such as qubits.
-            tags: Tags to be associated with the analysis result.
-            quality: Quality of this analysis.
-            verified: Whether the result quality has been verified.
-            result_id: Analysis result ID. It must be in the ``uuid4`` format.
-                One will be generated if not supplied.
-            chisq: chi^2 decimal value of the fit.
+            data: The data to save.
             json_encoder: Custom JSON encoder to use to encode the analysis result.
-            kwargs: Additional analysis result attributes that are not supported
-                and will be ignored.
 
         Returns:
             Analysis result ID.
@@ -752,15 +741,8 @@ class IBMExperimentService:
         """Update an existing analysis result.
 
         Args:
-            result_id: Analysis result ID.
-            result_data: Result data to be stored.
-            quality: Quality of this analysis.
-            verified: Whether the result quality has been verified.
-            tags: Tags to be associated with the analysis result.
-            chisq: chi^2 decimal value of the fit.
+            data: The data to save. Note that the following fields will be ignored: 'uuid', 'experiment_uuid', 'device_components', 'type'
             json_encoder: Custom JSON encoder to use to encode the analysis result.
-            kwargs: Additional analysis result attributes that are not supported
-                and will be ignored.
 
         Raises:
             IBMExperimentEntryNotFound: If the analysis result does not exist.
@@ -1281,6 +1263,49 @@ class IBMExperimentService:
         if response.status_code != 200:
             return None
         return figure_name, len(figure)
+
+    def create_or_update_figure(
+            self,
+            experiment_id: str,
+            figure: Union[str, bytes],
+            figure_name: Optional[str] = None,
+            create: bool = True,
+            max_attempts: int = 3
+    ) -> Tuple[str, int]:
+        """Creates a figure if it doesn't exists, otherwise updates it
+        Args:
+            experiment_id: Experiment ID.
+            figure: Name of the figure file or figure data to store.
+            figure_name: Name of the figure.
+            create: Whether to attempt to create first
+            max_attempts: Maximum number of attempts
+
+        Returns:
+            A tuple of the name and size of the saved figure.
+
+        Raises:
+            IBMApiError: If the request to the server failed.
+        """
+        attempts = 0
+        success = False
+        while attempts < 3 and not success:
+            attempts += 1
+            if create:
+                try:
+                    name, size = self.create_figure(experiment_id, figure, figure_name)
+                    success = True
+                except IBMExperimentEntryExists:
+                    create = False
+            else:
+                try:
+                    name, size = self.update_figure(experiment_id, figure, figure_name)
+                    success = True
+                except IBMExperimentEntryNotFound:
+                    create = True
+        return name, size
+
+
+
 
     def figure(
         self, experiment_id: str, figure_name: str, file_name: Optional[str] = None
