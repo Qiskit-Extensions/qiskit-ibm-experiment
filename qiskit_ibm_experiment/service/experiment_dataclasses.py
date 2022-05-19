@@ -12,6 +12,7 @@
 
 """Dataclasses for returned results"""
 import uuid
+import copy
 from dataclasses import dataclass, field
 from typing import Optional, List, Dict, Union, Any
 from datetime import datetime
@@ -64,6 +65,27 @@ class ExperimentData:
         if self.figure_names:
             ret += f"\nFigures: {self.figure_names}"
         return ret
+
+    def copy(self):
+        return ExperimentData(experiment_id=self.experiment_id,
+                              parent_id=self.parent_id,
+                              experiment_type=self.experiment_type,
+                              backend=self.backend,
+                              tags=copy.copy(self.tags),
+                              job_ids=copy.copy(self.job_ids),
+                              share_level=self.share_level,
+                              metadata=copy.deepcopy(self.metadata),
+                              figure_names=copy.copy(self.figure_names),
+                              notes=self.notes,
+                              hub=self.hub,
+                              group=self.group,
+                              project=self.project,
+                              owner=self.owner,
+                              creation_datetime=self.creation_datetime,
+                              start_datetime=self.start_datetime,
+                              end_datetime=self.end_datetime,
+                              updated_datetime=self.updated_datetime,
+        )
 
 
 @dataclass
