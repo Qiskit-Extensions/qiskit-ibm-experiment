@@ -1,0 +1,5 @@
+---
+features:
+  - |
+    Added the `ExperimentData` and `AnalysisResultData` classes as an interface for sending
+    and receiving data from the API
