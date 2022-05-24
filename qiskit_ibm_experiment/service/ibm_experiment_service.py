@@ -359,6 +359,14 @@ class IBMExperimentService:
                 data.experiment_id, json.dumps(api_data, cls=json_encoder)
             )
 
+    def create_or_update_experiment(self, data: ExperimentData, json_encoder: Type[json.JSONEncoder] = json.JSONEncoder, create: bool = True, max_attempts: int = 3, **kwargs) -> str:
+        """Creates a new experiment, or updates an existing one"""
+        params = kwargs
+        params.update({"data": data,
+                  "json_encoder": json_encoder
+                  })
+        return self.create_or_update(self.create_experiment, self.update_experiment, params, create, max_attempts)
+
     def _experiment_data_to_api(self, data: ExperimentData) -> Dict:
         """Convert experiment data to API request data.
 
@@ -564,10 +572,10 @@ class IBMExperimentService:
                 )
 
         start_time_filters = []
-        if start_datetime_after:
+        if start_datetime_after is not None:
             st_filter = "ge:{}".format(local_to_utc_str(start_datetime_after))
             start_time_filters.append(st_filter)
-        if start_datetime_before:
+        if start_datetime_before is not None:
             st_filter = "le:{}".format(local_to_utc_str(start_datetime_before))
             start_time_filters.append(st_filter)
 
@@ -758,6 +766,18 @@ class IBMExperimentService:
             self._api_client.analysis_result_update(
                 data.result_id, json.dumps(request, cls=json_encoder)
             )
+
+    def create_or_update_analysis_result(
+        self,
+        data: AnalysisResultData,
+        json_encoder: Type[json.JSONEncoder] = json.JSONEncoder,
+        create: bool = True,
+        max_attempts: int = 3
+    ) -> str:
+        """Creates or updates an analysis result"""
+        params = {"data": data, "json_encoder": json_encoder}
+        return self.create_or_update(self.create_analysis_result, self.update_analysis_result, params, create, max_attempts)
+
 
     def _confirm_delete(self, msg: str) -> bool:
         """Confirms a delete command; if the options indicate a prompt should be
@@ -1286,23 +1306,41 @@ class IBMExperimentService:
         Raises:
             IBMApiError: If the request to the server failed.
         """
+        params = {"experiment_id": experiment_id,
+                  "figure": figure,
+                  "figure_name": figure_name}
+        return self.create_or_update(self.create_figure,
+                                           self.update_figure,
+                                           params,
+                                           create,
+                                           max_attempts)
+
+    def create_or_update(
+            self,
+            create_func,
+            update_func,
+            params,
+            create: bool = True,
+            max_attempts: int = 3
+    ) -> Tuple[str, int]:
+        """Creates or updates a database entry using the given functions"""
         attempts = 0
         success = False
-        while attempts < 3 and not success:
+        while attempts < max_attempts and not success:
             attempts += 1
             if create:
                 try:
-                    name, size = self.create_figure(experiment_id, figure, figure_name)
+                    result = create_func(**params)
                     success = True
                 except IBMExperimentEntryExists:
                     create = False
             else:
                 try:
-                    name, size = self.update_figure(experiment_id, figure, figure_name)
+                    result = update_func(**params)
                     success = True
                 except IBMExperimentEntryNotFound:
                     create = True
-        return name, size
+        return result
 
 
 

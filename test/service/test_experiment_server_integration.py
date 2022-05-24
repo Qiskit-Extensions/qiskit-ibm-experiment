@@ -205,6 +205,9 @@ class TestExperimentServerIntegration(IBMTestCase):
 
         before_start = ref_start_dt - timedelta(hours=1)
         after_start = ref_start_dt + timedelta(hours=1)
+        exp = self.service.experiments(start_datetime_after=before_start)
+        print(exp)
+
         sub_tests = [
             (before_start, None, True, "before start, None"),
             (None, after_start, True, "None, after start"),
@@ -629,6 +632,31 @@ class TestExperimentServerIntegration(IBMTestCase):
         self.assertEqual(ExperimentShareLevel.PROJECT.value, rexp.share_level)
         self.assertTrue(rexp.end_datetime)
 
+    def test_create_or_update_experiment(self):
+        """Test updating an experiment."""
+        new_exp_id = self.service.create_or_update_experiment(ExperimentData(
+            experiment_type="qiskit_test",
+            backend = self.backend.name()
+        ), provider=self.provider)
+
+        self.service.create_or_update_experiment(ExperimentData(
+            experiment_id=new_exp_id,
+            metadata={"foo": "bar"},
+            job_ids=["job1", "job2"],
+            tags=["qiskit_test"],
+            notes="some notes",
+            share_level=ExperimentShareLevel.PROJECT,
+            end_datetime=datetime.now(),
+        ), create=False)
+
+        rexp = self.service.experiment(new_exp_id)
+        self.assertEqual({"foo": "bar"}, rexp.metadata)
+        self.assertEqual(["job1", "job2"], rexp.job_ids)
+        self.assertEqual(["qiskit_test"], rexp.tags)
+        self.assertEqual("some notes", rexp.notes)
+        self.assertEqual(ExperimentShareLevel.PROJECT.value, rexp.share_level)
+        self.assertTrue(rexp.end_datetime)
+
     def test_delete_experiment(self):
         """Test deleting an experiment."""
         new_exp_id = self._create_experiment(notes="delete me")
@@ -685,6 +713,36 @@ class TestExperimentServerIntegration(IBMTestCase):
             verified=True,
             chisq=chisq,
         ))
+
+        rresult = self.service.analysis_result(result_id)
+        self.assertEqual(result_id, rresult.result_id)
+        self.assertEqual(fit, rresult.result_data)
+        self.assertEqual(["qiskit_test"], rresult.tags)
+        self.assertEqual(ResultQuality.GOOD, rresult.quality)
+        self.assertTrue(rresult.verified)
+        self.assertEqual(chisq, rresult.chisq)
+
+    def test_create_or_update_analysis_result(self):
+        """Test updating an analysis result."""
+        experiment_id= self._create_experiment()
+        result_type = "qiskit_test"
+        result_data = {}
+        result_id = self.service.create_or_update_analysis_result(AnalysisResultData(
+            experiment_id=experiment_id,
+            result_data=result_data,
+            result_type=result_type,
+        ))
+        fit = dict(value=41.456, variance=4.051)
+        chisq = 1.3253
+
+        self.service.create_or_update_analysis_result(AnalysisResultData(
+            result_id=result_id,
+            result_data=fit,
+            tags=["qiskit_test"],
+            quality=ResultQuality.GOOD,
+            verified=True,
+            chisq=chisq,
+        ), create=False)
 
         rresult = self.service.analysis_result(result_id)
         self.assertEqual(result_id, rresult.result_id)
@@ -1172,6 +1230,23 @@ class TestExperimentServerIntegration(IBMTestCase):
         rplot = self.service.figure(expr_id, figure_name)
         self.assertEqual(rplot, friend_bytes, "Retrieved plot not equal updated plot.")
 
+    def test_create_or_update_figure(self):
+        """Test uploading and updating plot data using create_or_update method"""
+        figure_name = "hello.svg"
+        expr_id = self._create_experiment()
+        self.service.create_or_update_figure(
+            experiment_id=expr_id,
+            figure=str.encode("hello world"),
+            figure_name=figure_name,
+        )
+        friend_bytes = str.encode("hello friend!")
+        name, _ = self.service.create_or_update_figure(
+            experiment_id=expr_id, figure=friend_bytes, figure_name=figure_name
+        )
+        self.assertEqual(name, figure_name)
+        rplot = self.service.figure(expr_id, figure_name)
+        self.assertEqual(rplot, friend_bytes, "Retrieved plot not equal updated plot.")
+
     def test_delete_figure(self):
         """Test deleting a figure."""
         figure_name = "hello.svg"
@@ -1321,17 +1396,17 @@ class TestExperimentServerIntegration(IBMTestCase):
         return backend_name, device_components
 
 
-if __name__ == "__main__":
-    unittest.main()
+# if __name__ == "__main__":
+#     unittest.main()
 
-# def suite():
-#     suite = unittest.TestSuite()
-#     # suite.addTest(TestExperimentServerIntegration('test_upload_experiment'))
-#     # suite.addTest(TestExperimentServerIntegration('test_experiment_coders'))
-#     # suite.addTest(TestExperimentServerIntegration('test_update_experiment'))
-#     suite.addTest(TestExperimentServerIntegration('test_experiments_with_start_time'))
-#     return suite
-#
-# if __name__ == '__main__':
-#     runner = unittest.TextTestRunner()
-#     runner.run(suite())
+def suite():
+    suite = unittest.TestSuite()
+    suite.addTest(TestExperimentServerIntegration('test_experiments_with_start_time'))
+    # suite.addTest(TestExperimentServerIntegration('test_create_or_update_figure'))
+    # suite.addTest(TestExperimentServerIntegration('test_create_or_update_analysis_result'))
+    # suite.addTest(TestExperimentServerIntegration('test_experiments_with_start_time'))
+    return suite
+
+if __name__ == '__main__':
+    runner = unittest.TextTestRunner()
+    runner.run(suite())
