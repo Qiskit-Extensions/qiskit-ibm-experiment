@@ -11,24 +11,28 @@
 # that they have been altered from the originals.
 
 """Dataclasses for returned results"""
+import uuid
+import copy
 from dataclasses import dataclass, field
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Union, Any
 from datetime import datetime
+from .constants import ResultQuality
+from .device_component import DeviceComponent
 
 
 @dataclass
 class ExperimentData:
     """Dataclass for experiments"""
 
-    experiment_id: str
+    experiment_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     parent_id: Optional[str] = None
     experiment_type: str = None
     backend: Optional[str] = None
-    tags: Optional[List[str]] = field(default_factory=lambda: [])
-    job_ids: Optional[List[str]] = field(default_factory=lambda: [])
+    tags: Optional[List[str]] = field(default_factory=list)
+    job_ids: Optional[List[str]] = field(default_factory=list)
     share_level: Optional[str] = None
-    metadata: Optional[Dict[str, str]] = field(default_factory=lambda: {})
-    figure_names: Optional[List[str]] = field(default_factory=lambda: [])
+    metadata: Optional[Dict[str, str]] = field(default_factory=dict)
+    figure_names: Optional[List[str]] = field(default_factory=list)
     notes: Optional[str] = None
     hub: Optional[str] = None
     group: Optional[str] = None
@@ -62,19 +66,44 @@ class ExperimentData:
             ret += f"\nFigures: {self.figure_names}"
         return ret
 
+    def copy(self):
+        """Creates a deep copy of the data"""
+        return ExperimentData(
+            experiment_id=self.experiment_id,
+            parent_id=self.parent_id,
+            experiment_type=self.experiment_type,
+            backend=self.backend,
+            tags=copy.copy(self.tags),
+            job_ids=copy.copy(self.job_ids),
+            share_level=self.share_level,
+            metadata=copy.deepcopy(self.metadata),
+            figure_names=copy.copy(self.figure_names),
+            notes=self.notes,
+            hub=self.hub,
+            group=self.group,
+            project=self.project,
+            owner=self.owner,
+            creation_datetime=self.creation_datetime,
+            start_datetime=self.start_datetime,
+            end_datetime=self.end_datetime,
+            updated_datetime=self.updated_datetime,
+        )
+
 
 @dataclass
 class AnalysisResultData:
     """Dataclass for experiment analysis results"""
 
-    experiment_id: str
-    result_id: str
+    result_id: Optional[str] = field(default_factory=lambda: str(uuid.uuid4()))
+    experiment_id: Optional[str] = None
     result_type: Optional[str] = None
-    result_data: Optional[Dict[str, Any]] = field(default_factory=lambda: {})
-    device_components: Optional[List[str]] = field(default_factory=lambda: [])
-    quality: Optional[str] = None
+    result_data: Optional[Dict[str, Any]] = field(default_factory=dict)
+    device_components: Optional[
+        Union[List[Union[str, DeviceComponent]], str, DeviceComponent]
+    ] = field(default_factory=list)
+    quality: Optional[ResultQuality] = ResultQuality.UNKNOWN
     verified: Optional[bool] = False
-    tags: Optional[List[str]] = field(default_factory=lambda: [])
+    tags: Optional[List[str]] = field(default_factory=list)
     backend_name: Optional[str] = None
     creation_datetime: Optional[datetime] = None
     updated_datetime: Optional[datetime] = None
@@ -98,3 +127,20 @@ class AnalysisResultData:
         if self.updated_datetime:
             ret += f"\nUpdated at: {self.updated_datetime}"
         return ret
+
+    def copy(self):
+        """Creates a deep copy of the data"""
+        return AnalysisResultData(
+            result_id=self.result_id,
+            experiment_id=self.experiment_id,
+            result_type=self.result_type,
+            result_data=copy.deepcopy(self.result_data),
+            device_components=copy.copy(self.device_components),
+            quality=self.quality,
+            verified=self.verified,
+            tags=copy.copy(self.tags),
+            backend_name=self.backend_name,
+            creation_datetime=self.creation_datetime,
+            updated_datetime=self.updated_datetime,
+            chisq=self.chisq,
+        )

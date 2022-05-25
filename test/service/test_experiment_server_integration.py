@@ -15,6 +15,7 @@
 import os
 import uuid
 import unittest
+import json
 from unittest import mock, SkipTest, skipIf
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
@@ -27,6 +28,7 @@ from qiskit.providers.ibmq import IBMQFactory, least_busy
 from qiskit_ibm_experiment.service import ResultQuality, ExperimentShareLevel
 from qiskit_ibm_experiment import IBMExperimentEntryNotFound
 from qiskit_ibm_experiment import IBMExperimentService
+from qiskit_ibm_experiment import ExperimentData, AnalysisResultData
 
 
 @skipIf(
@@ -203,6 +205,8 @@ class TestExperimentServerIntegration(IBMTestCase):
 
         before_start = ref_start_dt - timedelta(hours=1)
         after_start = ref_start_dt + timedelta(hours=1)
+        exp = self.service.experiments(start_datetime_after=before_start)
+
         sub_tests = [
             (before_start, None, True, "before start, None"),
             (None, after_start, True, "None, after start"),
@@ -230,7 +234,7 @@ class TestExperimentServerIntegration(IBMTestCase):
                 self.assertEqual(
                     found,
                     expected,
-                    "Experiment {} (not)found unexpectedly when filter using"
+                    "Experiment {} (not)found unexpectedly when filter using "
                     "start_dt={}, end_dt={}. Found={}".format(
                         exp_id, start_dt, end_dt, found
                     ),
@@ -564,16 +568,18 @@ class TestExperimentServerIntegration(IBMTestCase):
         """Test uploading an experiment."""
         exp_id = str(uuid.uuid4())
         new_exp_id = self.service.create_experiment(
-            experiment_type="qiskit_test",
-            backend_name=self.backend.name(),
+            ExperimentData(
+                experiment_type="qiskit_test",
+                backend=self.backend.name(),
+                metadata={"foo": "bar"},
+                experiment_id=exp_id,
+                job_ids=["job1", "job2"],
+                tags=["qiskit_test"],
+                notes="some notes",
+                share_level=ExperimentShareLevel.PROJECT,
+                start_datetime=datetime.now(),
+            ),
             provider=self.provider,
-            metadata={"foo": "bar"},
-            experiment_id=exp_id,
-            job_ids=["job1", "job2"],
-            tags=["qiskit_test"],
-            notes="some notes",
-            share_level=ExperimentShareLevel.PROJECT,
-            start_datetime=datetime.now(),
         )
         self.experiments_to_delete.append(new_exp_id)
         self.assertEqual(exp_id, new_exp_id)
@@ -611,13 +617,43 @@ class TestExperimentServerIntegration(IBMTestCase):
         new_exp_id = self._create_experiment()
 
         self.service.update_experiment(
-            experiment_id=new_exp_id,
-            metadata={"foo": "bar"},
-            job_ids=["job1", "job2"],
-            tags=["qiskit_test"],
-            notes="some notes",
-            share_level=ExperimentShareLevel.PROJECT,
-            end_datetime=datetime.now(),
+            ExperimentData(
+                experiment_id=new_exp_id,
+                metadata={"foo": "bar"},
+                job_ids=["job1", "job2"],
+                tags=["qiskit_test"],
+                notes="some notes",
+                share_level=ExperimentShareLevel.PROJECT,
+                end_datetime=datetime.now(),
+            )
+        )
+
+        rexp = self.service.experiment(new_exp_id)
+        self.assertEqual({"foo": "bar"}, rexp.metadata)
+        self.assertEqual(["job1", "job2"], rexp.job_ids)
+        self.assertEqual(["qiskit_test"], rexp.tags)
+        self.assertEqual("some notes", rexp.notes)
+        self.assertEqual(ExperimentShareLevel.PROJECT.value, rexp.share_level)
+        self.assertTrue(rexp.end_datetime)
+
+    def test_create_or_update_experiment(self):
+        """Test updating an experiment."""
+        new_exp_id = self.service.create_or_update_experiment(
+            ExperimentData(experiment_type="qiskit_test", backend=self.backend.name()),
+            provider=self.provider,
+        )
+
+        self.service.create_or_update_experiment(
+            ExperimentData(
+                experiment_id=new_exp_id,
+                metadata={"foo": "bar"},
+                job_ids=["job1", "job2"],
+                tags=["qiskit_test"],
+                notes="some notes",
+                share_level=ExperimentShareLevel.PROJECT,
+                end_datetime=datetime.now(),
+            ),
+            create=False,
         )
 
         rexp = self.service.experiment(new_exp_id)
@@ -646,15 +682,17 @@ class TestExperimentServerIntegration(IBMTestCase):
         result_id = str(uuid.uuid4())
         chisq = 1.3253
         aresult_id = self.service.create_analysis_result(
-            experiment_id=exp_id,
-            result_type="qiskit_test",
-            result_data=fit,
-            device_components=self.device_components,
-            tags=["qiskit_test"],
-            quality=ResultQuality.GOOD,
-            verified=True,
-            result_id=result_id,
-            chisq=chisq,
+            AnalysisResultData(
+                experiment_id=exp_id,
+                result_type="qiskit_test",
+                result_data=fit,
+                device_components=self.device_components,
+                tags=["qiskit_test"],
+                quality=ResultQuality.GOOD,
+                verified=True,
+                result_id=result_id,
+                chisq=chisq,
+            )
         )
 
         rresult = self.service.analysis_result(aresult_id)
@@ -677,12 +715,49 @@ class TestExperimentServerIntegration(IBMTestCase):
         chisq = 1.3253
 
         self.service.update_analysis_result(
-            result_id=result_id,
-            result_data=fit,
-            tags=["qiskit_test"],
-            quality=ResultQuality.GOOD,
-            verified=True,
-            chisq=chisq,
+            AnalysisResultData(
+                result_id=result_id,
+                result_data=fit,
+                tags=["qiskit_test"],
+                quality=ResultQuality.GOOD,
+                verified=True,
+                chisq=chisq,
+            )
+        )
+
+        rresult = self.service.analysis_result(result_id)
+        self.assertEqual(result_id, rresult.result_id)
+        self.assertEqual(fit, rresult.result_data)
+        self.assertEqual(["qiskit_test"], rresult.tags)
+        self.assertEqual(ResultQuality.GOOD, rresult.quality)
+        self.assertTrue(rresult.verified)
+        self.assertEqual(chisq, rresult.chisq)
+
+    def test_create_or_update_analysis_result(self):
+        """Test updating an analysis result."""
+        experiment_id = self._create_experiment()
+        result_type = "qiskit_test"
+        result_data = {}
+        result_id = self.service.create_or_update_analysis_result(
+            AnalysisResultData(
+                experiment_id=experiment_id,
+                result_data=result_data,
+                result_type=result_type,
+            )
+        )
+        fit = dict(value=41.456, variance=4.051)
+        chisq = 1.3253
+
+        self.service.create_or_update_analysis_result(
+            AnalysisResultData(
+                result_id=result_id,
+                result_data=fit,
+                tags=["qiskit_test"],
+                quality=ResultQuality.GOOD,
+                verified=True,
+                chisq=chisq,
+            ),
+            create=False,
         )
 
         rresult = self.service.analysis_result(result_id)
@@ -1171,6 +1246,23 @@ class TestExperimentServerIntegration(IBMTestCase):
         rplot = self.service.figure(expr_id, figure_name)
         self.assertEqual(rplot, friend_bytes, "Retrieved plot not equal updated plot.")
 
+    def test_create_or_update_figure(self):
+        """Test uploading and updating plot data using create_or_update method"""
+        figure_name = "hello.svg"
+        expr_id = self._create_experiment()
+        self.service.create_or_update_figure(
+            experiment_id=expr_id,
+            figure=str.encode("hello world"),
+            figure_name=figure_name,
+        )
+        friend_bytes = str.encode("hello friend!")
+        name, _ = self.service.create_or_update_figure(
+            experiment_id=expr_id, figure=friend_bytes, figure_name=figure_name
+        )
+        self.assertEqual(name, figure_name)
+        rplot = self.service.figure(expr_id, figure_name)
+        self.assertEqual(rplot, friend_bytes, "Retrieved plot not equal updated plot.")
+
     def test_delete_figure(self):
         """Test deleting a figure."""
         figure_name = "hello.svg"
@@ -1199,7 +1291,8 @@ class TestExperimentServerIntegration(IBMTestCase):
 
         new_metadata = {"complex": 4 + 5j, "numpy": np.ones(3)}
         self.service.update_experiment(
-            expr_id, metadata=new_metadata, json_encoder=ExperimentEncoder
+            ExperimentData(expr_id, metadata=new_metadata),
+            json_encoder=ExperimentEncoder,
         )
         rexp = self.service.experiment(expr_id, json_decoder=ExperimentDecoder)
         rmetadata = rexp.metadata
@@ -1222,7 +1315,8 @@ class TestExperimentServerIntegration(IBMTestCase):
 
         new_data = {"complex": 4 + 5j, "numpy": np.ones(3), "numpy_int": np.int64(127)}
         self.service.update_analysis_result(
-            result_id, result_data=new_data, json_encoder=ExperimentEncoder
+            AnalysisResultData(result_id=result_id, result_data=new_data),
+            json_encoder=ExperimentEncoder,
         )
         rresult = self.service.analysis_result(
             result_id, json_decoder=ExperimentDecoder
@@ -1267,16 +1361,20 @@ class TestExperimentServerIntegration(IBMTestCase):
         self,
         experiment_type: Optional[str] = None,
         backend_name: Optional[str] = None,
+        json_encoder: Optional[json.JSONEncoder] = None,
         **kwargs,
     ) -> str:
         """Create a new experiment."""
         experiment_type = experiment_type or "qiskit_test"
         backend_name = backend_name or self.backend.name()
         exp_id = self.service.create_experiment(
-            experiment_type=experiment_type,
-            backend_name=backend_name,
+            ExperimentData(
+                experiment_type=experiment_type,
+                backend=backend_name,
+                **kwargs,
+            ),
             provider=self.provider,
-            **kwargs,
+            json_encoder=json_encoder,
         )
         self.experiments_to_delete.append(exp_id)
         return exp_id
@@ -1286,6 +1384,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         exp_id: Optional[str] = None,
         result_type: Optional[str] = None,
         result_data: Optional[Dict] = None,
+        json_encoder: Optional[json.JSONEncoder] = None,
         **kwargs: Any,
     ):
         """Create a simple analysis result."""
@@ -1293,10 +1392,13 @@ class TestExperimentServerIntegration(IBMTestCase):
         result_type = result_type or "qiskit_test"
         result_data = result_data or {}
         aresult_id = self.service.create_analysis_result(
-            experiment_id=experiment_id,
-            result_data=result_data,
-            result_type=result_type,
-            **kwargs,
+            AnalysisResultData(
+                experiment_id=experiment_id,
+                result_data=result_data,
+                result_type=result_type,
+                **kwargs,
+            ),
+            json_encoder=json_encoder,
         )
         return aresult_id
 
