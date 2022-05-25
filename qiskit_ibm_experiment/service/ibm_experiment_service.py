@@ -30,7 +30,12 @@ from .utils import map_api_error, local_to_utc_str, utc_to_local
 from .device_component import DeviceComponent
 from .experiment_dataclasses import ExperimentData, AnalysisResultData
 from ..client.experiment import ExperimentClient
-from ..exceptions import RequestsApiError, IBMApiError, IBMExperimentEntryExists, IBMExperimentEntryNotFound
+from ..exceptions import (
+    RequestsApiError,
+    IBMApiError,
+    IBMExperimentEntryExists,
+    IBMExperimentEntryNotFound,
+)
 from ..accounts import AccountManager, Account, ProxyConfiguration
 
 logger = logging.getLogger(__name__)
@@ -147,7 +152,8 @@ class IBMExperimentService:
             raise IBMApiError(
                 "Did not receive access token (request returned {})".format(
                     response.json()
-            ))
+                )
+            )
         self._access_token = access_token
         return access_token
 
@@ -307,8 +313,15 @@ class IBMExperimentService:
 
         api_data = self._experiment_data_to_api(data)
 
-        if "hub_id" not in api_data or "group_id" not in api_data or "project_id" not in api_data:
-            logger.warning("create_experiment() called without hub/group/project data (passing a provider parameter enables inference of these values)")
+        if (
+            "hub_id" not in api_data
+            or "group_id" not in api_data
+            or "project_id" not in api_data
+        ):
+            logger.warning(
+                "create_experiment() called without hub/group/project data"
+                "(passing a provider parameter enables inference of these values)"
+            )
 
         with map_api_error(f"Experiment {data.experiment_id} creation failed."):
             response_data = self._api_client.experiment_upload(
@@ -316,7 +329,11 @@ class IBMExperimentService:
             )
         return response_data["uuid"]
 
-    def update_experiment(self, data: ExperimentData, json_encoder: Type[json.JSONEncoder] = json.JSONEncoder) -> None:
+    def update_experiment(
+        self,
+        data: ExperimentData,
+        json_encoder: Type[json.JSONEncoder] = json.JSONEncoder,
+    ) -> None:
         """Update an existing experiment.
 
         Args:
@@ -345,7 +362,14 @@ class IBMExperimentService:
         """
 
         api_data = self._experiment_data_to_api(data)
-        unused_fields = ['uuid', 'device_name', 'group_id', 'hub_id', 'project_id', 'type']
+        unused_fields = [
+            "uuid",
+            "device_name",
+            "group_id",
+            "hub_id",
+            "project_id",
+            "type",
+        ]
         for field_name in unused_fields:
             if field_name in api_data:
                 del api_data[field_name]
@@ -359,13 +383,20 @@ class IBMExperimentService:
                 data.experiment_id, json.dumps(api_data, cls=json_encoder)
             )
 
-    def create_or_update_experiment(self, data: ExperimentData, json_encoder: Type[json.JSONEncoder] = json.JSONEncoder, create: bool = True, max_attempts: int = 3, **kwargs) -> str:
+    def create_or_update_experiment(
+        self,
+        data: ExperimentData,
+        json_encoder: Type[json.JSONEncoder] = json.JSONEncoder,
+        create: bool = True,
+        max_attempts: int = 3,
+        **kwargs,
+    ) -> str:
         """Creates a new experiment, or updates an existing one"""
         params = kwargs
-        params.update({"data": data,
-                  "json_encoder": json_encoder
-                  })
-        return self.create_or_update(self.create_experiment, self.update_experiment, params, create, max_attempts)
+        params.update({"data": data, "json_encoder": json_encoder})
+        return self.create_or_update(
+            self.create_experiment, self.update_experiment, params, create, max_attempts
+        )
 
     def _experiment_data_to_api(self, data: ExperimentData) -> Dict:
         """Convert experiment data to API request data.
@@ -749,7 +780,8 @@ class IBMExperimentService:
         """Update an existing analysis result.
 
         Args:
-            data: The data to save. Note that the following fields will be ignored: 'uuid', 'experiment_uuid', 'device_components', 'type'
+            data: The data to save. Note that the following fields will be ignored:
+            'uuid', 'experiment_uuid', 'device_components', 'type'
             json_encoder: Custom JSON encoder to use to encode the analysis result.
 
         Raises:
@@ -758,7 +790,7 @@ class IBMExperimentService:
         """
 
         request = self._analysis_result_to_api(data)
-        unused_fields = ['uuid', 'experiment_uuid', 'device_components', 'type']
+        unused_fields = ["uuid", "experiment_uuid", "device_components", "type"]
         for field_name in unused_fields:
             if field_name in request:
                 del request[field_name]
@@ -772,12 +804,17 @@ class IBMExperimentService:
         data: AnalysisResultData,
         json_encoder: Type[json.JSONEncoder] = json.JSONEncoder,
         create: bool = True,
-        max_attempts: int = 3
+        max_attempts: int = 3,
     ) -> str:
         """Creates or updates an analysis result"""
         params = {"data": data, "json_encoder": json_encoder}
-        return self.create_or_update(self.create_analysis_result, self.update_analysis_result, params, create, max_attempts)
-
+        return self.create_or_update(
+            self.create_analysis_result,
+            self.update_analysis_result,
+            params,
+            create,
+            max_attempts,
+        )
 
     def _confirm_delete(self, msg: str) -> bool:
         """Confirms a delete command; if the options indicate a prompt should be
@@ -1285,12 +1322,12 @@ class IBMExperimentService:
         return figure_name, len(figure)
 
     def create_or_update_figure(
-            self,
-            experiment_id: str,
-            figure: Union[str, bytes],
-            figure_name: Optional[str] = None,
-            create: bool = True,
-            max_attempts: int = 3
+        self,
+        experiment_id: str,
+        figure: Union[str, bytes],
+        figure_name: Optional[str] = None,
+        create: bool = True,
+        max_attempts: int = 3,
     ) -> Tuple[str, int]:
         """Creates a figure if it doesn't exists, otherwise updates it
         Args:
@@ -1306,22 +1343,22 @@ class IBMExperimentService:
         Raises:
             IBMApiError: If the request to the server failed.
         """
-        params = {"experiment_id": experiment_id,
-                  "figure": figure,
-                  "figure_name": figure_name}
-        return self.create_or_update(self.create_figure,
-                                           self.update_figure,
-                                           params,
-                                           create,
-                                           max_attempts)
+        params = {
+            "experiment_id": experiment_id,
+            "figure": figure,
+            "figure_name": figure_name,
+        }
+        return self.create_or_update(
+            self.create_figure, self.update_figure, params, create, max_attempts
+        )
 
     def create_or_update(
-            self,
-            create_func,
-            update_func,
-            params,
-            create: bool = True,
-            max_attempts: int = 3
+        self,
+        create_func,
+        update_func,
+        params,
+        create: bool = True,
+        max_attempts: int = 3,
     ) -> Tuple[str, int]:
         """Creates or updates a database entry using the given functions"""
         attempts = 0
@@ -1341,9 +1378,6 @@ class IBMExperimentService:
                 except IBMExperimentEntryNotFound:
                     create = True
         return result
-
-
-
 
     def figure(
         self, experiment_id: str, figure_name: str, file_name: Optional[str] = None

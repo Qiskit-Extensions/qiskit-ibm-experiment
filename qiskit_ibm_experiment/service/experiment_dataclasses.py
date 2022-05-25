@@ -67,24 +67,26 @@ class ExperimentData:
         return ret
 
     def copy(self):
-        return ExperimentData(experiment_id=self.experiment_id,
-                              parent_id=self.parent_id,
-                              experiment_type=self.experiment_type,
-                              backend=self.backend,
-                              tags=copy.copy(self.tags),
-                              job_ids=copy.copy(self.job_ids),
-                              share_level=self.share_level,
-                              metadata=copy.deepcopy(self.metadata),
-                              figure_names=copy.copy(self.figure_names),
-                              notes=self.notes,
-                              hub=self.hub,
-                              group=self.group,
-                              project=self.project,
-                              owner=self.owner,
-                              creation_datetime=self.creation_datetime,
-                              start_datetime=self.start_datetime,
-                              end_datetime=self.end_datetime,
-                              updated_datetime=self.updated_datetime,
+        """Creates a deep copy of the data"""
+        return ExperimentData(
+            experiment_id=self.experiment_id,
+            parent_id=self.parent_id,
+            experiment_type=self.experiment_type,
+            backend=self.backend,
+            tags=copy.copy(self.tags),
+            job_ids=copy.copy(self.job_ids),
+            share_level=self.share_level,
+            metadata=copy.deepcopy(self.metadata),
+            figure_names=copy.copy(self.figure_names),
+            notes=self.notes,
+            hub=self.hub,
+            group=self.group,
+            project=self.project,
+            owner=self.owner,
+            creation_datetime=self.creation_datetime,
+            start_datetime=self.start_datetime,
+            end_datetime=self.end_datetime,
+            updated_datetime=self.updated_datetime,
         )
 
 
@@ -96,7 +98,9 @@ class AnalysisResultData:
     experiment_id: Optional[str] = None
     result_type: Optional[str] = None
     result_data: Optional[Dict[str, Any]] = field(default_factory=dict)
-    device_components: Optional[Union[List[Union[str, DeviceComponent]], str, DeviceComponent]] = field(default_factory=list)
+    device_components: Optional[
+        Union[List[Union[str, DeviceComponent]], str, DeviceComponent]
+    ] = field(default_factory=list)
     quality: Optional[ResultQuality] = ResultQuality.UNKNOWN
     verified: Optional[bool] = False
     tags: Optional[List[str]] = field(default_factory=list)
@@ -123,3 +127,20 @@ class AnalysisResultData:
         if self.updated_datetime:
             ret += f"\nUpdated at: {self.updated_datetime}"
         return ret
+
+    def copy(self):
+        """Creates a deep copy of the data"""
+        return AnalysisResultData(
+            result_id=self.result_id,
+            experiment_id=self.experiment_id,
+            result_type=self.result_type,
+            result_data=copy.deepcopy(self.result_data),
+            device_components=copy.copy(self.device_components),
+            quality=self.quality,
+            verified=self.verified,
+            tags=copy.copy(self.tags),
+            backend_name=self.backend_name,
+            creation_datetime=self.creation_datetime,
+            updated_datetime=self.updated_datetime,
+            chisq=self.chisq,
+        )
