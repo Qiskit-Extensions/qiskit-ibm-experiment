@@ -24,22 +24,22 @@ from qiskit_ibm_experiment.exceptions import IBMExperimentEntryNotFound, IBMExpe
 logger = logging.getLogger(__name__)
 
 class LocalExperimentClient():
-    experiment_db_columns = [
-        "type",
-        "device_name",
-        "extra",
-        "experiment_id",
-        "group_id",
-        "hub_id",
-        "jobs",
-        "notes",
-        "parent_experiment_uuid",
-        "project_id",
-        "start_time",
-        "tags",
-        "uuid",
-        "visibility",
-    ]
+    experiment_db_columns = {
+        "type": 'str',
+        "device_name": 'str',
+        "extra": 'dict',
+        "experiment_id": 'str',
+        "group_id": 'str',
+        "hub_id": 'str',
+        "jobs": 'str',
+        "notes": 'list',
+        "parent_experiment_uuid": 'str',
+        "project_id": 'str',
+        "start_time": 'str',
+        "tags": 'list',
+        "uuid": 'str',
+        "visibility": 'str',
+    }
     results_db_columns =[
         "experiment_id",
         "result_data",
@@ -91,7 +91,9 @@ class LocalExperimentClient():
         if os.path.exists(self.experiments_file):
             self.experiments = pd.read_json(self.experiments_file)
         else:
-            self.experiments = pd.DataFrame(columns=self.experiment_db_columns)
+            self.experiments = pd.DataFrame({c: pd.Series(dtype=t) for c, t in
+                               self.experiment_db_columns.items()})
+            #self.experiments = pd.DataFrame(columns=self.experiment_db_columns)
 
         if os.path.exists(self.results_file):
             self.results = pd.read_json(self.results_file)
@@ -195,7 +197,14 @@ class LocalExperimentClient():
         Returns:
             Experiment data.
         """
-        pass
+        exp = self.experiments.loc[self.experiments.uuid == experiment_id]
+        if exp.empty:
+            raise IBMExperimentEntryNotFound
+        exp_index = exp.index[0]
+        new_data_dict = json.loads(new_data)
+        for key, value in new_data_dict.items():
+            self.experiments.at[exp_index, key] = value
+        self.save()
 
 
     def experiment_delete(self, experiment_id: str) -> Dict:
@@ -208,6 +217,7 @@ class LocalExperimentClient():
             JSON response.
         """
         self.experiments.drop(self.experiments.loc[self.experiments.uuid == experiment_id].index, inplace=True)
+        self.save()
 
 
     def experiment_plot_upload(

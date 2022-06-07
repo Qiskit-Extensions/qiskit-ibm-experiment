@@ -45,6 +45,30 @@ class TestExperimentServerIntegration(IBMTestCase):
         with self.assertRaises(IBMExperimentEntryExists):
             self.service.create_experiment(exp)
 
+    def test_update_experiment(self):
+        data = ExperimentData(
+            experiment_type="test_experiment",
+            backend="ibmq_qasm_simulator",
+            metadata={"float_data": 3.14, "string_data": "foo"}
+        )
+        exp_id = self.service.create_experiment(data)
+        data = self.service.experiment(exp_id)
+        data.metadata['float_data'] = 2.71
+        data.experiment_type = "foo_type" # this should NOT change
+        data.notes = ["foo_note"]
+        self.service.update_experiment(data)
+        result = self.service.experiment(exp_id)
+        self.assertEqual(result.metadata['float_data'], 2.71)
+        self.assertEqual(result.experiment_type, "test_experiment")
+        self.assertEqual(result.notes[0], "foo_note")
+
+        data.experiment_id = "foo_id" # should not be able to update
+        with self.assertRaises(IBMExperimentEntryNotFound):
+            self.service.update_experiment(data)
+
+
+
+
     def test_delete_experiment(self):
         data = ExperimentData(
             experiment_type="test_experiment",
@@ -52,10 +76,10 @@ class TestExperimentServerIntegration(IBMTestCase):
         )
         exp_id = self.service.create_experiment(data)
         # Check the experiment exists
-        exp = self.service.experiment(experiment_id=exp_id)
+        self.service.experiment(experiment_id=exp_id)
         self.service.delete_experiment(exp_id)
         with self.assertRaises(IBMExperimentEntryNotFound):
-            exp = self.service.experiment(experiment_id=exp_id)
+            self.service.experiment(experiment_id=exp_id)
 
 
 if __name__ == "__main__":
