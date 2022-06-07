@@ -323,13 +323,13 @@ class IBMExperimentService:
 
         api_data = self._experiment_data_to_api(data)
 
-        if (
+        if not self._account.local and (
             "hub_id" not in api_data
             or "group_id" not in api_data
             or "project_id" not in api_data
         ):
             logger.warning(
-                "create_experiment() called without hub/group/project data"
+                "create_experiment() called without hub/group/project data "
                 "(passing a provider parameter enables inference of these values)"
             )
 

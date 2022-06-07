@@ -15,7 +15,7 @@ import unittest
 from test.service.ibm_test_case import IBMTestCase
 from qiskit_ibm_experiment import IBMExperimentService
 from qiskit_ibm_experiment import ExperimentData
-
+from qiskit_ibm_experiment.exceptions import IBMExperimentEntryNotFound
 class TestExperimentServerIntegration(IBMTestCase):
     """Test experiment modules."""
 
@@ -24,6 +24,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         """Initial class level setup."""
         super().setUpClass()
         cls.service = IBMExperimentService(local=True)
+        cls.service.options["prompt_for_delete"] = False
 
     def test_create_experiment(self):
         data = ExperimentData(
@@ -39,6 +40,19 @@ class TestExperimentServerIntegration(IBMTestCase):
         self.assertEqual(exp.backend, "ibmq_qasm_simulator")
         self.assertEqual(exp.metadata['float_data'], 3.14)
         self.assertEqual(exp.metadata['string_data'], "foo")
+
+    def test_delete_experiment(self):
+        data = ExperimentData(
+            experiment_type="test_experiment",
+            backend="ibmq_qasm_simulator",
+        )
+        exp_id = self.service.create_experiment(data)
+        # Check the experiment exists
+        exp = self.service.experiment(experiment_id=exp_id)
+        self.service.delete_experiment(exp_id)
+        with self.assertRaises(IBMExperimentEntryNotFound):
+            exp = self.service.experiment(experiment_id=exp_id)
+
 
 if __name__ == "__main__":
     unittest.main()

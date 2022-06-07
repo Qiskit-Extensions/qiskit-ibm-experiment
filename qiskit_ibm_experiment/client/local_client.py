@@ -19,6 +19,7 @@ from typing import List, Dict, Optional, Union
 import pandas as pd
 import numpy as np
 import json
+from qiskit_ibm_experiment.exceptions import IBMExperimentEntryNotFound
 
 logger = logging.getLogger(__name__)
 
@@ -157,6 +158,8 @@ class LocalExperimentClient():
             Experiment data.
         """
         exp = self.experiments.loc[self.experiments.uuid == experiment_id]
+        if exp.empty:
+            raise IBMExperimentEntryNotFound
         return self.serialize(exp)
 
     def experiment_upload(self, data: str) -> Dict:
@@ -199,7 +202,7 @@ class LocalExperimentClient():
         Returns:
             JSON response.
         """
-        pass
+        self.experiments.drop(self.experiments.loc[self.experiments.uuid == experiment_id].index, inplace=True)
 
 
     def experiment_plot_upload(
