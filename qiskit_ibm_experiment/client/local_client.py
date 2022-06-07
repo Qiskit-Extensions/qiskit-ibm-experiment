@@ -207,7 +207,6 @@ class LocalExperimentClient():
         experiment_id: str,
         plot: Union[bytes, str],
         plot_name: str,
-        sync_upload: bool = True,
     ) -> Dict:
         """Upload an experiment plot.
 
@@ -215,9 +214,6 @@ class LocalExperimentClient():
             experiment_id: Experiment UUID.
             plot: Plot file name or data to upload.
             plot_name: Name of the plot.
-            sync_upload: By default the server will upload the plot file
-                to backend storage asynchronously. Set this to False to use
-                that behavior and not block the upload.
 
         Returns:
             JSON response.
@@ -230,7 +226,6 @@ class LocalExperimentClient():
         experiment_id: str,
         plot: Union[bytes, str],
         plot_name: str,
-        sync_upload: bool = True,
     ) -> Dict:
         """Update an experiment plot.
 
@@ -238,9 +233,6 @@ class LocalExperimentClient():
             experiment_id: Experiment UUID.
             plot: Plot file name or data to upload.
             plot_name: Name of the plot.
-            sync_upload: By default the server will upload the plot file
-                to backend storage asynchronously. Set this to False to use
-                that behavior and not block the upload.
 
         Returns:
             JSON response.
