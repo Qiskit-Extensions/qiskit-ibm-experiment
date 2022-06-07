@@ -14,7 +14,7 @@
 import unittest
 from test.service.ibm_test_case import IBMTestCase
 from qiskit_ibm_experiment import IBMExperimentService
-
+from qiskit_ibm_experiment import ExperimentData
 
 class TestExperimentServerIntegration(IBMTestCase):
     """Test experiment modules."""
@@ -26,18 +26,19 @@ class TestExperimentServerIntegration(IBMTestCase):
         cls.service = IBMExperimentService(local=True)
 
     def test_create_experiment(self):
-        exp_id = self.service.create_experiment(
+        data = ExperimentData(
             experiment_type="test_experiment",
-            backend_name="ibmq_qasm_simulator",
+            backend="ibmq_qasm_simulator",
             metadata={"float_data": 3.14, "string_data": "foo"}
         )
+        exp_id = self.service.create_experiment(data)
         self.assertIsNotNone(exp_id)
 
         exp = self.service.experiment(experiment_id=exp_id)
-        self.assertEqual(exp['experiment_type'], "test_experiment")
-        self.assertEqual(exp['backend'], "ibmq_qasm_simulator")
-        self.assertEqual(exp['metadata']['float_data'], 3.14)
-        self.assertEqual(exp['metadata']['string_data'], "foo")
+        self.assertEqual(exp.experiment_type, "test_experiment")
+        self.assertEqual(exp.backend, "ibmq_qasm_simulator")
+        self.assertEqual(exp.metadata['float_data'], 3.14)
+        self.assertEqual(exp.metadata['string_data'], "foo")
 
 if __name__ == "__main__":
     unittest.main()
