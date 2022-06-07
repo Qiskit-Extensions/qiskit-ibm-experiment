@@ -15,7 +15,7 @@ import unittest
 from test.service.ibm_test_case import IBMTestCase
 from qiskit_ibm_experiment import IBMExperimentService
 from qiskit_ibm_experiment import ExperimentData
-from qiskit_ibm_experiment.exceptions import IBMExperimentEntryNotFound
+from qiskit_ibm_experiment.exceptions import IBMExperimentEntryNotFound, IBMExperimentEntryExists
 class TestExperimentServerIntegration(IBMTestCase):
     """Test experiment modules."""
 
@@ -40,6 +40,10 @@ class TestExperimentServerIntegration(IBMTestCase):
         self.assertEqual(exp.backend, "ibmq_qasm_simulator")
         self.assertEqual(exp.metadata['float_data'], 3.14)
         self.assertEqual(exp.metadata['string_data'], "foo")
+
+        # attempt to create an experiment with the same id; should fail
+        with self.assertRaises(IBMExperimentEntryExists):
+            self.service.create_experiment(exp)
 
     def test_delete_experiment(self):
         data = ExperimentData(

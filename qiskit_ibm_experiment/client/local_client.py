@@ -19,7 +19,7 @@ from typing import List, Dict, Optional, Union
 import pandas as pd
 import numpy as np
 import json
-from qiskit_ibm_experiment.exceptions import IBMExperimentEntryNotFound
+from qiskit_ibm_experiment.exceptions import IBMExperimentEntryNotFound, IBMExperimentEntryExists
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +84,7 @@ class LocalExperimentClient():
         self.results.to_json(self.results_file)
 
     def serialize(self, df):
-        result = df.where(pd.notnull(df), None).to_dict("records")[0]
+        result = df.replace({np.nan: None}).to_dict("records")[0]
         return json.dumps(result)
 
     def init_db(self):
@@ -174,6 +174,11 @@ class LocalExperimentClient():
         data_dict = json.loads(data)
         if "uuid" not in data_dict:
             data_dict["uuid"] = str(uuid.uuid4())
+
+        exp = self.experiments.loc[self.experiments.uuid == data_dict["uuid"]]
+        if not exp.empty:
+            raise IBMExperimentEntryExists
+
         new_df = pd.DataFrame([data_dict], columns=self.experiments.columns)
         self.experiments = pd.concat([self.experiments, new_df], ignore_index=True)
         self.save()
