@@ -144,7 +144,11 @@ class LocalExperimentClient():
         df = self._experiments
 
         if experiment_type is not None:
-            df = df.loc[df.type == experiment_type]
+            if experiment_type[:5] == 'like:':
+                experiment_type = experiment_type.split(":")[1]
+                df = df.loc[df.type.str.contains(experiment_type)]
+            else:
+                df = df.loc[df.type == experiment_type]
 
         if backend_name is not None:
             df = df.loc[df.device_name == backend_name]
@@ -177,7 +181,9 @@ class LocalExperimentClient():
             df = df.loc[df.start_time >= filters["start_datetime_after"]]
 
         # This is a parameter of IBMExperimentService.experiments
-        sort_by = filters.get("sort_by", "start_datetime:desc")
+        sort_by = filters.get("sort_by")
+        if sort_by is None:
+            sort_by = "start_datetime:desc"
 
         if not isinstance(sort_by, list):
             sort_by = [sort_by]
@@ -203,8 +209,8 @@ class LocalExperimentClient():
         )
 
         df = df.iloc[:limit]
-
-        return df.to_dict("records")
+        result = {"experiments": df.replace({np.nan: None}).to_dict("records")}
+        return json.dumps(result)
 
     def experiment_get(self, experiment_id: str) -> str:
         """Get a specific experiment.
