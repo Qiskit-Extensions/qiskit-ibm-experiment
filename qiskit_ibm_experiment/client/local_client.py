@@ -19,40 +19,39 @@ from typing import List, Dict, Optional, Union
 import pandas as pd
 import numpy as np
 import json
-from qiskit_ibm_experiment.exceptions import IBMExperimentEntryNotFound, IBMExperimentEntryExists
+from qiskit_ibm_experiment.exceptions import IBMExperimentEntryNotFound, IBMExperimentEntryExists, IBMApiError
 
 logger = logging.getLogger(__name__)
 
 class LocalExperimentClient():
-    experiment_db_columns = {
-        "type": 'str',
-        "device_name": 'str',
-        "extra": 'dict',
-        "experiment_id": 'str',
-        "group_id": 'str',
-        "hub_id": 'str',
-        "jobs": 'str',
-        "notes": 'list',
-        "parent_experiment_uuid": 'str',
-        "project_id": 'str',
-        "start_time": 'str',
-        "tags": 'list',
-        "uuid": 'str',
-        "visibility": 'str',
-    }
-    results_db_columns =[
+    experiment_db_columns = [
+        "type",
+        "device_name",
+        "extra",
+        "uuid",
+        "parent_experiment_uuid",
+        "hub_id",
+        "group_id",
+        "project_id",
         "experiment_id",
-        "result_data",
-        "result_type",
+        "visibility",
+        "tags",
+        "jobs",
+        "notes",
+        "start_time",
+        "end_time",
+    ]
+    results_db_columns =[
+        "experiment_uuid",
         "device_components",
+        "fit",
+        "type",
         "tags",
         "quality",
         "verified",
-        "result_id",
+        "uuid",
         "chisq",
-        "creation_datetime",
-        "service",
-        "backend_name",
+        "device_name",
     ]
     def __init__(self, main_dir) -> None:
         """ExperimentClient constructor.
@@ -91,9 +90,7 @@ class LocalExperimentClient():
         if os.path.exists(self.experiments_file):
             self.experiments = pd.read_json(self.experiments_file)
         else:
-            self.experiments = pd.DataFrame({c: pd.Series(dtype=t) for c, t in
-                               self.experiment_db_columns.items()})
-            #self.experiments = pd.DataFrame(columns=self.experiment_db_columns)
+            self.experiments = pd.DataFrame(columns=self.experiment_db_columns)
 
         if os.path.exists(self.results_file):
             self.results = pd.read_json(self.results_file)
@@ -334,7 +331,22 @@ class LocalExperimentClient():
         Returns:
             Analysis result data.
         """
-        pass
+        data_dict = json.loads(result)
+        exp_id = data_dict.get("experiment_uuid")
+        if exp_id is None:
+            return IBMApiError
+        exp = self.experiments.loc[self.experiments.uuid == exp_id]
+        if exp.empty:
+            return IBMApiError
+        exp_index = exp.index[0]
+        data_dict["device_name"] = self.experiments.at[exp_index, "device_name"]
+        if "uuid" not in data_dict:
+            data_dict["uuid"] = str(uuid.uuid4())
+
+        new_df = pd.DataFrame([data_dict], columns=self.results.columns)
+        self.results = pd.concat([self.results, new_df], ignore_index=True)
+        self.save()
+        return data_dict
 
 
     def analysis_result_update(self, result_id: str, new_data: str) -> Dict:
@@ -371,7 +383,10 @@ class LocalExperimentClient():
         Returns:
             Analysis result data.
         """
-        pass
+        result = self.results.loc[self.results.uuid == result_id]
+        if result.empty:
+            raise IBMExperimentEntryNotFound
+        return self.serialize(result)
 
 
     def device_components(self, backend_name: Optional[str]) -> List[Dict]:

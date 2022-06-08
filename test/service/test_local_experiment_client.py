@@ -12,9 +12,10 @@
 
 """Local experiment client tests"""
 import unittest
+import numpy as np
 from test.service.ibm_test_case import IBMTestCase
 from qiskit_ibm_experiment import IBMExperimentService
-from qiskit_ibm_experiment import ExperimentData
+from qiskit_ibm_experiment import ExperimentData, AnalysisResultData
 from qiskit_ibm_experiment.exceptions import IBMExperimentEntryNotFound, IBMExperimentEntryExists
 class TestExperimentServerIntegration(IBMTestCase):
     """Test experiment modules."""
@@ -66,9 +67,6 @@ class TestExperimentServerIntegration(IBMTestCase):
         with self.assertRaises(IBMExperimentEntryNotFound):
             self.service.update_experiment(data)
 
-
-
-
     def test_delete_experiment(self):
         data = ExperimentData(
             experiment_type="test_experiment",
@@ -80,6 +78,19 @@ class TestExperimentServerIntegration(IBMTestCase):
         self.service.delete_experiment(exp_id)
         with self.assertRaises(IBMExperimentEntryNotFound):
             self.service.experiment(experiment_id=exp_id)
+
+    def test_create_analysis_result(self):
+        exp_id = self.service.create_experiment(ExperimentData(experiment_type="test_experiment", backend="ibmq_qasm_simulator"))
+        analysis_result_value = {"str": "foo", "float": 3.14}
+        analysis_data = AnalysisResultData(experiment_id=exp_id,
+                                           result_data=analysis_result_value,
+                                           result_type="qiskit_test")
+        analysis_id = self.service.create_analysis_result(analysis_data)
+        result = self.service.analysis_result(result_id=analysis_id)
+        self.assertEqual(result.result_type, "qiskit_test")
+        self.assertEqual(result.result_data["str"], analysis_result_value["str"])
+        self.assertEqual(result.result_data["float"], analysis_result_value["float"])
+
 
 
 if __name__ == "__main__":
