@@ -79,6 +79,18 @@ class TestExperimentServerIntegration(IBMTestCase):
         with self.assertRaises(IBMExperimentEntryNotFound):
             self.service.experiment(experiment_id=exp_id)
 
+    def test_get_experiments(self):
+        for exp_id in ['00', '01', '10', '11']:
+            self.service.create_experiment(
+                ExperimentData(
+                    experiment_id=exp_id,
+                    experiment_type=f"test_experiment_{exp_id[0]}",
+                    backend=f"backend_{exp_id[1]}",
+                )
+            )
+        exps = self.service.experiments()
+        print(exps)
+
     def test_create_analysis_result(self):
         exp_id = self.service.create_experiment(ExperimentData(experiment_type="test_experiment", backend="ibmq_qasm_simulator"))
         analysis_result_value = {"str": "foo", "float": 3.14}

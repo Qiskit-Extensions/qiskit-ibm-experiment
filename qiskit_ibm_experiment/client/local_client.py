@@ -15,7 +15,7 @@
 import logging
 import os
 import uuid
-from typing import List, Dict, Optional, Union
+from typing import List, Dict, Optional, Union, Any
 import pandas as pd
 import numpy as np
 import json
@@ -79,7 +79,7 @@ class LocalExperimentClient():
                 os.makedirs(dir)
 
     def save(self):
-        self.experiments.to_json(self.experiments_file)
+        self._experiments.to_json(self.experiments_file)
         self.results.to_json(self.results_file)
 
     def serialize(self, df):
@@ -87,15 +87,18 @@ class LocalExperimentClient():
         return json.dumps(result)
 
     def init_db(self):
-        if os.path.exists(self.experiments_file):
-            self.experiments = pd.read_json(self.experiments_file)
-        else:
-            self.experiments = pd.DataFrame(columns=self.experiment_db_columns)
+        # if os.path.exists(self.experiments_file):
+        #     self._experiments = pd.read_json(self.experiments_file)
+        # else:
+        #     self._experiments = pd.DataFrame(columns=self.experiment_db_columns)
 
-        if os.path.exists(self.results_file):
-            self.results = pd.read_json(self.results_file)
-        else:
-            self.results = pd.DataFrame(columns=self.results_db_columns)
+        # if os.path.exists(self.results_file):
+        #     self.results = pd.read_json(self.results_file)
+        # else:
+        #     self.results = pd.DataFrame(columns=self.results_db_columns)
+
+        self._experiments = pd.DataFrame(columns=self.experiment_db_columns)
+        self.results = pd.DataFrame(columns=self.results_db_columns)
 
         self.save()
 
@@ -105,22 +108,15 @@ class LocalExperimentClient():
 
     def experiments(
         self,
-        limit: Optional[int],
-        marker: Optional[str],
-        backend_name: Optional[str],
+        limit: Optional[int] = 10,
+        json_decoder: "json.JSONDecoder" = json.JSONDecoder,
+        device_components: Optional[Union[str, "DeviceComponent"]] = None,
         experiment_type: Optional[str] = None,
-        start_time: Optional[List] = None,
-        device_components: Optional[List[str]] = None,
+        backend_name: Optional[str] = None,
         tags: Optional[List[str]] = None,
-        hub: Optional[str] = None,
-        group: Optional[str] = None,
-        project: Optional[str] = None,
-        exclude_public: Optional[bool] = False,
-        public_only: Optional[bool] = False,
-        exclude_mine: Optional[bool] = False,
-        mine_only: Optional[bool] = False,
         parent_id: Optional[str] = None,
-        sort_by: Optional[str] = None,
+        tags_operator: Optional[str] = "OR",
+        **filters: Any,
     ) -> str:
         """Retrieve experiments, with optional filtering.
 
@@ -145,7 +141,70 @@ class LocalExperimentClient():
         Returns:
             A list of experiments and the marker, if applicable.
         """
-        pass
+        df = self._experiments
+
+        if experiment_type is not None:
+            df = df.loc[df.type == experiment_type]
+
+        if backend_name is not None:
+            df = df.loc[df.device_name == backend_name]
+
+        # Note a bug in the interface for all services:
+        # It is impossible to filter by experiments whose parent id is None
+        # (i.e., root experiments)
+        if parent_id is not None:
+            df = df.loc[df.parent_experiment_uuid == parent_id]
+
+        # Waiting for consistency between provider service and qiskit-experiments service,
+        # currently they have different types for `device_components`
+        if device_components is not None:
+            raise ValueError(
+                "The fake service currently does not support filtering on device components"
+            )
+
+        if tags is not None:
+            if tags_operator == "OR":
+                df = df.loc[df.tags.apply(lambda dftags: any(x in dftags for x in tags))]
+            elif tags_operator == "AND":
+                df = df.loc[df.tags.apply(lambda dftags: all(x in dftags for x in tags))]
+            else:
+                raise ValueError("Unrecognized tags operator")
+
+        # These are parameters of IBMExperimentService.experiments
+        if "start_datetime_before" in filters:
+            df = df.loc[df.start_time <= filters["start_datetime_before"]]
+        if "start_datetime_after" in filters:
+            df = df.loc[df.start_time >= filters["start_datetime_after"]]
+
+        # This is a parameter of IBMExperimentService.experiments
+        sort_by = filters.get("sort_by", "start_datetime:desc")
+
+        if not isinstance(sort_by, list):
+            sort_by = [sort_by]
+
+        # TODO: support also experiment_type
+        if len(sort_by) != 1:
+            raise ValueError("The fake service currently supports only sorting by start_datetime")
+
+        sortby_split = sort_by[0].split(":")
+        # TODO: support also experiment_type
+        if (
+                len(sortby_split) != 2
+                or sortby_split[0] != "start_datetime"
+                or (sortby_split[1] != "asc" and sortby_split[1] != "desc")
+        ):
+            raise ValueError(
+                "The fake service currently supports only sorting by start_datetime, which can be "
+                "either asc or desc"
+            )
+
+        df = df.sort_values(
+            ["start_time", "uuid"], ascending=[(sortby_split[1] == "asc"), True]
+        )
+
+        df = df.iloc[:limit]
+
+        return df.to_dict("records")
 
     def experiment_get(self, experiment_id: str) -> str:
         """Get a specific experiment.
@@ -156,7 +215,7 @@ class LocalExperimentClient():
         Returns:
             Experiment data.
         """
-        exp = self.experiments.loc[self.experiments.uuid == experiment_id]
+        exp = self._experiments.loc[self._experiments.uuid == experiment_id]
         if exp.empty:
             raise IBMExperimentEntryNotFound
         return self.serialize(exp)
@@ -173,13 +232,12 @@ class LocalExperimentClient():
         data_dict = json.loads(data)
         if "uuid" not in data_dict:
             data_dict["uuid"] = str(uuid.uuid4())
-
-        exp = self.experiments.loc[self.experiments.uuid == data_dict["uuid"]]
+        exp = self._experiments.loc[self._experiments.uuid == data_dict["uuid"]]
         if not exp.empty:
             raise IBMExperimentEntryExists
 
-        new_df = pd.DataFrame([data_dict], columns=self.experiments.columns)
-        self.experiments = pd.concat([self.experiments, new_df], ignore_index=True)
+        new_df = pd.DataFrame([data_dict], columns=self._experiments.columns)
+        self._experiments = pd.concat([self._experiments, new_df], ignore_index=True)
         self.save()
         return data_dict
 
@@ -194,13 +252,13 @@ class LocalExperimentClient():
         Returns:
             Experiment data.
         """
-        exp = self.experiments.loc[self.experiments.uuid == experiment_id]
+        exp = self._experiments.loc[self._experiments.uuid == experiment_id]
         if exp.empty:
             raise IBMExperimentEntryNotFound
         exp_index = exp.index[0]
         new_data_dict = json.loads(new_data)
         for key, value in new_data_dict.items():
-            self.experiments.at[exp_index, key] = value
+            self._experiments.at[exp_index, key] = value
         self.save()
 
 
@@ -213,7 +271,7 @@ class LocalExperimentClient():
         Returns:
             JSON response.
         """
-        self.experiments.drop(self.experiments.loc[self.experiments.uuid == experiment_id].index, inplace=True)
+        self._experiments.drop(self._experiments.loc[self._experiments.uuid == experiment_id].index, inplace=True)
         self.save()
 
 
@@ -335,11 +393,11 @@ class LocalExperimentClient():
         exp_id = data_dict.get("experiment_uuid")
         if exp_id is None:
             return IBMApiError
-        exp = self.experiments.loc[self.experiments.uuid == exp_id]
+        exp = self._experiments.loc[self._experiments.uuid == exp_id]
         if exp.empty:
             return IBMApiError
         exp_index = exp.index[0]
-        data_dict["device_name"] = self.experiments.at[exp_index, "device_name"]
+        data_dict["device_name"] = self._experiments.at[exp_index, "device_name"]
         if "uuid" not in data_dict:
             data_dict["uuid"] = str(uuid.uuid4())
 
