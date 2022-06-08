@@ -80,16 +80,27 @@ class TestExperimentServerIntegration(IBMTestCase):
             self.service.experiment(experiment_id=exp_id)
 
     def test_get_experiments(self):
-        for exp_id in ['00', '01', '10', '11']:
+        exp_ids = ['00', '01', '10', '11']
+        for exp_id in exp_ids:
             self.service.create_experiment(
                 ExperimentData(
                     experiment_id=exp_id,
-                    experiment_type=f"test_experiment_{exp_id[0]}",
+                    experiment_type=f"test_get_experiments_{exp_id[0]}",
                     backend=f"backend_{exp_id[1]}",
                 )
             )
-        exps = self.service.experiments()
-        print(exps)
+        exps = self.service.experiments(experiment_type="test_get_experiments", experiment_type_operator='like')
+        self.assertEqual(len(exps), len(exp_ids))
+        exps = self.service.experiments(experiment_type="test_get_experiments",
+                                        experiment_type_operator='like',
+                                        backend_name="backend_0")
+        self.assertEqual(len(exps), 2)
+        self.assertEqual(exps[0].backend, "backend_0")
+        self.assertEqual(exps[1].backend, "backend_0")
+        self.assertEqual(exps[0].experiment_id[1], "0")
+        self.assertEqual(exps[1].experiment_id[1], "0")
+
+
 
     def test_create_analysis_result(self):
         exp_id = self.service.create_experiment(ExperimentData(experiment_type="test_experiment", backend="ibmq_qasm_simulator"))
