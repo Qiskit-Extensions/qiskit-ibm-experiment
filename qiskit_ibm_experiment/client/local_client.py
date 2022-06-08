@@ -40,6 +40,7 @@ class LocalExperimentClient():
         "notes",
         "start_time",
         "end_time",
+        "updated_at",
     ]
     results_db_columns =[
         "experiment_uuid",
@@ -52,6 +53,8 @@ class LocalExperimentClient():
         "uuid",
         "chisq",
         "device_name",
+        "created_at",
+        "updated_at",
     ]
     def __init__(self, main_dir) -> None:
         """ExperimentClient constructor.
@@ -383,7 +386,72 @@ class LocalExperimentClient():
         Returns:
             A list of analysis results and the marker, if applicable.
         """
-        pass
+        df = self.results
+
+        # TODO: skipping device components for now until we conslidate more with the provider service
+        # (in the qiskit-experiments service there is no opertor for device components,
+        # so the specification for filtering is not clearly defined)
+
+        if experiment_uuid is not None:
+            df = df.loc[df.experiment_id == experiment_uuid]
+        if result_type is not None:
+            if result_type[:5] == 'like:':
+                result_type = result_type.split(":")[1]
+                df = df.loc[df.type.str.contains(result_type)]
+            else:
+                df = df.loc[df.type == result_type]
+        if backend_name is not None:
+            df = df.loc[df.backend_name == backend_name]
+        if quality is not None:
+            df = df.loc[df.quality == quality]
+        if verified is not None:
+            df = df.loc[df.verified == verified]
+
+        if tags is not None:
+            operator, tags = tags.split(":")
+            tags = tags.split(",")
+            if operator == "any:": # OR operator
+                df = df.loc[df.tags.apply(
+                    lambda dftags: any(x in dftags for x in tags))]
+            elif operator == "AND":
+                df = df.loc[df.tags.apply(
+                    lambda dftags: all(x in dftags for x in tags))]
+            else:
+                raise ValueError(f"Unrecognized tags operator {operator}")
+
+        # This is a parameter of IBMExperimentService.experiments
+        if sort_by is None:
+            sort_by = "creation_datetime:desc"
+
+        if not isinstance(sort_by, list):
+            sort_by = [sort_by]
+
+        # TODO: support also device components and result type
+        if len(sort_by) != 1:
+            raise ValueError(
+                "The fake service currently supports only sorting by creation_datetime"
+            )
+
+        sortby_split = sort_by[0].split(":")
+        # TODO: support also device components and result type
+        if (
+                len(sortby_split) != 2
+                or sortby_split[0] != "creation_datetime"
+                or (sortby_split[1] != "asc" and sortby_split[1] != "desc")
+        ):
+            raise ValueError(
+                "The fake service currently supports only sorting by creation_datetime, "
+                "which can be either asc or desc"
+            )
+
+        df = df.sort_values(
+            ["created_at", "uuid"],
+            ascending=[(sortby_split[1] == "asc"), True]
+        )
+
+        df = df.iloc[:limit]
+        result = {"analysis_results": df.replace({np.nan: None}).to_dict("records")}
+        return json.dumps(result)
 
 
     def analysis_result_create(self, result: str) -> Dict:

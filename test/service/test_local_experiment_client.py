@@ -100,8 +100,6 @@ class TestExperimentServerIntegration(IBMTestCase):
         self.assertEqual(exps[0].experiment_id[1], "0")
         self.assertEqual(exps[1].experiment_id[1], "0")
 
-
-
     def test_create_analysis_result(self):
         exp_id = self.service.create_experiment(ExperimentData(experiment_type="test_experiment", backend="ibmq_qasm_simulator"))
         analysis_result_value = {"str": "foo", "float": 3.14}
@@ -113,6 +111,26 @@ class TestExperimentServerIntegration(IBMTestCase):
         self.assertEqual(result.result_type, "qiskit_test")
         self.assertEqual(result.result_data["str"], analysis_result_value["str"])
         self.assertEqual(result.result_data["float"], analysis_result_value["float"])
+
+    def test_get_analysis_results(self):
+        exp_id = self.service.create_experiment(
+            ExperimentData(experiment_type="test_experiment",
+                           backend="ibmq_qasm_simulator"))
+        result_ids = ['00', '01', '10', '11']
+        for result_id in result_ids:
+            analysis_result_value = {"str": f"foo_{result_id}", "float": 3.14 + int(result_id)}
+            analysis_data = AnalysisResultData(experiment_id=exp_id,
+                                               result_id=result_id,
+                                               result_data=analysis_result_value,
+                                               result_type=f"test_get_analysis_results_{result_id[0]}")
+            self.service.create_analysis_result(analysis_data)
+        results = self.service.analysis_results(result_type="test_get_analysis_results", result_type_operator='like')
+        self.assertEqual(len(results), len(result_ids))
+        results = self.service.analysis_results(
+            result_type="test_get_analysis_results_1")
+        self.assertEqual(len(results), 2)
+        self.assertEqual(results[0].result_data['float'], 3.14 + 10)
+        self.assertEqual(results[1].result_data['float'], 3.14 + 11)
 
 
 
