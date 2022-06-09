@@ -150,7 +150,7 @@ class ExperimentClient:
         experiment_id: str,
         plot: Union[bytes, str],
         plot_name: str,
-    ) -> Dict:
+    ) -> bool:
         """Upload an experiment plot.
 
         Args:
@@ -159,11 +159,12 @@ class ExperimentClient:
             plot_name: Name of the plot.
 
         Returns:
-            JSON response.
+            Whether the upload succeeded
         """
-        return self.api.upload_plot(
+        response = self.api.upload_plot(
             experiment_id, plot, plot_name
         )
+        return response.status_code == 200
 
     def experiment_plot_update(
         self,

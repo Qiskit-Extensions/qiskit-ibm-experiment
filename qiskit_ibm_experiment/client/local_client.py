@@ -289,7 +289,7 @@ class LocalExperimentClient():
         experiment_id: str,
         plot: Union[bytes, str],
         plot_name: str,
-    ) -> Dict:
+    ) -> bool:
         """Upload an experiment plot.
 
         Args:
@@ -298,9 +298,9 @@ class LocalExperimentClient():
             plot_name: Name of the plot.
 
         Returns:
-            JSON response.
+            Whether the upload succeeded
         """
-        pass
+        return True
 
 
     def experiment_plot_update(
@@ -393,7 +393,7 @@ class LocalExperimentClient():
         # so the specification for filtering is not clearly defined)
 
         if experiment_uuid is not None:
-            df = df.loc[df.experiment_id == experiment_uuid]
+            df = df.loc[df.experiment_uuid == experiment_uuid]
         if result_type is not None:
             if result_type[:5] == 'like:':
                 result_type = result_type.split(":")[1]

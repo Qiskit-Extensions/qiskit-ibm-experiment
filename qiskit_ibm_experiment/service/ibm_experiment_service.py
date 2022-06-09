@@ -1280,11 +1280,11 @@ class IBMExperimentService:
                 figure = file.read()
 
         with map_api_error(f"Figure {figure_name} creation failed."):
-            response = self._api_client.experiment_plot_upload(
+            success = self._api_client.experiment_plot_upload(
                 experiment_id, figure, figure_name
             )
 
-        if response.status_code != 200:
+        if not success:
             return None
         return figure_name, len(figure)
 
