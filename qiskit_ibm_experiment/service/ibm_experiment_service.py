@@ -119,7 +119,7 @@ class IBMExperimentService:
         )
         if self._account.preferences is None:
             self._account.preferences = copy.deepcopy(self._default_preferences)
-        if not self._account.local:
+        if not self.local:
             if self._account.url is None:
                 self._account.url = url
             self.get_access_token()
@@ -138,6 +138,10 @@ class IBMExperimentService:
             self._api_client = LocalExperimentClient(main_dir=self._DEFAULT_LOCAL_DB_DIR)
         self.options = self._default_options
         self.set_option(**kwargs)
+
+    @property
+    def local(self):
+        return self._account.local
 
     def set_option(self, **kwargs):
         """Sets the options given as keywords"""
@@ -323,7 +327,7 @@ class IBMExperimentService:
 
         api_data = self._experiment_data_to_api(data)
 
-        if not self._account.local and (
+        if not self.local and (
             "hub_id" not in api_data
             or "group_id" not in api_data
             or "project_id" not in api_data
@@ -447,7 +451,7 @@ class IBMExperimentService:
             if isinstance(share_level, str):
                 share_level = ExperimentShareLevel(data.share_level.lower())
             out["visibility"] = share_level.value
-        if data.tags:
+        if data.tags is not None:
             out["tags"] = data.tags
         if data.job_ids:
             out["jobs"] = data.job_ids
@@ -860,7 +864,7 @@ class IBMExperimentService:
             out["fit"] = data.result_data
         if data.result_type:
             out["type"] = data.result_type
-        if data.tags:
+        if data.tags is not None:
             out["tags"] = data.tags
         if data.quality:
             quality = data.quality
