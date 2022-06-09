@@ -1,0 +1,5 @@
+---
+features:
+  - |
+    `IBMExperimentService` now supports the `local` keyword, enabling the use
+    of a local database. This feature is still experimental and incomplete.
