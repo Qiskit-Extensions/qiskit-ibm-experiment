@@ -38,7 +38,6 @@ class ExperimentRestAdapter:
     }
 
     _HEADER_JSON_CONTENT = {"Content-Type": "application/json"}
-    _DEFAULT_URL_BASE = "https://api.quantum-computing.ibm.com/resultsdb"
 
     def __init__(self, session: RetrySession, prefix_url: str = "") -> None:
         """ExperimentRestAdapter constructor.
