@@ -177,13 +177,11 @@ class LocalExperimentClient():
             else:
                 raise ValueError("Unrecognized tags operator")
 
-        # These are parameters of IBMExperimentService.experiments
         if "start_datetime_before" in filters:
             df = df.loc[df.start_time <= filters["start_datetime_before"]]
         if "start_datetime_after" in filters:
             df = df.loc[df.start_time >= filters["start_datetime_after"]]
 
-        # This is a parameter of IBMExperimentService.experiments
         sort_by = filters.get("sort_by")
         if sort_by is None:
             sort_by = "start_datetime:desc"
@@ -280,8 +278,12 @@ class LocalExperimentClient():
         Returns:
             JSON response.
         """
+        exp = self._experiments.loc[self._experiments.uuid == experiment_id]
+        if exp.empty:
+            raise IBMExperimentEntryNotFound
         self._experiments.drop(self._experiments.loc[self._experiments.uuid == experiment_id].index, inplace=True)
         self.save()
+        return self.serialize(exp)
 
 
     def experiment_plot_upload(
@@ -419,7 +421,6 @@ class LocalExperimentClient():
             else:
                 raise ValueError(f"Unrecognized tags operator {operator}")
 
-        # This is a parameter of IBMExperimentService.experiments
         if sort_by is None:
             sort_by = "creation_datetime:desc"
 
@@ -466,10 +467,10 @@ class LocalExperimentClient():
         data_dict = json.loads(result)
         exp_id = data_dict.get("experiment_uuid")
         if exp_id is None:
-            return IBMApiError
+            raise IBMApiError(f"Cannot create analysis result without experiment id")
         exp = self._experiments.loc[self._experiments.uuid == exp_id]
         if exp.empty:
-            return IBMApiError
+            raise IBMApiError(f"Experiment {exp_id} not found")
         exp_index = exp.index[0]
         data_dict["device_name"] = self._experiments.at[exp_index, "device_name"]
         if "uuid" not in data_dict:
