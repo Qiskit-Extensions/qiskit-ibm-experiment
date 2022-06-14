@@ -132,6 +132,20 @@ class TestExperimentServerIntegration(IBMTestCase):
         self.assertEqual(results[0].result_data['float'], 3.14 + 10)
         self.assertEqual(results[1].result_data['float'], 3.14 + 11)
 
+    def test_delete_analysis_result(self):
+        exp_id = self.service.create_experiment(
+            ExperimentData(experiment_type="test_experiment",
+                           backend="ibmq_qasm_simulator"))
+        analysis_data = AnalysisResultData(experiment_id=exp_id,
+                                           result_data={"foo": "delete_bar"},
+                                           result_type="test_result")
+        result_id = self.service.create_analysis_result(analysis_data)
+        result = self.service.analysis_result(result_id)
+        self.assertEqual(result.result_data['foo'], 'delete_bar')
+        self.service.delete_analysis_result(result_id)
+        with self.assertRaises(IBMExperimentEntryNotFound):
+            result = self.service.analysis_result(result_id)
+
     def test_figure(self):
         """Test getting a figure."""
         exp_id = self.service.create_experiment(

@@ -548,8 +548,16 @@ class LocalExperimentClient():
         Returns:
             Analysis result data.
         """
-        pass
-
+        result = self._results.loc[self._results.uuid == result_id]
+        if result.empty:
+            raise IBMExperimentEntryNotFound
+        result_index = result.index[0]
+        new_data_dict = json.loads(new_data)
+        for key, value in new_data_dict.items():
+            self._results.at[result_index, key] = value
+        self.save()
+        result = self._results.loc[self._results.uuid == result_id]
+        return self.serialize(result)
 
     def analysis_result_delete(self, result_id: str) -> Dict:
         """Delete an analysis result.
@@ -560,7 +568,12 @@ class LocalExperimentClient():
         Returns:
             Analysis result data.
         """
-        pass
+        result = self._results.loc[self._results.uuid == result_id]
+        if result.empty:
+            raise IBMExperimentEntryNotFound
+        self._results.drop(self._results.loc[self._results.uuid == result_id].index, inplace=True)
+        self.save()
+        return self.serialize(result)
 
 
     def analysis_result_get(self, result_id: str) -> str:
