@@ -15,6 +15,7 @@
 import logging
 import json
 import copy
+import os
 from typing import Optional, List, Dict, Union, Tuple, Any, Type
 from datetime import datetime
 from collections import defaultdict
@@ -31,11 +32,11 @@ from .device_component import DeviceComponent
 from .experiment_dataclasses import ExperimentData, AnalysisResultData
 from ..client.experiment import ExperimentClient
 from ..exceptions import (
-    RequestsApiError,
-    IBMApiError,
     IBMExperimentEntryExists,
     IBMExperimentEntryNotFound,
 )
+from ..client.local_client import LocalExperimentClient
+from ..exceptions import RequestsApiError, IBMApiError
 from ..accounts import AccountManager, Account, ProxyConfiguration
 
 logger = logging.getLogger(__name__)
@@ -79,6 +80,9 @@ class IBMExperimentService:
 
     _default_preferences = {"auto_save": False}
     _default_options = {"prompt_for_delete": True}
+    _DEFAULT_AUTHENTICATION_PREFIX = "/v2/users/loginWithToken"
+    _DEFAULT_EXPERIMENT_PREFIX = "/resultsdb"
+    _DEFAULT_LOCAL_DB_DIR = os.path.join(os.path.expanduser("~"), ".qiskit", "resultdb")
     _AUTHENTICATION_CMD = "/users/loginWithToken"
     _USER_DATA_CMD = "/users/me"
 
@@ -90,6 +94,7 @@ class IBMExperimentService:
         proxies: Optional[dict] = None,
         verify: Optional[bool] = None,
         local: Optional[bool] = None,
+        local_save: Optional[bool] = True,
         **kwargs,
     ) -> None:
         """IBMExperimentService constructor.
@@ -97,6 +102,8 @@ class IBMExperimentService:
         Args:
             token: the API token to use when establishing connection with the result DB
             url: the url for the result DB API
+            local: Whether to use a local DB client which does not connect to the result DB
+            local_save: If using a local client, whether to enable save to disk or not.
         """
         super().__init__()
         if url is None:
@@ -111,7 +118,7 @@ class IBMExperimentService:
         )
         if self._account.preferences is None:
             self._account.preferences = copy.deepcopy(self._default_preferences)
-        if not self._account.local:
+        if not self.local:
             if self._account.url is None:
                 self._account.url = url
             self.get_access_token()
@@ -126,8 +133,17 @@ class IBMExperimentService:
             self._api_client = ExperimentClient(
                 self._access_token, db_url, self._additional_params
             )
+        else:
+            self._api_client = LocalExperimentClient(
+                main_dir=self._DEFAULT_LOCAL_DB_DIR, local_save=local_save
+            )
         self.options = self._default_options
         self.set_option(**kwargs)
+
+    @property
+    def local(self):
+        """The local property determines whether data is stored locally and not on the remote server"""
+        return self._account.local
 
     def set_option(self, **kwargs):
         """Sets the options given as keywords"""
@@ -313,13 +329,13 @@ class IBMExperimentService:
 
         api_data = self._experiment_data_to_api(data)
 
-        if (
+        if not self.local and (
             "hub_id" not in api_data
             or "group_id" not in api_data
             or "project_id" not in api_data
         ):
             logger.warning(
-                "create_experiment() called without hub/group/project data"
+                "create_experiment() called without hub/group/project data "
                 "(passing a provider parameter enables inference of these values)"
             )
 
@@ -437,7 +453,7 @@ class IBMExperimentService:
             if isinstance(share_level, str):
                 share_level = ExperimentShareLevel(data.share_level.lower())
             out["visibility"] = share_level.value
-        if data.tags:
+        if data.tags is not None:
             out["tags"] = data.tags
         if data.job_ids:
             out["jobs"] = data.job_ids
@@ -850,7 +866,7 @@ class IBMExperimentService:
             out["fit"] = data.result_data
         if data.result_type:
             out["type"] = data.result_type
-        if data.tags:
+        if data.tags is not None:
             out["tags"] = data.tags
         if data.quality:
             quality = data.quality
@@ -1270,11 +1286,11 @@ class IBMExperimentService:
                 figure = file.read()
 
         with map_api_error(f"Figure {figure_name} creation failed."):
-            response = self._api_client.experiment_plot_upload(
+            success = self._api_client.experiment_plot_upload(
                 experiment_id, figure, figure_name
             )
 
-        if response.status_code != 200:
+        if not success:
             return None
         return figure_name, len(figure)
 

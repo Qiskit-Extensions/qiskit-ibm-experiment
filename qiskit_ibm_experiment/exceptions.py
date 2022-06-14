@@ -51,38 +51,8 @@ class IBMApiError(IBMError):
     pass
 
 
-class IBMRuntimeError(IBMError):
-    """Base class for errors raised by the runtime service modules."""
-
-    pass
-
-
-class RuntimeDuplicateProgramError(IBMRuntimeError):
-    """Error raised when a program being uploaded already exists."""
-
-    pass
-
-
-class RuntimeProgramNotFound(IBMRuntimeError):
-    """Error raised when a program is not found."""
-
-    pass
-
-
-class RuntimeJobFailureError(IBMRuntimeError):
-    """Error raised when a runtime job failed."""
-
-    pass
-
-
-class RuntimeJobNotFound(IBMRuntimeError):
-    """Error raised when a job is not found."""
-
-    pass
-
-
-class RuntimeInvalidStateError(IBMRuntimeError):
-    """Errors raised when the state is not valid for the operation."""
+class IBMProviderMissing(IBMError):
+    """Error raised when provider is not passed when creating new experiment"""
 
     pass
 

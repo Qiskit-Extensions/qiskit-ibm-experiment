@@ -116,7 +116,7 @@ def utc_to_local(utc_dt: Union[datetime, str]) -> datetime:
     if isinstance(utc_dt, str):
         utc_dt = dateutil.parser.parse(utc_dt)
     if not isinstance(utc_dt, datetime):
-        raise TypeError("Input `utc_dt` is not string or datetime.")
+        raise TypeError(f"Input `utc_dt` ({utc_dt}) is not string or datetime.")
     utc_dt = utc_dt.replace(tzinfo=timezone.utc)  # type: ignore[arg-type]
     local_dt = utc_dt.astimezone(dateutil.tz.tzlocal())  # type: ignore[attr-defined]
     return local_dt
