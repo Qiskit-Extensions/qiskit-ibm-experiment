@@ -32,13 +32,11 @@ from .device_component import DeviceComponent
 from .experiment_dataclasses import ExperimentData, AnalysisResultData
 from ..client.experiment import ExperimentClient
 from ..exceptions import (
-    RequestsApiError,
-    IBMApiError,
     IBMExperimentEntryExists,
     IBMExperimentEntryNotFound,
 )
 from ..client.local_client import LocalExperimentClient
-from ..exceptions import RequestsApiError, IBMApiError, IBMProviderMissing
+from ..exceptions import RequestsApiError, IBMApiError
 from ..accounts import AccountManager, Account, ProxyConfiguration
 
 logger = logging.getLogger(__name__)
@@ -84,9 +82,7 @@ class IBMExperimentService:
     _default_options = {"prompt_for_delete": True}
     _DEFAULT_AUTHENTICATION_PREFIX = "/v2/users/loginWithToken"
     _DEFAULT_EXPERIMENT_PREFIX = "/resultsdb"
-    _DEFAULT_LOCAL_DB_DIR = os.path.join(
-        os.path.expanduser("~"), ".qiskit", "resultdb"
-    )
+    _DEFAULT_LOCAL_DB_DIR = os.path.join(os.path.expanduser("~"), ".qiskit", "resultdb")
     _AUTHENTICATION_CMD = "/users/loginWithToken"
     _USER_DATA_CMD = "/users/me"
 
@@ -138,12 +134,15 @@ class IBMExperimentService:
                 self._access_token, db_url, self._additional_params
             )
         else:
-            self._api_client = LocalExperimentClient(main_dir=self._DEFAULT_LOCAL_DB_DIR, local_save=local_save)
+            self._api_client = LocalExperimentClient(
+                main_dir=self._DEFAULT_LOCAL_DB_DIR, local_save=local_save
+            )
         self.options = self._default_options
         self.set_option(**kwargs)
 
     @property
     def local(self):
+        """The local property determines whether data is stored locally and not on the remote server"""
         return self._account.local
 
     def set_option(self, **kwargs):

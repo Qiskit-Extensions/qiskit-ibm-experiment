@@ -161,9 +161,7 @@ class ExperimentClient:
         Returns:
             Whether the upload succeeded
         """
-        response = self.api.upload_plot(
-            experiment_id, plot, plot_name
-        )
+        response = self.api.upload_plot(experiment_id, plot, plot_name)
         return response.status_code == 200
 
     def experiment_plot_update(
@@ -182,9 +180,7 @@ class ExperimentClient:
         Returns:
             JSON response.
         """
-        return self.api.update_plot(
-            experiment_id, plot, plot_name
-        )
+        return self.api.update_plot(experiment_id, plot, plot_name)
 
     def experiment_plot_get(self, experiment_id: str, plot_name: str) -> bytes:
         """Retrieve an experiment plot.

@@ -50,10 +50,12 @@ class IBMApiError(IBMError):
 
     pass
 
+
 class IBMProviderMissing(IBMError):
     """Error raised when provider is not passed when creating new experiment"""
 
     pass
+
 
 class IBMExperimentError(IBMError):
     """Base class for errors raised by the experiment service modules."""

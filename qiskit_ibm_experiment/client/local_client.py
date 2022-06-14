@@ -15,15 +15,23 @@
 import logging
 import os
 import uuid
+import json
 from typing import List, Dict, Optional, Union, Any
 import pandas as pd
 import numpy as np
-import json
-from qiskit_ibm_experiment.exceptions import IBMExperimentEntryNotFound, IBMExperimentEntryExists, RequestsApiError
+
+from qiskit_ibm_experiment.exceptions import (
+    IBMExperimentEntryNotFound,
+    IBMExperimentEntryExists,
+    RequestsApiError,
+)
 
 logger = logging.getLogger(__name__)
 
-class LocalExperimentClient():
+
+class LocalExperimentClient:
+    """Client for locally performing database services."""
+
     experiment_db_columns = [
         "type",
         "device_name",
@@ -42,7 +50,7 @@ class LocalExperimentClient():
         "end_time",
         "updated_at",
     ]
-    results_db_columns =[
+    results_db_columns = [
         "experiment_uuid",
         "device_components",
         "fit",
@@ -56,6 +64,7 @@ class LocalExperimentClient():
         "created_at",
         "updated_at",
     ]
+
     def __init__(self, main_dir: str = None, local_save: bool = None) -> None:
         """ExperimentClient constructor.
 
@@ -64,6 +73,9 @@ class LocalExperimentClient():
             url: The session's base url
             additional_params: additional session parameters
         """
+        self._experiments = None
+        self._results = None
+        self._figures = None
         self._local_save = False
         if local_save and main_dir is not None:
             self._local_save = True
@@ -72,25 +84,28 @@ class LocalExperimentClient():
         self.init_db()
 
     def set_paths(self, main_dir):
+        """Creates the path to db files and directories"""
         self.main_dir = main_dir
-        self.figures_dir = os.path.join(self.main_dir, 'figures')
-        self.experiments_file = os.path.join(self.main_dir, 'experiments.json')
-        self.results_file = os.path.join(self.main_dir, 'results.json')
+        self.figures_dir = os.path.join(self.main_dir, "figures")
+        self.experiments_file = os.path.join(self.main_dir, "experiments.json")
+        self.results_file = os.path.join(self.main_dir, "results.json")
 
     def create_directories(self):
         """Creates the directories needed for the DB if they do not exist"""
         dirs_to_create = [self.main_dir, self.figures_dir]
-        for dir in dirs_to_create:
-            if not os.path.exists(dir):
-                os.makedirs(dir)
+        for dir_to_create in dirs_to_create:
+            if not os.path.exists(dir_to_create):
+                os.makedirs(dir_to_create)
 
     def save(self):
+        """Saves the db to disk"""
         if self._local_save:
             self._experiments.to_json(self.experiments_file)
             self._results.to_json(self.results_file)
             self._save_figures()
 
     def _save_figures(self):
+        """Saves the figures to disk"""
         for exp_id in self._figures:
             for figure_name, figure_data in self._figures[exp_id].items():
                 filename = f"{exp_id}_{figure_name}"
@@ -98,10 +113,12 @@ class LocalExperimentClient():
                     file.write(figure_data)
 
     def serialize(self, df):
+        """Serializes db values as JSON"""
         result = df.replace({np.nan: None}).to_dict("records")[0]
         return json.dumps(result)
 
     def init_db(self):
+        """Initializes the db"""
         if self._local_save:
             if os.path.exists(self.experiments_file):
                 self._experiments = pd.read_json(self.experiments_file)
@@ -125,14 +142,15 @@ class LocalExperimentClient():
         self.save()
 
     def _get_figure_list(self):
+        """Generates the figure dictionary based on stored data on disk"""
         figures = {}
         for exp_id in self._experiments.uuid:
             figures_for_exp = {}
             for filename in os.listdir(self.figures_dir):
                 if filename.startswith(exp_id):
-                    with open(os.path.join(self.figures_dir,filename), "rb") as file:
+                    with open(os.path.join(self.figures_dir, filename), "rb") as file:
                         figure_data = file.read()
-                    figure_name = filename[len(exp_id)+1:]
+                    figure_name = filename[len(exp_id) + 1 :]
                     figures_for_exp[figure_name] = figure_data
             figures[exp_id] = figures_for_exp
         return figures
@@ -144,7 +162,6 @@ class LocalExperimentClient():
     def experiments(
         self,
         limit: Optional[int] = 10,
-        json_decoder: "json.JSONDecoder" = json.JSONDecoder,
         device_components: Optional[Union[str, "DeviceComponent"]] = None,
         experiment_type: Optional[str] = None,
         backend_name: Optional[str] = None,
@@ -175,11 +192,14 @@ class LocalExperimentClient():
 
         Returns:
             A list of experiments and the marker, if applicable.
+
+        Raises:
+            ValueError: If the parameters are unsuitable for filtering
         """
         df = self._experiments
 
         if experiment_type is not None:
-            if experiment_type[:5] == 'like:':
+            if experiment_type[:5] == "like:":
                 experiment_type = experiment_type.split(":")[1]
                 df = df.loc[df.type.str.contains(experiment_type)]
             else:
@@ -203,9 +223,13 @@ class LocalExperimentClient():
 
         if tags is not None:
             if tags_operator == "OR":
-                df = df.loc[df.tags.apply(lambda dftags: any(x in dftags for x in tags))]
+                df = df.loc[
+                    df.tags.apply(lambda dftags: any(x in dftags for x in tags))
+                ]
             elif tags_operator == "AND":
-                df = df.loc[df.tags.apply(lambda dftags: all(x in dftags for x in tags))]
+                df = df.loc[
+                    df.tags.apply(lambda dftags: all(x in dftags for x in tags))
+                ]
             else:
                 raise ValueError("Unrecognized tags operator")
 
@@ -223,14 +247,16 @@ class LocalExperimentClient():
 
         # TODO: support also experiment_type
         if len(sort_by) != 1:
-            raise ValueError("The fake service currently supports only sorting by start_datetime")
+            raise ValueError(
+                "The fake service currently supports only sorting by start_datetime"
+            )
 
         sortby_split = sort_by[0].split(":")
         # TODO: support also experiment_type
         if (
-                len(sortby_split) != 2
-                or sortby_split[0] != "start_datetime"
-                or (sortby_split[1] != "asc" and sortby_split[1] != "desc")
+            len(sortby_split) != 2
+            or sortby_split[0] != "start_datetime"
+            or (sortby_split[1] != "asc" and sortby_split[1] != "desc")
         ):
             raise ValueError(
                 "The fake service currently supports only sorting by start_datetime, which can be "
@@ -253,6 +279,9 @@ class LocalExperimentClient():
 
         Returns:
             Experiment data.
+
+        Raises:
+            IBMExperimentEntryNotFound: If the experiment is not found
         """
         exp = self._experiments.loc[self._experiments.uuid == experiment_id]
         if exp.empty:
@@ -267,6 +296,10 @@ class LocalExperimentClient():
 
         Returns:
             Experiment data.
+
+        Raises:
+            IBMExperimentEntryExists: If the experiment already exists
+
         """
         data_dict = json.loads(data)
         if "uuid" not in data_dict:
@@ -280,7 +313,6 @@ class LocalExperimentClient():
         self.save()
         return data_dict
 
-
     def experiment_update(self, experiment_id: str, new_data: str) -> Dict:
         """Update an experiment.
 
@@ -290,6 +322,9 @@ class LocalExperimentClient():
 
         Returns:
             Experiment data.
+
+        Raises:
+            IBMExperimentEntryNotFound: If the experiment is not found
         """
         exp = self._experiments.loc[self._experiments.uuid == experiment_id]
         if exp.empty:
@@ -302,7 +337,6 @@ class LocalExperimentClient():
         exp = self._experiments.loc[self._experiments.uuid == experiment_id]
         return self.serialize(exp)
 
-
     def experiment_delete(self, experiment_id: str) -> Dict:
         """Delete an experiment.
 
@@ -311,14 +345,19 @@ class LocalExperimentClient():
 
         Returns:
             JSON response.
+
+        Raises:
+            IBMExperimentEntryNotFound: If the experiment is not found
         """
         exp = self._experiments.loc[self._experiments.uuid == experiment_id]
         if exp.empty:
             raise IBMExperimentEntryNotFound
-        self._experiments.drop(self._experiments.loc[self._experiments.uuid == experiment_id].index, inplace=True)
+        self._experiments.drop(
+            self._experiments.loc[self._experiments.uuid == experiment_id].index,
+            inplace=True,
+        )
         self.save()
         return self.serialize(exp)
-
 
     def experiment_plot_upload(
         self,
@@ -335,16 +374,20 @@ class LocalExperimentClient():
 
         Returns:
             Whether the upload succeeded
+
+        Raises:
+            RequestsApiError: If the figure already exists
         """
         if experiment_id not in self._figures:
             self._figures[experiment_id] = {}
         exp_figures = self._figures[experiment_id]
         if plot_name in exp_figures:
-            raise RequestsApiError(f"Figure {plot_name} already exists", status_code=409)
+            raise RequestsApiError(
+                f"Figure {plot_name} already exists", status_code=409
+            )
         exp_figures[plot_name] = plot
         self.save()
         return True
-
 
     def experiment_plot_update(
         self,
@@ -361,15 +404,16 @@ class LocalExperimentClient():
 
         Returns:
             JSON response.
+
+        Raises:
+            RequestsApiError: If the figure is not found
         """
         exp_figures = self._figures[experiment_id]
         if plot_name not in exp_figures:
-            raise RequestsApiError(f"Figure {plot_name} not found",
-                                   status_code=404)
+            raise RequestsApiError(f"Figure {plot_name} not found", status_code=404)
         exp_figures[plot_name] = plot
         self.save()
-        return json.dumps({'name': plot_name, 'size': len(plot)})
-
+        return json.dumps({"name": plot_name, "size": len(plot)})
 
     def experiment_plot_get(self, experiment_id: str, plot_name: str) -> bytes:
         """Retrieve an experiment plot.
@@ -380,14 +424,15 @@ class LocalExperimentClient():
 
         Returns:
             Retrieved experiment plot.
+
+        Raises:
+            RequestsApiError: If the figure is not found
         """
 
         exp_figures = self._figures[experiment_id]
         if plot_name not in exp_figures:
-            raise RequestsApiError(f"Figure {plot_name} not found",
-                                   status_code=404)
+            raise RequestsApiError(f"Figure {plot_name} not found", status_code=404)
         return exp_figures[plot_name]
-
 
     def experiment_plot_delete(self, experiment_id: str, plot_name: str) -> None:
         """Delete an experiment plot.
@@ -395,13 +440,14 @@ class LocalExperimentClient():
         Args:
             experiment_id: Experiment UUID.
             plot_file_name: Plot file name.
+
+        Raises:
+            RequestsApiError: If the figure is not found
         """
         exp_figures = self._figures[experiment_id]
         if plot_name not in exp_figures:
-            raise RequestsApiError(f"Figure {plot_name} not found",
-                                   status_code=404)
+            raise RequestsApiError(f"Figure {plot_name} not found", status_code=404)
         del exp_figures[plot_name]
-
 
     def experiment_devices(self) -> List:
         """Return list of experiment devices.
@@ -410,7 +456,6 @@ class LocalExperimentClient():
             A list of experiment devices.
         """
         pass
-
 
     def analysis_results(
         self,
@@ -443,7 +488,10 @@ class LocalExperimentClient():
 
         Returns:
             A list of analysis results and the marker, if applicable.
+        Raises:
+            ValueError: If the parameters are unsuitable for filtering
         """
+        # pylint: disable=unused-argument
         df = self._results
 
         # TODO: skipping device components for now until we conslidate more with the provider service
@@ -453,7 +501,7 @@ class LocalExperimentClient():
         if experiment_uuid is not None:
             df = df.loc[df.experiment_uuid == experiment_uuid]
         if result_type is not None:
-            if result_type[:5] == 'like:':
+            if result_type[:5] == "like:":
                 result_type = result_type.split(":")[1]
                 df = df.loc[df.type.str.contains(result_type)]
             else:
@@ -468,12 +516,14 @@ class LocalExperimentClient():
         if tags is not None:
             operator, tags = tags.split(":")
             tags = tags.split(",")
-            if operator == "any:": # OR operator
-                df = df.loc[df.tags.apply(
-                    lambda dftags: any(x in dftags for x in tags))]
+            if operator == "any:":  # OR operator
+                df = df.loc[
+                    df.tags.apply(lambda dftags: any(x in dftags for x in tags))
+                ]
             elif operator == "AND":
-                df = df.loc[df.tags.apply(
-                    lambda dftags: all(x in dftags for x in tags))]
+                df = df.loc[
+                    df.tags.apply(lambda dftags: all(x in dftags for x in tags))
+                ]
             else:
                 raise ValueError(f"Unrecognized tags operator {operator}")
 
@@ -492,9 +542,9 @@ class LocalExperimentClient():
         sortby_split = sort_by[0].split(":")
         # TODO: support also device components and result type
         if (
-                len(sortby_split) != 2
-                or sortby_split[0] != "creation_datetime"
-                or (sortby_split[1] != "asc" and sortby_split[1] != "desc")
+            len(sortby_split) != 2
+            or sortby_split[0] != "creation_datetime"
+            or (sortby_split[1] != "asc" and sortby_split[1] != "desc")
         ):
             raise ValueError(
                 "The fake service currently supports only sorting by creation_datetime, "
@@ -502,14 +552,12 @@ class LocalExperimentClient():
             )
 
         df = df.sort_values(
-            ["created_at", "uuid"],
-            ascending=[(sortby_split[1] == "asc"), True]
+            ["created_at", "uuid"], ascending=[(sortby_split[1] == "asc"), True]
         )
 
         df = df.iloc[:limit]
         result = {"analysis_results": df.replace({np.nan: None}).to_dict("records")}
         return json.dumps(result)
-
 
     def analysis_result_create(self, result: str) -> Dict:
         """Upload an analysis result.
@@ -519,11 +567,16 @@ class LocalExperimentClient():
 
         Returns:
             Analysis result data.
+
+        Raises:
+            RequestsApiError: If experiment id is missing
         """
         data_dict = json.loads(result)
         exp_id = data_dict.get("experiment_uuid")
         if exp_id is None:
-            raise RequestsApiError(f"Cannot create analysis result without experiment id")
+            raise RequestsApiError(
+                f"Cannot create analysis result without experiment id"
+            )
         exp = self._experiments.loc[self._experiments.uuid == exp_id]
         if exp.empty:
             raise RequestsApiError(f"Experiment {exp_id} not found", status_code=404)
@@ -537,7 +590,6 @@ class LocalExperimentClient():
         self.save()
         return data_dict
 
-
     def analysis_result_update(self, result_id: str, new_data: str) -> Dict:
         """Update an analysis result.
 
@@ -547,6 +599,9 @@ class LocalExperimentClient():
 
         Returns:
             Analysis result data.
+
+        Raises:
+            IBMExperimentEntryNotFound: If the analysis result is not found
         """
         result = self._results.loc[self._results.uuid == result_id]
         if result.empty:
@@ -567,14 +622,18 @@ class LocalExperimentClient():
 
         Returns:
             Analysis result data.
+
+        Raises:
+            IBMExperimentEntryNotFound: If the analysis result is not found
         """
         result = self._results.loc[self._results.uuid == result_id]
         if result.empty:
             raise IBMExperimentEntryNotFound
-        self._results.drop(self._results.loc[self._results.uuid == result_id].index, inplace=True)
+        self._results.drop(
+            self._results.loc[self._results.uuid == result_id].index, inplace=True
+        )
         self.save()
         return self.serialize(result)
-
 
     def analysis_result_get(self, result_id: str) -> str:
         """Retrieve an analysis result.
@@ -584,12 +643,13 @@ class LocalExperimentClient():
 
         Returns:
             Analysis result data.
+        Raises:
+            IBMExperimentEntryNotFound: If the analysis result is not found
         """
         result = self._results.loc[self._results.uuid == result_id]
         if result.empty:
             raise IBMExperimentEntryNotFound
         return self.serialize(result)
-
 
     def device_components(self, backend_name: Optional[str]) -> List[Dict]:
         """Return device components for the backend.
@@ -601,4 +661,3 @@ class LocalExperimentClient():
             A list of device components.
         """
         pass
-
