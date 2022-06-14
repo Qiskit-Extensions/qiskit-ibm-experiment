@@ -19,7 +19,7 @@ from typing import List, Dict, Optional, Union, Any
 import pandas as pd
 import numpy as np
 import json
-from qiskit_ibm_experiment.exceptions import IBMExperimentEntryNotFound, IBMExperimentEntryExists, IBMApiError
+from qiskit_ibm_experiment.exceptions import IBMExperimentEntryNotFound, IBMExperimentEntryExists, RequestsApiError
 
 logger = logging.getLogger(__name__)
 
@@ -334,6 +334,11 @@ class LocalExperimentClient():
         Returns:
             Whether the upload succeeded
         """
+        exp_figures = self._figures[experiment_id]
+        if plot_name in exp_figures:
+            raise RequestsApiError(f"Figure {plot_name} already exists", status_code=409)
+        exp_figures[plot_name] = plot
+        self.save()
         return True
 
 
@@ -353,7 +358,12 @@ class LocalExperimentClient():
         Returns:
             JSON response.
         """
-        pass
+        exp_figures = self._figures[experiment_id]
+        if plot_name not in exp_figures:
+            raise RequestsApiError(f"Figure {plot_name} not found",
+                                   status_code=404)
+        exp_figures[plot_name] = plot
+        self.save()
 
 
     def experiment_plot_get(self, experiment_id: str, plot_name: str) -> bytes:
@@ -366,17 +376,25 @@ class LocalExperimentClient():
         Returns:
             Retrieved experiment plot.
         """
-        pass
+        exp_figures = self._figures[experiment_id]
+        if plot_name not in exp_figures:
+            raise RequestsApiError(f"Figure {plot_name} not found",
+                                   status_code=404)
+        return exp_figures[plot_name]
 
 
-    def experiment_plot_delete(self, experiment_id: str, plot_file_name: str) -> None:
+    def experiment_plot_delete(self, experiment_id: str, plot_name: str) -> None:
         """Delete an experiment plot.
 
         Args:
             experiment_id: Experiment UUID.
             plot_file_name: Plot file name.
         """
-        pass
+        exp_figures = self._figures[experiment_id]
+        if plot_name not in exp_figures:
+            raise RequestsApiError(f"Figure {plot_name} not found",
+                                   status_code=404)
+        del exp_figures[plot_name]
 
 
     def experiment_devices(self) -> List:
@@ -499,10 +517,10 @@ class LocalExperimentClient():
         data_dict = json.loads(result)
         exp_id = data_dict.get("experiment_uuid")
         if exp_id is None:
-            raise IBMApiError(f"Cannot create analysis result without experiment id")
+            raise RequestsApiError(f"Cannot create analysis result without experiment id")
         exp = self._experiments.loc[self._experiments.uuid == exp_id]
         if exp.empty:
-            raise IBMApiError(f"Experiment {exp_id} not found")
+            raise RequestsApiError(f"Experiment {exp_id} not found", status_code=404)
         exp_index = exp.index[0]
         data_dict["device_name"] = self._experiments.at[exp_index, "device_name"]
         if "uuid" not in data_dict:
