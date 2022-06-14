@@ -132,7 +132,18 @@ class TestExperimentServerIntegration(IBMTestCase):
         self.assertEqual(results[0].result_data['float'], 3.14 + 10)
         self.assertEqual(results[1].result_data['float'], 3.14 + 11)
 
-
+    def test_figure(self):
+        """Test getting a figure."""
+        exp_id = self.service.create_experiment(
+            ExperimentData(experiment_type="test_experiment",
+                           backend="ibmq_qasm_simulator"))
+        hello_bytes = str.encode("hello world")
+        figure_name = "hello.svg"
+        self.service.create_figure(
+            experiment_id=exp_id, figure=hello_bytes, figure_name=figure_name
+        )
+        fig = self.service.figure(exp_id, figure_name)
+        self.assertEqual(fig, hello_bytes)
 
 if __name__ == "__main__":
     unittest.main()

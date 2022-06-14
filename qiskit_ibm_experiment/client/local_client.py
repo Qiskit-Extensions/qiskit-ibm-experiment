@@ -334,6 +334,8 @@ class LocalExperimentClient():
         Returns:
             Whether the upload succeeded
         """
+        if experiment_id not in self._figures:
+            self._figures[experiment_id] = {}
         exp_figures = self._figures[experiment_id]
         if plot_name in exp_figures:
             raise RequestsApiError(f"Figure {plot_name} already exists", status_code=409)
@@ -376,6 +378,7 @@ class LocalExperimentClient():
         Returns:
             Retrieved experiment plot.
         """
+
         exp_figures = self._figures[experiment_id]
         if plot_name not in exp_figures:
             raise RequestsApiError(f"Figure {plot_name} not found",
