@@ -87,7 +87,7 @@ class LocalExperimentClient():
     def save(self):
         if self._local_save:
             self._experiments.to_json(self.experiments_file)
-            self.results.to_json(self.results_file)
+            self._results.to_json(self.results_file)
 
     def serialize(self, df):
         result = df.replace({np.nan: None}).to_dict("records")[0]
@@ -101,12 +101,12 @@ class LocalExperimentClient():
                 self._experiments = pd.DataFrame(columns=self.experiment_db_columns)
 
             if os.path.exists(self.results_file):
-                self.results = pd.read_json(self.results_file)
+                self._results = pd.read_json(self.results_file)
             else:
-                self.results = pd.DataFrame(columns=self.results_db_columns)
+                self._results = pd.DataFrame(columns=self.results_db_columns)
         else:
             self._experiments = pd.DataFrame(columns=self.experiment_db_columns)
-            self.results = pd.DataFrame(columns=self.results_db_columns)
+            self._results = pd.DataFrame(columns=self.results_db_columns)
 
         self.save()
 
@@ -393,7 +393,7 @@ class LocalExperimentClient():
         Returns:
             A list of analysis results and the marker, if applicable.
         """
-        df = self.results
+        df = self._results
 
         # TODO: skipping device components for now until we conslidate more with the provider service
         # (in the qiskit-experiments service there is no operator for device components,
@@ -481,8 +481,8 @@ class LocalExperimentClient():
         if "uuid" not in data_dict:
             data_dict["uuid"] = str(uuid.uuid4())
 
-        new_df = pd.DataFrame([data_dict], columns=self.results.columns)
-        self.results = pd.concat([self.results, new_df], ignore_index=True)
+        new_df = pd.DataFrame([data_dict], columns=self._results.columns)
+        self._results = pd.concat([self._results, new_df], ignore_index=True)
         self.save()
         return data_dict
 
@@ -521,7 +521,7 @@ class LocalExperimentClient():
         Returns:
             Analysis result data.
         """
-        result = self.results.loc[self.results.uuid == result_id]
+        result = self._results.loc[self._results.uuid == result_id]
         if result.empty:
             raise IBMExperimentEntryNotFound
         return self.serialize(result)
