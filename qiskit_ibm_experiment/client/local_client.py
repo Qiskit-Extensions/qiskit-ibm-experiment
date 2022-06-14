@@ -299,6 +299,8 @@ class LocalExperimentClient():
         for key, value in new_data_dict.items():
             self._experiments.at[exp_index, key] = value
         self.save()
+        exp = self._experiments.loc[self._experiments.uuid == experiment_id]
+        return self.serialize(exp)
 
 
     def experiment_delete(self, experiment_id: str) -> Dict:
@@ -366,6 +368,7 @@ class LocalExperimentClient():
                                    status_code=404)
         exp_figures[plot_name] = plot
         self.save()
+        return json.dumps({'name': plot_name, 'size': len(plot)})
 
 
     def experiment_plot_get(self, experiment_id: str, plot_name: str) -> bytes:
