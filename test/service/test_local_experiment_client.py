@@ -24,7 +24,7 @@ class TestExperimentServerIntegration(IBMTestCase):
     def setUpClass(cls):
         """Initial class level setup."""
         super().setUpClass()
-        cls.service = IBMExperimentService(local=True)
+        cls.service = IBMExperimentService(local=True, local_save=False)
         cls.service.options["prompt_for_delete"] = False
 
     def test_create_experiment(self):

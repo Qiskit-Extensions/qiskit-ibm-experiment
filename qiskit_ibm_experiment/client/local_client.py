@@ -56,7 +56,7 @@ class LocalExperimentClient():
         "created_at",
         "updated_at",
     ]
-    def __init__(self, main_dir) -> None:
+    def __init__(self, main_dir: str = None, local_save: bool = None) -> None:
         """ExperimentClient constructor.
 
         Args:
@@ -64,8 +64,11 @@ class LocalExperimentClient():
             url: The session's base url
             additional_params: additional session parameters
         """
-        self.set_paths(main_dir)
-        self.create_directories()
+        self._local_save = False
+        if local_save and main_dir is not None:
+            self._local_save = True
+            self.set_paths(main_dir)
+            self.create_directories()
         self.init_db()
 
     def set_paths(self, main_dir):
@@ -82,26 +85,28 @@ class LocalExperimentClient():
                 os.makedirs(dir)
 
     def save(self):
-        self._experiments.to_json(self.experiments_file)
-        self.results.to_json(self.results_file)
+        if self._local_save:
+            self._experiments.to_json(self.experiments_file)
+            self.results.to_json(self.results_file)
 
     def serialize(self, df):
         result = df.replace({np.nan: None}).to_dict("records")[0]
         return json.dumps(result)
 
     def init_db(self):
-        # if os.path.exists(self.experiments_file):
-        #     self._experiments = pd.read_json(self.experiments_file)
-        # else:
-        #     self._experiments = pd.DataFrame(columns=self.experiment_db_columns)
+        if self._local_save:
+            if os.path.exists(self.experiments_file):
+                self._experiments = pd.read_json(self.experiments_file)
+            else:
+                self._experiments = pd.DataFrame(columns=self.experiment_db_columns)
 
-        # if os.path.exists(self.results_file):
-        #     self.results = pd.read_json(self.results_file)
-        # else:
-        #     self.results = pd.DataFrame(columns=self.results_db_columns)
-
-        self._experiments = pd.DataFrame(columns=self.experiment_db_columns)
-        self.results = pd.DataFrame(columns=self.results_db_columns)
+            if os.path.exists(self.results_file):
+                self.results = pd.read_json(self.results_file)
+            else:
+                self.results = pd.DataFrame(columns=self.results_db_columns)
+        else:
+            self._experiments = pd.DataFrame(columns=self.experiment_db_columns)
+            self.results = pd.DataFrame(columns=self.results_db_columns)
 
         self.save()
 

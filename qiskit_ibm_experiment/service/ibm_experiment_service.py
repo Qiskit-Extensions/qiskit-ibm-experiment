@@ -98,6 +98,7 @@ class IBMExperimentService:
         proxies: Optional[dict] = None,
         verify: Optional[bool] = None,
         local: Optional[bool] = None,
+        local_save: Optional[bool] = True,
         **kwargs,
     ) -> None:
         """IBMExperimentService constructor.
@@ -105,6 +106,8 @@ class IBMExperimentService:
         Args:
             token: the API token to use when establishing connection with the result DB
             url: the url for the result DB API
+            local: Whether to use a local DB client which does not connect to the result DB
+            local_save: If using a local client, whether to enable save to disk or not.
         """
         super().__init__()
         if url is None:
@@ -135,7 +138,7 @@ class IBMExperimentService:
                 self._access_token, db_url, self._additional_params
             )
         else:
-            self._api_client = LocalExperimentClient(main_dir=self._DEFAULT_LOCAL_DB_DIR)
+            self._api_client = LocalExperimentClient(main_dir=self._DEFAULT_LOCAL_DB_DIR, local_save=local_save)
         self.options = self._default_options
         self.set_option(**kwargs)
 
