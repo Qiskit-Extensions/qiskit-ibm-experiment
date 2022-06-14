@@ -88,6 +88,14 @@ class LocalExperimentClient():
         if self._local_save:
             self._experiments.to_json(self.experiments_file)
             self._results.to_json(self.results_file)
+            self._save_figures()
+
+    def _save_figures(self):
+        for exp_id in self._figures:
+            for figure_name, figure_data in self._figures[exp_id].items():
+                filename = f"{exp_id}_{figure_name}"
+                with open(os.path.join(self.figures_dir, filename), "wb") as file:
+                    file.write(figure_data)
 
     def serialize(self, df):
         result = df.replace({np.nan: None}).to_dict("records")[0]
@@ -104,11 +112,30 @@ class LocalExperimentClient():
                 self._results = pd.read_json(self.results_file)
             else:
                 self._results = pd.DataFrame(columns=self.results_db_columns)
+
+            if os.path.exists(self.figures_dir):
+                self._figures = self._get_figure_list()
+            else:
+                self._figures = {}
         else:
             self._experiments = pd.DataFrame(columns=self.experiment_db_columns)
             self._results = pd.DataFrame(columns=self.results_db_columns)
+            self._figures = {}
 
         self.save()
+
+    def _get_figure_list(self):
+        figures = {}
+        for exp_id in self._experiments.uuid:
+            figures_for_exp = {}
+            for filename in os.listdir(self.figures_dir):
+                if filename.startswith(exp_id):
+                    with open(os.path.join(self.figures_dir,filename), "rb") as file:
+                        figure_data = file.read()
+                    figure_name = filename[len(exp_id)+1:]
+                    figures_for_exp[figure_name] = figure_data
+            figures[exp_id] = figures_for_exp
+        return figures
 
     def devices(self) -> Dict:
         """Return the device list from the experiment DB."""
