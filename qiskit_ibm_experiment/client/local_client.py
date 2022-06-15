@@ -145,12 +145,14 @@ class LocalExperimentClient:
         """Generates the figure dictionary based on stored data on disk"""
         figures = {}
         for exp_id in self._experiments.uuid:
+            # exp_id should be str to begin with, so just in case
+            exp_id_string = str(exp_id)
             figures_for_exp = {}
             for filename in os.listdir(self.figures_dir):
-                if filename.startswith(exp_id):
+                if filename.startswith(exp_id_string):
                     with open(os.path.join(self.figures_dir, filename), "rb") as file:
                         figure_data = file.read()
-                    figure_name = filename[len(exp_id) + 1 :]
+                    figure_name = filename[len(exp_id_string) + 1 :]
                     figures_for_exp[figure_name] = figure_data
             figures[exp_id] = figures_for_exp
         return figures
