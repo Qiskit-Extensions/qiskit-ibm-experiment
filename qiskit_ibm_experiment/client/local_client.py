@@ -198,7 +198,7 @@ class LocalExperimentClient:
                     file_list_for_exp.append(new_file_element)
             files_list[exp_id] = file_list_for_exp
             files[exp_id] = files_for_exp
-        return figures
+        return files, files_list
 
     def devices(self) -> Dict:
         """Return the device list from the experiment DB."""
