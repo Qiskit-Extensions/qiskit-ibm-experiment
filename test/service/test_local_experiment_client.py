@@ -196,6 +196,19 @@ class TestExperimentServerIntegration(IBMTestCase):
         fig = self.service.figure(exp_id, figure_name)
         self.assertEqual(fig, hello_bytes)
 
+    def test_files(self):
+        exp_id = self.service.create_experiment(
+            ExperimentData(
+                experiment_type="test_experiment", backend="ibmq_qasm_simulator"
+            )
+        )
+        hello_data = {"hello": "world", "foo": "bar"}
+        filename = "test_file.json"
+        self.service.file_upload(exp_id, filename, hello_data)
+        rfile_data = self.service.file_download(exp_id, filename)
+        self.assertEqual(hello_data, rfile_data)
+
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -155,6 +155,7 @@ class LocalExperimentClient:
             self._experiments = pd.DataFrame(columns=self.experiment_db_columns)
             self._results = pd.DataFrame(columns=self.results_db_columns)
             self._figures = {}
+            self._files = {}
 
         self.save()
 
@@ -755,4 +756,4 @@ class LocalExperimentClient:
             raise IBMExperimentEntryNotFound
         if file_name not in self._files[experiment_id]:
             raise IBMExperimentEntryNotFound
-        return self._files[experiment_id][file_name]
+        return json.loads(self._files[experiment_id][file_name])
