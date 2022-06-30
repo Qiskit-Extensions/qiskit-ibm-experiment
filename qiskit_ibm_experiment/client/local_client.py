@@ -122,7 +122,7 @@ class LocalExperimentClient:
         for exp_id in self._files:
             for file_name, file_data in self._files[exp_id].items():
                 filename = f"{exp_id}_{file_name}"
-                with open(os.path.join(self.figures_dir, filename), "wb") as file:
+                with open(os.path.join(self.files_dir, filename), "w") as file:
                     file.write(file_data)
 
     def serialize(self, df):
@@ -186,7 +186,7 @@ class LocalExperimentClient:
             for filename in os.listdir(self.files_dir):
                 if filename.startswith(exp_id_string):
                     file_full_path = os.path.join(self.files_dir, filename)
-                    with open(file_full_path, "rb") as file:
+                    with open(file_full_path, "r") as file:
                         file_data = file.read()
                     file_name = filename[len(exp_id_string) + 1 :]
                     files_for_exp[file_name] = file_data
@@ -739,6 +739,7 @@ class LocalExperimentClient:
         }
         self._files_list[experiment_id].append(new_file_element)
         self._files[experiment_id][file_name] = file_data
+        self.save()
 
     def experiment_file_download(self, experiment_id: str, file_name: str) -> Dict:
         """Downloads a data file from the DB
