@@ -147,6 +147,10 @@ class LocalExperimentClient:
                 self._figures = self._get_figure_list()
             else:
                 self._figures = {}
+            if os.path.exists(self.files_dir):
+                self._files, self._files_list = self._get_files()
+            else:
+                self._files = {}
         else:
             self._experiments = pd.DataFrame(columns=self.experiment_db_columns)
             self._results = pd.DataFrame(columns=self.results_db_columns)
@@ -168,6 +172,32 @@ class LocalExperimentClient:
                     figure_name = filename[len(exp_id_string) + 1 :]
                     figures_for_exp[figure_name] = figure_data
             figures[exp_id] = figures_for_exp
+        return figures
+
+    def _get_files(self):
+        """Generates the figure dictionary based on stored data on disk"""
+        files = {}
+        files_list = {}
+        for exp_id in self._experiments.uuid:
+            # exp_id should be str to begin with, so just in case
+            exp_id_string = str(exp_id)
+            file_list_for_exp = []
+            files_for_exp = {}
+            for filename in os.listdir(self.files_dir):
+                if filename.startswith(exp_id_string):
+                    file_full_path = os.path.join(self.files_dir, filename)
+                    with open(file_full_path, "rb") as file:
+                        file_data = file.read()
+                    file_name = filename[len(exp_id_string) + 1 :]
+                    files_for_exp[file_name] = file_data
+                    new_file_element = {
+                        "Key": file_name,
+                        "Size": len(file_data),
+                        "LastModified": os.path.getmtime(file_full_path)
+                    }
+                    file_list_for_exp.append(new_file_element)
+            files_list[exp_id] = file_list_for_exp
+            files[exp_id] = files_for_exp
         return figures
 
     def devices(self) -> Dict:
