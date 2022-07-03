@@ -1216,7 +1216,7 @@ class IBMExperimentService:
             "result_id": raw_data.get("uuid", None),
             "quality": quality,
             "verified": raw_data.get("verified", False),
-            "tags": raw_data.get("tags", []),
+            "tags": raw_data.get("tags", []) or [],
             **extra_data,
         }
         return out_dict
