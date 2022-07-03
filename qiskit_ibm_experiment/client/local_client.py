@@ -751,6 +751,9 @@ class LocalExperimentClient:
 
         Returns:
             The Dictionary of contents of the file
+
+        Raises:
+            IBMExperimentEntryNotFound: if experiment or file not found
         """
         if experiment_id not in self._files:
             raise IBMExperimentEntryNotFound

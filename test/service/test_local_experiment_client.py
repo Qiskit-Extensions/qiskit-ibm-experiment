@@ -197,6 +197,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         self.assertEqual(fig, hello_bytes)
 
     def test_files(self):
+        """Test upload and download of files"""
         exp_id = self.service.create_experiment(
             ExperimentData(
                 experiment_type="test_experiment", backend="ibmq_qasm_simulator"
