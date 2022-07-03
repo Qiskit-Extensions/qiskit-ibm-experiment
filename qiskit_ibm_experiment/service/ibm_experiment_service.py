@@ -80,8 +80,6 @@ class IBMExperimentService:
 
     _default_preferences = {"auto_save": False}
     _default_options = {"prompt_for_delete": True}
-    _DEFAULT_AUTHENTICATION_PREFIX = "/v2/users/loginWithToken"
-    _DEFAULT_EXPERIMENT_PREFIX = "/resultsdb"
     _DEFAULT_LOCAL_DB_DIR = os.path.join(os.path.expanduser("~"), ".qiskit", "resultdb")
     _AUTHENTICATION_CMD = "/users/loginWithToken"
     _USER_DATA_CMD = "/users/me"
@@ -453,7 +451,7 @@ class IBMExperimentService:
             if isinstance(share_level, str):
                 share_level = ExperimentShareLevel(data.share_level.lower())
             out["visibility"] = share_level.value
-        if data.tags is not None:
+        if data.tags is not None and len(data.tags) > 0:
             out["tags"] = data.tags
         if data.job_ids:
             out["jobs"] = data.job_ids
@@ -709,7 +707,7 @@ class IBMExperimentService:
             "backend": backend,
             "experiment_id": raw_data["uuid"],
             "parent_id": raw_data.get("parent_experiment_uuid", None),
-            "tags": raw_data.get("tags", None),
+            "tags": raw_data.get("tags", None) or [],
             "job_ids": raw_data["jobs"],
             "share_level": raw_data.get("visibility", None),
             "metadata": raw_data.get("extra", None),
@@ -866,7 +864,7 @@ class IBMExperimentService:
             out["fit"] = data.result_data
         if data.result_type:
             out["type"] = data.result_type
-        if data.tags is not None:
+        if data.tags is not None and len(data.tags) > 0:
             out["tags"] = data.tags
         if data.quality:
             quality = data.quality
@@ -1218,7 +1216,7 @@ class IBMExperimentService:
             "result_id": raw_data.get("uuid", None),
             "quality": quality,
             "verified": raw_data.get("verified", False),
-            "tags": raw_data.get("tags", []),
+            "tags": raw_data.get("tags", []) or [],
             **extra_data,
         }
         return out_dict

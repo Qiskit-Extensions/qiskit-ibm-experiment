@@ -65,9 +65,7 @@ class TestExperimentServerIntegration(IBMTestCase):
             token=os.getenv("QISKIT_IBM_STAGING_API_TOKEN"),
             url=os.getenv("QISKIT_IBM_STAGING_API_URL"),
         )
-        cls.backend = least_busy(
-            cls.provider.backends(simulator=False, min_num_qubits=5)
-        )
+        cls.backend = least_busy(cls.provider.backends())
 
     @classmethod
     def get_experiments(cls, **kwargs):

@@ -26,6 +26,7 @@ REQUIREMENTS = [
     "urllib3>=1.21.1",
     "python-dateutil>=2.8.0",
     "typing-extensions>=4.0.0",  # remove when support for Python 3.7 is dropped (use "from typing import" instead)
+    "pandas>=1.3.0",
 ]
 
 # Handle version.

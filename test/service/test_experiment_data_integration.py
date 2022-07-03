@@ -21,7 +21,6 @@ import numpy as np
 from qiskit import transpile
 from qiskit.providers import JobStatus
 from qiskit.test.reference_circuits import ReferenceCircuits
-from qiskit.tools.visualization import HAS_MATPLOTLIB
 from qiskit.providers.ibmq import IBMQ, least_busy
 from qiskit_ibm_experiment import IBMExperimentService
 from qiskit_ibm_experiment.service import ResultQuality
@@ -256,7 +255,6 @@ class TestExperimentDataIntegration(IBMTestCase):
                 rexp = DbExperimentData.load(exp_data.experiment_id, self.service)
                 self.assertEqual(rexp.figure(idx), hello_bytes)
 
-    @skipIf(not HAS_MATPLOTLIB, "matplotlib not available.")
     def test_add_figures_plot(self):
         """Test adding a matplotlib figure."""
         import matplotlib.pyplot as plt

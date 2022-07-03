@@ -16,6 +16,7 @@ import logging
 import os
 import uuid
 import json
+from datetime import datetime
 from typing import List, Dict, Optional, Union, Any
 import pandas as pd
 import numpy as np
@@ -76,6 +77,8 @@ class LocalExperimentClient:
         self._experiments = None
         self._results = None
         self._figures = None
+        self._files = None
+        self._files_list = {}
         self._local_save = False
         if local_save and main_dir is not None:
             self._local_save = True
@@ -87,12 +90,13 @@ class LocalExperimentClient:
         """Creates the path to db files and directories"""
         self.main_dir = main_dir
         self.figures_dir = os.path.join(self.main_dir, "figures")
+        self.files_dir = os.path.join(self.main_dir, "files")
         self.experiments_file = os.path.join(self.main_dir, "experiments.json")
         self.results_file = os.path.join(self.main_dir, "results.json")
 
     def create_directories(self):
         """Creates the directories needed for the DB if they do not exist"""
-        dirs_to_create = [self.main_dir, self.figures_dir]
+        dirs_to_create = [self.main_dir, self.figures_dir, self.files_dir]
         for dir_to_create in dirs_to_create:
             if not os.path.exists(dir_to_create):
                 os.makedirs(dir_to_create)
@@ -103,6 +107,7 @@ class LocalExperimentClient:
             self._experiments.to_json(self.experiments_file)
             self._results.to_json(self.results_file)
             self._save_figures()
+            self._save_files()
 
     def _save_figures(self):
         """Saves the figures to disk"""
@@ -111,6 +116,14 @@ class LocalExperimentClient:
                 filename = f"{exp_id}_{figure_name}"
                 with open(os.path.join(self.figures_dir, filename), "wb") as file:
                     file.write(figure_data)
+
+    def _save_files(self):
+        """Saves the figures to disk"""
+        for exp_id in self._files:
+            for file_name, file_data in self._files[exp_id].items():
+                filename = f"{exp_id}_{file_name}"
+                with open(os.path.join(self.files_dir, filename), "w") as file:
+                    file.write(file_data)
 
     def serialize(self, df):
         """Serializes db values as JSON"""
@@ -134,10 +147,15 @@ class LocalExperimentClient:
                 self._figures = self._get_figure_list()
             else:
                 self._figures = {}
+            if os.path.exists(self.files_dir):
+                self._files, self._files_list = self._get_files()
+            else:
+                self._files = {}
         else:
             self._experiments = pd.DataFrame(columns=self.experiment_db_columns)
             self._results = pd.DataFrame(columns=self.results_db_columns)
             self._figures = {}
+            self._files = {}
 
         self.save()
 
@@ -156,6 +174,32 @@ class LocalExperimentClient:
                     figures_for_exp[figure_name] = figure_data
             figures[exp_id] = figures_for_exp
         return figures
+
+    def _get_files(self):
+        """Generates the figure dictionary based on stored data on disk"""
+        files = {}
+        files_list = {}
+        for exp_id in self._experiments.uuid:
+            # exp_id should be str to begin with, so just in case
+            exp_id_string = str(exp_id)
+            file_list_for_exp = []
+            files_for_exp = {}
+            for filename in os.listdir(self.files_dir):
+                if filename.startswith(exp_id_string):
+                    file_full_path = os.path.join(self.files_dir, filename)
+                    with open(file_full_path, "r") as file:
+                        file_data = file.read()
+                    file_name = filename[len(exp_id_string) + 1 :]
+                    files_for_exp[file_name] = file_data
+                    new_file_element = {
+                        "Key": file_name,
+                        "Size": len(file_data),
+                        "LastModified": os.path.getmtime(file_full_path),
+                    }
+                    file_list_for_exp.append(new_file_element)
+            files_list[exp_id] = file_list_for_exp
+            files[exp_id] = files_for_exp
+        return files, files_list
 
     def devices(self) -> Dict:
         """Return the device list from the experiment DB."""
@@ -663,3 +707,56 @@ class LocalExperimentClient:
             A list of device components.
         """
         pass
+
+    def experiment_files_get(self, experiment_id: str) -> str:
+        """Retrieve experiment related files.
+
+        Args:
+            experiment_id: Experiment ID.
+
+        Returns:
+            Experiment files.
+        """
+        return json.dumps({"files": self._files_list[experiment_id]})
+
+    def experiment_file_upload(
+        self, experiment_id: str, file_name: str, file_data: str
+    ):
+        """Uploads a data file to the DB
+
+        Args:
+            experiment_id: Experiment ID.
+            file_name: The intended name of the data file
+            file_data: The contents of the data file
+        """
+        if experiment_id not in self._files_list:
+            self._files_list[experiment_id] = []
+        if experiment_id not in self._files:
+            self._files[experiment_id] = {}
+        new_file_element = {
+            "Key": file_name,
+            "Size": len(file_data),
+            "LastModified": datetime.now(),
+        }
+        self._files_list[experiment_id].append(new_file_element)
+        self._files[experiment_id][file_name] = file_data
+        self.save()
+
+    def experiment_file_download(self, experiment_id: str, file_name: str) -> Dict:
+        """Downloads a data file from the DB
+
+        Args:
+            experiment_id: Experiment ID.
+            file_name: The name of the data file
+
+        Returns:
+            The Dictionary of contents of the file
+
+        Raises:
+            IBMExperimentEntryNotFound: if experiment or file not found
+        """
+        if experiment_id not in self._files:
+            raise IBMExperimentEntryNotFound
+        if file_name not in self._files[experiment_id]:
+            raise IBMExperimentEntryNotFound
+        return json.loads(self._files[experiment_id][file_name])
