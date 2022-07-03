@@ -707,7 +707,7 @@ class IBMExperimentService:
             "backend": backend,
             "experiment_id": raw_data["uuid"],
             "parent_id": raw_data.get("parent_experiment_uuid", None),
-            "tags": raw_data.get("tags", None),
+            "tags": raw_data.get("tags", None) or [],
             "job_ids": raw_data["jobs"],
             "share_level": raw_data.get("visibility", None),
             "metadata": raw_data.get("extra", None),
