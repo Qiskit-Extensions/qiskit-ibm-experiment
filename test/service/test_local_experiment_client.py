@@ -208,6 +208,9 @@ class TestExperimentServerIntegration(IBMTestCase):
         self.service.file_upload(exp_id, filename, hello_data)
         rfile_data = self.service.file_download(exp_id, filename)
         self.assertEqual(hello_data, rfile_data)
+        file_list = self.service.files(exp_id)["files"]
+        self.assertEqual(len(file_list), 1)
+        self.assertEqual(file_list[0]["Key"], filename)
 
 
 if __name__ == "__main__":
