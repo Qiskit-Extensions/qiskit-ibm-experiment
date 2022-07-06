@@ -99,7 +99,7 @@ class LocalExperimentClient:
         dirs_to_create = [self.main_dir, self.figures_dir, self.files_dir]
         for dir_to_create in dirs_to_create:
             if not os.path.exists(dir_to_create):
-                os.makedirs(dir_to_create, exist_ok = True)
+                os.makedirs(dir_to_create, exist_ok=True)
 
     def save(self):
         """Saves the db to disk"""
