@@ -1532,6 +1532,20 @@ class IBMExperimentService:
         file_data = self._api_client.experiment_file_download(experiment_id, file_name)
         return file_data
 
+    def experiment_has_file(self, exp_id: str, filename: str) -> bool:
+        """Checks whether a specific expriment has a specific file
+        Args:
+            experiment_id: The experiment the data file belongs to
+            file_name: The filename of the data file
+        Returns:
+            True if the file exists for the specified experiment
+        """
+        files = self.files(exp_id)["files"]
+        for file_data in files:
+            if file_data["Key"] == filename:
+                return True
+        return False
+
     @property
     def preferences(self) -> Dict:
         """Return saved experiment preferences.
