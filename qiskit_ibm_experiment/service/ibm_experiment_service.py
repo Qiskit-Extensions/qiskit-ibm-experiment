@@ -710,7 +710,7 @@ class IBMExperimentService:
             "tags": raw_data.get("tags", None) or [],
             "job_ids": raw_data["jobs"],
             "share_level": raw_data.get("visibility", None),
-            "metadata": raw_data.get("extra", None),
+            "metadata": raw_data.get("extra", None) or {},
             "figure_names": raw_data.get("plot_names", None),
             "notes": raw_data.get("notes", ""),
             "hub": raw_data.get("hub_id", ""),
