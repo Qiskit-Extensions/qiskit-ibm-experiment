@@ -99,7 +99,7 @@ class LocalExperimentClient:
         dirs_to_create = [self.main_dir, self.figures_dir, self.files_dir]
         for dir_to_create in dirs_to_create:
             if not os.path.exists(dir_to_create):
-                os.makedirs(dir_to_create)
+                os.makedirs(dir_to_create, exist_ok=True)
 
     def save(self):
         """Saves the db to disk"""
@@ -717,7 +717,7 @@ class LocalExperimentClient:
         Returns:
             Experiment files.
         """
-        return json.dumps({"files": self._files_list[experiment_id]})
+        return {"files": self._files_list[experiment_id]}
 
     def experiment_file_upload(
         self, experiment_id: str, file_name: str, file_data: str
@@ -736,7 +736,7 @@ class LocalExperimentClient:
         new_file_element = {
             "Key": file_name,
             "Size": len(file_data),
-            "LastModified": datetime.now(),
+            "LastModified": str(datetime.now()),
         }
         self._files_list[experiment_id].append(new_file_element)
         self._files[experiment_id][file_name] = file_data

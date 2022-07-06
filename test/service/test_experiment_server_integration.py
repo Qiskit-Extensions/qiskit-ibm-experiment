@@ -1336,6 +1336,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         file_list = self.service.files(exp_id)["files"]
         self.assertEqual(len(file_list), 1)
         self.assertEqual(file_list[0]["Key"], filename + ".json")
+        self.assertTrue(self.service.experiment_has_file(exp_id, filename + ".json"))
 
         # updating existing file
         data = {"string": "a-string", "int": 89, "float": 2.71, "null": None}

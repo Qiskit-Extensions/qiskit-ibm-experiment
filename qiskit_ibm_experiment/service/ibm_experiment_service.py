@@ -710,7 +710,7 @@ class IBMExperimentService:
             "tags": raw_data.get("tags", None) or [],
             "job_ids": raw_data["jobs"],
             "share_level": raw_data.get("visibility", None),
-            "metadata": raw_data.get("extra", None),
+            "metadata": raw_data.get("extra", None) or {},
             "figure_names": raw_data.get("plot_names", None),
             "notes": raw_data.get("notes", ""),
             "hub": raw_data.get("hub_id", ""),
@@ -1531,6 +1531,20 @@ class IBMExperimentService:
             file_name += ".json"
         file_data = self._api_client.experiment_file_download(experiment_id, file_name)
         return file_data
+
+    def experiment_has_file(self, exp_id: str, filename: str) -> bool:
+        """Checks whether a specific expriment has a specific file
+        Args:
+            experiment_id: The experiment the data file belongs to
+            file_name: The filename of the data file
+        Returns:
+            True if the file exists for the specified experiment
+        """
+        files = self.files(exp_id)["files"]
+        for file_data in files:
+            if file_data["Key"] == filename:
+                return True
+        return False
 
     @property
     def preferences(self) -> Dict:
