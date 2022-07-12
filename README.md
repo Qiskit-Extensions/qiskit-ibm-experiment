@@ -62,7 +62,7 @@ pip install qiskit-ibm-experiment
 Alternatively, the IBM Provider can discover credentials from environment variables:
 ```bash
 export QISKIT_IBM_EXPERIMENT_TOKEN='MY_API_TOKEN'
-export QISKIT_IBM_EXPERIMENT_URL='https://api.quantum-computing.ibm.com'
+export QISKIT_IBM_EXPERIMENT_URL='https://auth.quantum-computing.ibm.com/api'
 ```
 
 Then instantiate the provider without any arguments and access the backends:
