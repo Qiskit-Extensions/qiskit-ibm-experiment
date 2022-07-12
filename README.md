@@ -6,8 +6,7 @@ This project contains a service that allows accessing the **[IBM Quantum]**
 experiment database.
 
 ## Installation
-The package is not yet available. After it is ready, 
-you'll be able to install the provider using pip:
+The provider can be installed via pip:
 
 ```bash
 pip install qiskit-ibm-experiment
@@ -112,14 +111,13 @@ project at different levels. If you use Qiskit, please cite as per the included
 [IBM Quantum]: https://www.ibm.com/quantum-computing/
 [IBM Quantum login page]:  https://quantum-computing.ibm.com/login
 [IBM Quantum account page]: https://quantum-computing.ibm.com/account
-[contribution guidelines]: https://github.com/Qiskit-Partners/qiskit-ibm/blob/main/CONTRIBUTING.md
-[code of conduct]: https://github.com/Qiskit-Partners/qiskit-ibm/blob/main/CODE_OF_CONDUCT.md
-[GitHub issues]: https://github.com/Qiskit-Partners/qiskit-ibm/issues
+[contribution guidelines]: https://github.com/Qiskit/qiskit-ibm-experiment/blob/main/CONTRIBUTING.md
+[code of conduct]: https://github.com/Qiskit/qiskit-ibm-experiment/blob/main/CODE_OF_CONDUCT.md
+[GitHub issues]: https://github.com/Qiskit/qiskit-ibm-experiment/issues
 [slack]: https://qiskit.slack.com
 [Qiskit.org]: https://qiskit.org
 [Stack Exchange]: https://quantumcomputing.stackexchange.com/questions/tagged/qiskit
 [Qiskit Tutorial]: https://github.com/Qiskit/qiskit-tutorial
-[many people]: https://github.com/Qiskit-Partners/qiskit-ibm/graphs/contributors
+[many people]: https://github.com/Qiskit/qiskit-ibm-experiment/graphs/contributors
 [BibTeX file]: https://github.com/Qiskit/qiskit/blob/master/Qiskit.bib
-[Apache License 2.0]: https://github.com/Qiskit-Partners/qiskit-ibm/blob/main/LICENSE.txt
-[migration guide]: https://github.com/Qiskit-Partners/qiskit-ibm/blob/main/MIGRATING.md
+[Apache License 2.0]: https://github.com/Qiskit/qiskit-ibm-experiment/blob/main/LICENSE.txt
