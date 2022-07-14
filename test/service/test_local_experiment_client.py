@@ -213,6 +213,14 @@ class TestExperimentServerIntegration(IBMTestCase):
         self.assertEqual(len(file_list), 1)
         self.assertEqual(file_list[0]["Key"], filename)
 
+        exp_id2 = self.service.create_experiment(
+            ExperimentData(
+                experiment_type="test_experiment", backend="ibmq_qasm_simulator"
+            )
+        )
+        file_list = self.service.files(exp_id2)["files"]
+        self.assertEqual(len(file_list), 0)
+
 
 if __name__ == "__main__":
     unittest.main()
