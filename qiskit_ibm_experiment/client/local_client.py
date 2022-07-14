@@ -717,7 +717,7 @@ class LocalExperimentClient:
         Returns:
             Experiment files.
         """
-        return {"files": self._files_list[experiment_id]}
+        return {"files": self._files_list.get(experiment_id, [])}
 
     def experiment_file_upload(
         self, experiment_id: str, file_name: str, file_data: str
