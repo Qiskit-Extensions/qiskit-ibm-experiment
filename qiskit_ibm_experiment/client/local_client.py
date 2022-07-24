@@ -215,7 +215,6 @@ class LocalExperimentClient:
         backend_name: Optional[str] = None,
         tags: Optional[List[str]] = None,
         parent_id: Optional[str] = None,
-        tags_operator: Optional[str] = "OR",
         **filters: Any,
     ) -> str:
         """Retrieve experiments, with optional filtering.
