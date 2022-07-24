@@ -1,0 +1,5 @@
+---
+fixes:
+  - |
+    Filtering and sorting in the `experiments` method of `LocalExperimentClient` are
+    now handled correctly
