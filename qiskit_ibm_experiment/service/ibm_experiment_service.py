@@ -90,8 +90,8 @@ class IBMExperimentService:
         url: Optional[str] = None,
         name: Optional[str] = None,
         proxies: Optional[dict] = None,
-        verify: Optional[bool] = None,
-        local: Optional[bool] = None,
+        verify: Optional[bool] = False,
+        local: Optional[bool] = False,
         local_save: Optional[bool] = True,
         **kwargs,
     ) -> None:

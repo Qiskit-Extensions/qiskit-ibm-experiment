@@ -12,6 +12,8 @@
 
 """Local experiment client tests"""
 import unittest
+from datetime import datetime, timedelta
+from dateutil import tz
 from test.service.ibm_test_case import IBMTestCase
 from qiskit_ibm_experiment import IBMExperimentService
 from qiskit_ibm_experiment import ExperimentData, AnalysisResultData
@@ -220,6 +222,53 @@ class TestExperimentServerIntegration(IBMTestCase):
         )
         file_list = self.service.files(exp_id2)["files"]
         self.assertEqual(len(file_list), 0)
+
+    def test_experiments_with_start_time(self):
+        """Test retrieving an experiment by its start_time."""
+        ref_start_dt = datetime.now() - timedelta(days=1)
+        ref_start_dt = ref_start_dt.replace(tzinfo=tz.tzlocal())
+        exp_id = self.service.create_experiment(
+            ExperimentData(
+                experiment_type="qiskit_test", backend="ibmq_qasm_simulator",
+                start_datetime=ref_start_dt
+            )
+        )
+
+        before_start = ref_start_dt - timedelta(hours=1)
+        after_start = ref_start_dt + timedelta(hours=1)
+
+        sub_tests = [
+            (before_start, None, True, "before start, None"),
+            (None, after_start, True, "None, after start"),
+            (before_start, after_start, True, "before, after start"),
+            (after_start, None, False, "after start, None"),
+            (None, before_start, False, "None, before start"),
+            (before_start, before_start, False, "before, before start"),
+        ]
+
+        for start_dt, end_dt, expected, title in sub_tests:
+            with self.subTest(title=title):
+                backend_experiments = self.service.experiments(
+                    start_datetime_after=start_dt,
+                    start_datetime_before=end_dt,
+                    experiment_type="qiskit_test",
+                )
+                found = False
+                for exp in backend_experiments:
+                    if start_dt:
+                        self.assertGreaterEqual(exp.start_datetime, start_dt)
+                    if end_dt:
+                        self.assertLessEqual(exp.start_datetime, end_dt)
+                    if exp.experiment_id == exp_id:
+                        found = True
+                self.assertEqual(
+                    found,
+                    expected,
+                    "Experiment {} (not)found unexpectedly when filter using "
+                    "start_dt={}, end_dt={}. Found={}".format(
+                        exp_id, start_dt, end_dt, found
+                    ),
+                )
 
 
 if __name__ == "__main__":

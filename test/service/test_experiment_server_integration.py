@@ -203,7 +203,6 @@ class TestExperimentServerIntegration(IBMTestCase):
 
         before_start = ref_start_dt - timedelta(hours=1)
         after_start = ref_start_dt + timedelta(hours=1)
-        exp = self.service.experiments(start_datetime_after=before_start)
 
         sub_tests = [
             (before_start, None, True, "before start, None"),

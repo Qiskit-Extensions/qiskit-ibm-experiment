@@ -27,6 +27,8 @@ from qiskit_ibm_experiment.exceptions import (
     RequestsApiError,
 )
 
+from qiskit_ibm_experiment.service.utils import str_to_utc
+
 logger = logging.getLogger(__name__)
 
 
@@ -279,10 +281,22 @@ class LocalExperimentClient:
             else:
                 raise ValueError("Unrecognized tags operator")
 
-        if "start_datetime_before" in filters:
-            df = df.loc[df.start_time <= filters["start_datetime_before"]]
-        if "start_datetime_after" in filters:
-            df = df.loc[df.start_time >= filters["start_datetime_after"]]
+        start_datetime_before = None
+        start_datetime_after = None
+        if 'start_time' in filters:
+            for start_time_string in filters['start_time']:
+                string_type = start_time_string[:2]
+                value = str_to_utc(start_time_string[3:])
+                if string_type == 'ge':
+                    start_datetime_after = value
+                if string_type == 'le':
+                    start_datetime_before = value
+
+        if start_datetime_before is not None:
+            df = df.loc[lambda df: df.start_time.apply(str_to_utc) <= start_datetime_before]
+        if start_datetime_after is not None:
+            df = df.loc[
+                lambda df: df.start_time.apply(str_to_utc) >= start_datetime_after]
 
         sort_by = filters.get("sort_by")
         if sort_by is None:

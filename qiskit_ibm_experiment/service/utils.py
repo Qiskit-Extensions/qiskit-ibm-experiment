@@ -172,7 +172,8 @@ def str_to_utc(utc_dt: Optional[str]) -> Optional[datetime]:
     Returns:
         A ``datetime`` with the UTC timezone, or ``None`` if the input is ``None``.
     """
-    if not utc_dt:
+    if not utc_dt or not isinstance(utc_dt, str):
         return None
     parsed_dt = dateutil.parser.isoparse(utc_dt)
-    return parsed_dt.replace(tzinfo=timezone.utc)
+    result = parsed_dt.replace(tzinfo=timezone.utc)
+    return result
