@@ -294,16 +294,17 @@ class LocalExperimentClient:
 
         if start_datetime_before is not None:
             df = df.loc[
-                lambda df: df.start_time.apply(str_to_utc) <= start_datetime_before
+                df.start_time.apply(str_to_utc) <= start_datetime_before
             ]
         if start_datetime_after is not None:
             df = df.loc[
-                lambda df: df.start_time.apply(str_to_utc) >= start_datetime_after
+                df.start_time.apply(str_to_utc) >= start_datetime_after
             ]
 
         sort_by = filters.get("sort_by")
         if sort_by is None:
             sort_by = "start_time:desc"
+        sort_by += ",uuid:asc"
         sort_by = sort_by.split(",")
 
         sort_by_columns = []
@@ -317,8 +318,6 @@ class LocalExperimentClient:
             sort_by_columns.append(sortby_split[0])
             sort_by_ascending.append(sortby_split[1] == "asc")
 
-        sort_by_columns.append("uuid")
-        sort_by_ascending.append(True)
         df = df.sort_values(sort_by_columns, ascending=sort_by_ascending)
         df = df.iloc[:limit]
         result = {"experiments": df.replace({np.nan: None}).to_dict("records")}
