@@ -90,8 +90,8 @@ class IBMExperimentService:
         url: Optional[str] = None,
         name: Optional[str] = None,
         proxies: Optional[dict] = None,
-        verify: Optional[bool] = None,
-        local: Optional[bool] = None,
+        verify: Optional[bool] = False,
+        local: Optional[bool] = False,
         local_save: Optional[bool] = True,
         **kwargs,
     ) -> None:
@@ -576,13 +576,13 @@ class IBMExperimentService:
             parent_id: Filter experiments by this parent experiment ID.
             sort_by: Specifies how the output should be sorted. This can be a single sorting
                 option or a list of options. Each option should contain a sort key
-                and a direction, separated by a semicolon. Valid sort keys are
-                "start_datetime" and "experiment_type".
+                and a direction, separated by a colon. Valid sort keys are
+                "start_time" and "experiment_type".
                 Valid directions are "asc" for ascending or "desc" for descending.
-                For example, ``sort_by=["experiment_type:asc", "start_datetime:desc"]`` will
+                For example, ``sort_by=["experiment_type:asc", "start_time:desc"]`` will
                 return an output list that is first sorted by experiment type in
                 ascending order, then by start datetime by descending order.
-                By default, experiments are sorted by ``start_datetime``
+                By default, experiments are sorted by ``start_time``
                 descending and ``experiment_id`` ascending.
             **filters: Additional filtering keywords that are not supported and will be ignored.
 
@@ -634,7 +634,11 @@ class IBMExperimentService:
             tags=tags,
             tags_operator=tags_operator,
             sort_by=sort_by,
-            sort_map={"start_datetime": "start_time", "experiment_type": "type"},
+            sort_map={
+                "start_datetime": "start_time",
+                "start_time": "start_time",
+                "experiment_type": "type",
+            },
             device_components=device_components,
             device_components_operator=device_components_operator,
             item_type=experiment_type,
