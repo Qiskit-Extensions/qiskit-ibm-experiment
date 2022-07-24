@@ -72,9 +72,8 @@ class LocalExperimentClient:
         """ExperimentClient constructor.
 
         Args:
-            access_token: The session's access token
-            url: The session's base url
-            additional_params: additional session parameters
+            main_dir: The dir in which to place the db files and subdirs
+            local_save: whether to store data to disk or not
         """
         self._experiments = None
         self._results = None

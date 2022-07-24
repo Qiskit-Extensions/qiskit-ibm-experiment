@@ -576,7 +576,7 @@ class IBMExperimentService:
             parent_id: Filter experiments by this parent experiment ID.
             sort_by: Specifies how the output should be sorted. This can be a single sorting
                 option or a list of options. Each option should contain a sort key
-                and a direction, separated by a semicolon. Valid sort keys are
+                and a direction, separated by a colon. Valid sort keys are
                 "start_time" and "experiment_type".
                 Valid directions are "asc" for ascending or "desc" for descending.
                 For example, ``sort_by=["experiment_type:asc", "start_time:desc"]`` will
