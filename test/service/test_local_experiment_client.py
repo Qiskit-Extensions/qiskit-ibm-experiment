@@ -14,8 +14,8 @@
 import unittest
 import uuid
 from datetime import datetime, timedelta
-from dateutil import tz
 from test.service.ibm_test_case import IBMTestCase
+from dateutil import tz
 from qiskit_ibm_experiment import IBMExperimentService
 from qiskit_ibm_experiment import ExperimentData, AnalysisResultData
 from qiskit_ibm_experiment.exceptions import (
