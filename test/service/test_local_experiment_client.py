@@ -12,6 +12,7 @@
 
 """Local experiment client tests"""
 import unittest
+import uuid
 from datetime import datetime, timedelta
 from dateutil import tz
 from test.service.ibm_test_case import IBMTestCase
@@ -23,7 +24,7 @@ from qiskit_ibm_experiment.exceptions import (
 )
 
 
-class TestExperimentServerIntegration(IBMTestCase):
+class TestExperimentLocalClient(IBMTestCase):
     """Test experiment modules."""
 
     @classmethod
@@ -269,6 +270,52 @@ class TestExperimentServerIntegration(IBMTestCase):
                         exp_id, start_dt, end_dt, found
                     ),
                 )
+
+    def test_experiments_with_sort_by(self):
+        """Test retrieving experiments with sort_by."""
+        tags = [str(uuid.uuid4())]
+        exp1 = self.service.create_experiment(
+            ExperimentData(
+                tags=tags,
+                experiment_type="qiskit_test_1",
+                start_datetime=datetime.now() - timedelta(hours=1),
+            )
+        )
+        exp2 = self.service.create_experiment(
+            ExperimentData(
+                tags=tags,
+                experiment_type="qiskit_test_2",
+                start_datetime=datetime.now(),
+            )
+        )
+        exp3 = self.service.create_experiment(
+            ExperimentData(
+                tags=tags,
+                experiment_type="qiskit_test_1",
+                start_datetime=datetime.now() - timedelta(hours=2),
+            )
+        )
+
+        subtests = [
+            (["experiment_type:asc"], [exp1, exp3, exp2] if exp1 < exp3 else [exp3, exp1, exp2]),
+            (["experiment_type:desc"], [exp2, exp1, exp3] if exp1 < exp3 else [exp2, exp3, exp1]),
+            (["start_datetime:asc"], [exp3, exp1, exp2]),
+            (["start_datetime:desc"], [exp2, exp1, exp3]),
+            (["experiment_type:asc", "start_datetime:asc"], [exp3, exp1, exp2]),
+            (["experiment_type:asc", "start_datetime:desc"], [exp1, exp3, exp2]),
+            (["experiment_type:desc", "start_datetime:asc"], [exp2, exp3, exp1]),
+            (["experiment_type:desc", "start_datetime:desc"], [exp2, exp1, exp3]),
+        ]
+
+        for sort_by, expected in subtests:
+            with self.subTest(sort_by=sort_by):
+                experiments = self.service.experiments(
+                    tags=tags,
+                    sort_by=sort_by,
+                    experiment_type_operator="like",
+                    experiment_type="qiskit_test",
+                )
+                self.assertEqual(expected, [exp.experiment_id for exp in experiments])
 
 
 if __name__ == "__main__":

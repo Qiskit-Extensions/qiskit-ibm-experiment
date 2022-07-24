@@ -270,13 +270,15 @@ class LocalExperimentClient:
             )
 
         if tags is not None:
-            if tags_operator == "OR":
+            if tags[:3] == "any":
+                tags_list = tags[4:].split(",")
                 df = df.loc[
-                    df.tags.apply(lambda dftags: any(x in dftags for x in tags))
+                    df.tags.apply(lambda dftags: any(x in dftags for x in tags_list))
                 ]
-            elif tags_operator == "AND":
+            elif tags[:8] == "contains":
+                tags_list = tags[9:].split(",")
                 df = df.loc[
-                    df.tags.apply(lambda dftags: all(x in dftags for x in tags))
+                    df.tags.apply(lambda dftags: all(x in dftags for x in tags_list))
                 ]
             else:
                 raise ValueError("Unrecognized tags operator")
@@ -300,33 +302,24 @@ class LocalExperimentClient:
 
         sort_by = filters.get("sort_by")
         if sort_by is None:
-            sort_by = "start_datetime:desc"
+            sort_by = "start_time:desc"
+        sort_by = sort_by.split(",")
 
-        if not isinstance(sort_by, list):
-            sort_by = [sort_by]
+        sort_by_columns = []
+        sort_by_ascending = []
+        for sort_by_element in sort_by:
+            sortby_split = sort_by_element.split(":")
+            if (
+                len(sortby_split) != 2
+                or (sortby_split[1] != "asc" and sortby_split[1] != "desc")
+            ):
+                raise ValueError(f"Sortby filter {sort_by} is malformed")
+            sort_by_columns.append(sortby_split[0])
+            sort_by_ascending.append(sortby_split[1] == "asc")
 
-        # TODO: support also experiment_type
-        if len(sort_by) != 1:
-            raise ValueError(
-                "The fake service currently supports only sorting by start_datetime"
-            )
-
-        sortby_split = sort_by[0].split(":")
-        # TODO: support also experiment_type
-        if (
-            len(sortby_split) != 2
-            or sortby_split[0] != "start_datetime"
-            or (sortby_split[1] != "asc" and sortby_split[1] != "desc")
-        ):
-            raise ValueError(
-                "The fake service currently supports only sorting by start_datetime, which can be "
-                "either asc or desc"
-            )
-
-        df = df.sort_values(
-            ["start_time", "uuid"], ascending=[(sortby_split[1] == "asc"), True]
-        )
-
+        sort_by_columns.append("uuid")
+        sort_by_ascending.append(True)
+        df = df.sort_values(sort_by_columns, ascending=sort_by_ascending)
         df = df.iloc[:limit]
         result = {"experiments": df.replace({np.nan: None}).to_dict("records")}
         return json.dumps(result)
