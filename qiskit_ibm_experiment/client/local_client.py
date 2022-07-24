@@ -293,13 +293,9 @@ class LocalExperimentClient:
                     start_datetime_before = value
 
         if start_datetime_before is not None:
-            df = df.loc[
-                df.start_time.apply(str_to_utc) <= start_datetime_before
-            ]
+            df = df.loc[df.start_time.apply(str_to_utc) <= start_datetime_before]
         if start_datetime_after is not None:
-            df = df.loc[
-                df.start_time.apply(str_to_utc) >= start_datetime_after
-            ]
+            df = df.loc[df.start_time.apply(str_to_utc) >= start_datetime_after]
 
         sort_by = filters.get("sort_by")
         if sort_by is None:
