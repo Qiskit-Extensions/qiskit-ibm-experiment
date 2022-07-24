@@ -285,20 +285,23 @@ class LocalExperimentClient:
 
         start_datetime_before = None
         start_datetime_after = None
-        if 'start_time' in filters:
-            for start_time_string in filters['start_time']:
+        if "start_time" in filters:
+            for start_time_string in filters["start_time"]:
                 string_type = start_time_string[:2]
                 value = str_to_utc(start_time_string[3:])
-                if string_type == 'ge':
+                if string_type == "ge":
                     start_datetime_after = value
-                if string_type == 'le':
+                if string_type == "le":
                     start_datetime_before = value
 
         if start_datetime_before is not None:
-            df = df.loc[lambda df: df.start_time.apply(str_to_utc) <= start_datetime_before]
+            df = df.loc[
+                lambda df: df.start_time.apply(str_to_utc) <= start_datetime_before
+            ]
         if start_datetime_after is not None:
             df = df.loc[
-                lambda df: df.start_time.apply(str_to_utc) >= start_datetime_after]
+                lambda df: df.start_time.apply(str_to_utc) >= start_datetime_after
+            ]
 
         sort_by = filters.get("sort_by")
         if sort_by is None:
@@ -309,9 +312,8 @@ class LocalExperimentClient:
         sort_by_ascending = []
         for sort_by_element in sort_by:
             sortby_split = sort_by_element.split(":")
-            if (
-                len(sortby_split) != 2
-                or (sortby_split[1] != "asc" and sortby_split[1] != "desc")
+            if len(sortby_split) != 2 or (
+                sortby_split[1] != "asc" and sortby_split[1] != "desc"
             ):
                 raise ValueError(f"Sortby filter {sort_by} is malformed")
             sort_by_columns.append(sortby_split[0])

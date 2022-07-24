@@ -230,8 +230,9 @@ class TestExperimentLocalClient(IBMTestCase):
         ref_start_dt = ref_start_dt.replace(tzinfo=tz.tzlocal())
         exp_id = self.service.create_experiment(
             ExperimentData(
-                experiment_type="qiskit_test", backend="ibmq_qasm_simulator",
-                start_datetime=ref_start_dt
+                experiment_type="qiskit_test",
+                backend="ibmq_qasm_simulator",
+                start_datetime=ref_start_dt,
             )
         )
 
@@ -297,8 +298,14 @@ class TestExperimentLocalClient(IBMTestCase):
         )
 
         subtests = [
-            (["experiment_type:asc"], [exp1, exp3, exp2] if exp1 < exp3 else [exp3, exp1, exp2]),
-            (["experiment_type:desc"], [exp2, exp1, exp3] if exp1 < exp3 else [exp2, exp3, exp1]),
+            (
+                ["experiment_type:asc"],
+                [exp1, exp3, exp2] if exp1 < exp3 else [exp3, exp1, exp2],
+            ),
+            (
+                ["experiment_type:desc"],
+                [exp2, exp1, exp3] if exp1 < exp3 else [exp2, exp3, exp1],
+            ),
             (["start_datetime:asc"], [exp3, exp1, exp2]),
             (["start_datetime:desc"], [exp2, exp1, exp3]),
             (["experiment_type:asc", "start_datetime:asc"], [exp3, exp1, exp2]),
