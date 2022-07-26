@@ -29,7 +29,6 @@ class ExperimentRestAdapter:
         "experiments": "/experiments",
         "analysis_results": "/analysis_results",
         "analysis_result": "/analysis_results/{uuid}",
-        "plots": "/experiments/{uuid}/plots",
         "plot": "/experiments/{uuid}/plots/{name}",
         "plot_upload": "/experiments/{uuid}/plots/upload/{name}",
         "files": "/experiments/{uuid}/files",
