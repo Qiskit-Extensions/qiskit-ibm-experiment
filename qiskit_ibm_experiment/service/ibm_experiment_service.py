@@ -383,6 +383,7 @@ class IBMExperimentService:
             "hub_id",
             "project_id",
             "type",
+            "start_time",
         ]
         for field_name in unused_fields:
             if field_name in api_data:
