@@ -72,6 +72,7 @@ disable=no-self-use,        # disabled as it is too verbose
     docstring-first-line-empty, # relax docstring style
     import-outside-toplevel,
     bad-continuation, bad-whitespace, # differences of opinion with black
+    unspecified-encoding, # not using different encodings in the project
     assigning-non-slot  # https://github.com/Qiskit/qiskit-terra/pull/7347#issuecomment-985007311
 
 

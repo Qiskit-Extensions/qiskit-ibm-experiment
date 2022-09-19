@@ -285,10 +285,8 @@ class TestExperimentLocalClient(IBMTestCase):
                 self.assertEqual(
                     found,
                     expected,
-                    "Experiment {} (not)found unexpectedly when filter using "
-                    "start_dt={}, end_dt={}. Found={}".format(
-                        exp_id, start_dt, end_dt, found
-                    ),
+                    f"Experiment {exp_id} (not)found unexpectedly when filter using "
+                    "start_dt={start_dt}, end_dt={end_dt}. Found={found}",
                 )
 
     def test_experiments_with_sort_by(self):
