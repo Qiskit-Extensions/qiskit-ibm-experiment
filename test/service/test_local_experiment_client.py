@@ -225,6 +225,7 @@ class TestExperimentLocalClient(IBMTestCase):
         self.assertEqual(len(file_list), 0)
 
     def test_server_setting_start_time(self):
+        """Tests that start time is initialized by the server unless already present"""
         ref_start_dt = datetime.now() - timedelta(days=1)
         exp_id = self.service.create_experiment(
             ExperimentData(

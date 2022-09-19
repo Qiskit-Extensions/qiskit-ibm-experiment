@@ -48,7 +48,7 @@ class TestExperimentServerIntegration(IBMTestCase):
             cls.device_components = cls.service.device_components(cls.backend.name())
         except Exception as err:
             cls.log.info("Error while setting the service/provider: %s", err)
-            raise SkipTest("Not authorized to use experiment service.")
+            raise SkipTest("Not authorized to use experiment service.") from err
 
     @classmethod
     def _setup_service(cls):

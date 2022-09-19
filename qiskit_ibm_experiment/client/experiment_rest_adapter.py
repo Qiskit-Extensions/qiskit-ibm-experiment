@@ -213,7 +213,7 @@ class ExperimentRestAdapter:
         """Return an analysis result.
 
         Args:
-            analysis_result_id: UUID of the analysis result.
+            result_id: UUID of the analysis result.
 
         Returns:
             The analysis result.
@@ -296,7 +296,7 @@ class ExperimentRestAdapter:
             url, data=new_data, headers=self._HEADER_JSON_CONTENT
         ).json()
 
-    def analysis_result_delete(self, result_id) -> Dict:
+    def analysis_result_delete(self, result_id: str) -> Dict:
         """Delete the analysis result.
         Args:
             result_id: The id of the analysis result to update
@@ -408,7 +408,7 @@ class ExperimentRestAdapter:
         """Uploads a file to the DB
         Args:
             experiment_id: Experiment ID.
-            file_name: The intended name of the data file
+            file_pathname: The intended name of the data file
             file_data: The contents of the data file
         """
         upload_request_url = self.get_url("files_upload")
