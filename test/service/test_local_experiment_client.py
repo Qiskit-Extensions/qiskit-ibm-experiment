@@ -224,6 +224,24 @@ class TestExperimentLocalClient(IBMTestCase):
         file_list = self.service.files(exp_id2)["files"]
         self.assertEqual(len(file_list), 0)
 
+    def test_server_setting_start_time(self):
+        ref_start_dt = datetime.now() - timedelta(days=1)
+        exp_id = self.service.create_experiment(
+            ExperimentData(
+                experiment_type="qiskit_time_test",
+                backend="ibmq_qasm_simulator",
+            )
+        )
+        experiments = self.service.experiments(
+            start_datetime_after=ref_start_dt,
+            experiment_type="qiskit_time_test",
+        )
+        found = False
+        for exp in experiments:
+            if exp.experiment_id == exp_id:
+                found = True
+        self.assertTrue(found)
+
     def test_experiments_with_start_time(self):
         """Test retrieving an experiment by its start_time."""
         ref_start_dt = datetime.now() - timedelta(days=1)
