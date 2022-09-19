@@ -352,6 +352,8 @@ class LocalExperimentClient:
         data_dict = json.loads(data)
         if "uuid" not in data_dict:
             data_dict["uuid"] = str(uuid.uuid4())
+        if "start_time" not in data_dict:
+            data_dict["start_time"] = datetime.now()
         exp = self._experiments.loc[self._experiments.uuid == data_dict["uuid"]]
         if not exp.empty:
             raise IBMExperimentEntryExists
