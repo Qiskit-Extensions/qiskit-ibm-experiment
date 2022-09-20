@@ -483,6 +483,7 @@ class IBMExperimentService:
             device_components: Filter by device components.
             device_components_operator: Operator used when filtering by device components.
                 Valid values are ``None`` and "contains":
+
                     * If ``None``, an analysis result's device components must match
                       exactly for it to be included.
                     * If "contains" is specified, an analysis result's device components
@@ -492,6 +493,7 @@ class IBMExperimentService:
             experiment_type: Experiment type used for filtering.
             experiment_type_operator: Operator used when filtering by experiment type.
                 Valid values are ``None`` and "like":
+
                 * If ``None`` is specified, an experiment's type value must
                   match exactly for it to be included.
                 * If "like" is specified, an experiment's type value must
@@ -502,6 +504,7 @@ class IBMExperimentService:
             tags: Filter by tags assigned to experiments.
             tags_operator: Logical operator to use when filtering by job tags. Valid
                 values are "AND" and "OR":
+
                     * If "AND" is specified, then an experiment must have all of the tags
                       specified in `tags` to be included.
                     * If "OR" is specified, then an experiment only needs to have any
@@ -549,6 +552,7 @@ class IBMExperimentService:
             IBMApiError: If the request to the server failed.
         """
         # pylint: disable=arguments-differ
+        # pylint: disable=missing-param-doc
         if filters:
             logger.info(
                 "Keywords %s are not supported by IBM Quantum experiment service "
@@ -951,6 +955,8 @@ class IBMExperimentService:
             IBMApiError: If the request to the server failed.
         """
         # pylint: disable=arguments-differ
+        # pylint: disable=missing-param-doc
+
         if filters:
             logger.info(
                 "Keywords %s are not supported by IBM Quantum experiment service "

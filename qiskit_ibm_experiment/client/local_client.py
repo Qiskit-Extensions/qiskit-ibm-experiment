@@ -12,6 +12,9 @@
 
 """Client for local Quantum experiment services."""
 
+# pylint treats the dataframes as JsonReader for some reason
+# pylint: disable=no-member
+
 import logging
 import os
 import uuid
