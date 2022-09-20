@@ -203,14 +203,6 @@ class ExperimentClient:
         """
         self.api.delete_plot(experiment_id, plot_file_name)
 
-    def experiment_devices(self) -> List:
-        """Return list of experiment devices.
-
-        Returns:
-            A list of experiment devices.
-        """
-        return self.base_api.experiment_devices()["devices"]
-
     def analysis_results(
         self,
         limit: Optional[int],

@@ -12,6 +12,9 @@
 
 """Client for local Quantum experiment services."""
 
+# pylint treats the dataframes as JsonReader for some reason
+# pylint: disable=no-member
+
 import logging
 import os
 import uuid
@@ -75,8 +78,8 @@ class LocalExperimentClient:
             main_dir: The dir in which to place the db files and subdirs
             local_save: whether to store data to disk or not
         """
-        self._experiments = None
-        self._results = None
+        self._experiments = pd.DataFrame()
+        self._results = pd.DataFrame()
         self._figures = None
         self._files = None
         self._files_list = {}
@@ -126,9 +129,9 @@ class LocalExperimentClient:
                 with open(os.path.join(self.files_dir, filename), "w") as file:
                     file.write(file_data)
 
-    def serialize(self, df):
+    def serialize(self, dataframe):
         """Serializes db values as JSON"""
-        result = df.replace({np.nan: None}).to_dict("records")[0]
+        result = dataframe.replace({np.nan: None}).to_dict("records")[0]
         return json.dumps(result)
 
     def init_db(self):
@@ -220,21 +223,13 @@ class LocalExperimentClient:
 
         Args:
             limit: Number of experiments to retrieve.
-            marker: Marker used to indicate where to start the next query.
-            backend_name: Name of the backend.
-            experiment_type: Experiment type.
-            start_time: A list of timestamps used to filter by experiment start time.
             device_components: A list of device components used for filtering.
+            experiment_type: Experiment type.
+            backend_name: Name of the backend.
             tags: Tags used for filtering.
-            hub: Filter by hub.
-            group: Filter by hub and group.
-            project: Filter by hub, group, and project.
-            exclude_public: Whether or not to exclude experiments with a public share level.
-            public_only: Whether or not to only return experiments with a public share level.
-            exclude_mine: Whether or not to exclude experiments where I am the owner.
-            mine_only: Whether or not to only return experiments where I am the owner.
             parent_id: Filter by parent experiment ID.
-            sort_by: Sorting order.
+            **filters: A set of additional filters/sorters for the results
+            (currently only "start_time" and "sort_by")
 
         Returns:
             A list of experiments and the marker, if applicable.
@@ -352,6 +347,8 @@ class LocalExperimentClient:
         data_dict = json.loads(data)
         if "uuid" not in data_dict:
             data_dict["uuid"] = str(uuid.uuid4())
+        if "start_time" not in data_dict:
+            data_dict["start_time"] = str(datetime.now())
         exp = self._experiments.loc[self._experiments.uuid == data_dict["uuid"]]
         if not exp.empty:
             raise IBMExperimentEntryExists
@@ -487,7 +484,7 @@ class LocalExperimentClient:
 
         Args:
             experiment_id: Experiment UUID.
-            plot_file_name: Plot file name.
+            plot_name: Plot file name.
 
         Raises:
             RequestsApiError: If the figure is not found
@@ -623,7 +620,7 @@ class LocalExperimentClient:
         exp_id = data_dict.get("experiment_uuid")
         if exp_id is None:
             raise RequestsApiError(
-                f"Cannot create analysis result without experiment id"
+                "Cannot create analysis result without experiment id"
             )
         exp = self._experiments.loc[self._experiments.uuid == exp_id]
         if exp.empty:

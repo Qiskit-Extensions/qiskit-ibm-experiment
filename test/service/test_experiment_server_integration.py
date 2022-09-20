@@ -48,7 +48,7 @@ class TestExperimentServerIntegration(IBMTestCase):
             cls.device_components = cls.service.device_components(cls.backend.name())
         except Exception as err:
             cls.log.info("Error while setting the service/provider: %s", err)
-            raise SkipTest("Not authorized to use experiment service.")
+            raise SkipTest("Not authorized to use experiment service.") from err
 
     @classmethod
     def _setup_service(cls):
@@ -99,7 +99,7 @@ class TestExperimentServerIntegration(IBMTestCase):
 
         found = False
         for exp in experiments:
-            self.assertTrue(exp.experiment_id, "{} does not have an ID!".format(exp))
+            self.assertTrue(exp.experiment_id, f"{exp} does not have an ID!")
             for dt_attr in [
                 "start_datetime",
                 "creation_datetime",
@@ -124,9 +124,7 @@ class TestExperimentServerIntegration(IBMTestCase):
                 found = True
         self.assertTrue(
             found,
-            "Experiment {} not found when filter by backend name {}.".format(
-                exp_id, self.backend.name()
-            ),
+            f"Experiment {exp_id} not found when filter by backend name {self.backend.name()}.",
         )
 
     def test_experiments_with_type(self):
@@ -141,8 +139,7 @@ class TestExperimentServerIntegration(IBMTestCase):
             if exp.experiment_id == exp_id:
                 found = True
         self.assertTrue(
-            found,
-            "Experiment {} not found when filter by type {}.".format(exp_id, exp_type),
+            found, f"Experiment {exp_id} not found when filter by type {exp_type}."
         )
 
     def test_experiments_with_parent_id(self):
@@ -157,10 +154,7 @@ class TestExperimentServerIntegration(IBMTestCase):
             if exp.experiment_id == child_id:
                 found = True
         self.assertTrue(
-            found,
-            "Experiment {} not found when filter by type {}.".format(
-                child_id, parent_id
-            ),
+            found, f"Experiment {child_id} not found when filter by type {parent_id}."
         )
 
     def test_experiments_with_type_operator(self):
@@ -231,10 +225,8 @@ class TestExperimentServerIntegration(IBMTestCase):
                 self.assertEqual(
                     found,
                     expected,
-                    "Experiment {} (not)found unexpectedly when filter using "
-                    "start_dt={}, end_dt={}. Found={}".format(
-                        exp_id, start_dt, end_dt, found
-                    ),
+                    f"Experiment {exp_id} (not)found unexpectedly when filter using "
+                    f"start_dt={start_dt}, end_dt={end_dt}. Found={found}",
                 )
 
     def test_experiments_with_tags(self):
@@ -256,9 +248,7 @@ class TestExperimentServerIntegration(IBMTestCase):
                 experiments = self.get_experiments(tags=tags, tags_operator=operator)
                 ref_expr_found = False
                 for expr in experiments:
-                    msg = "Tags {} not fond in experiment tags {}".format(
-                        tags, expr.tags
-                    )
+                    msg = f"Tags {tags} not fond in experiment tags {expr.tags}"
                     if operator == "AND":
                         self.assertTrue(all(f_tag in expr.tags for f_tag in tags), msg)
                     else:
@@ -267,9 +257,7 @@ class TestExperimentServerIntegration(IBMTestCase):
                         ref_expr_found = True
                 self.assertTrue(
                     ref_expr_found == found,
-                    "Experiment tags {} unexpectedly (not)found. Found={}".format(
-                        ref_tags, found
-                    ),
+                    f"Experiment tags {ref_tags} unexpectedly (not)found. Found={found}",
                 )
 
     def test_experiments_with_hgp(self):
@@ -326,20 +314,18 @@ class TestExperimentServerIntegration(IBMTestCase):
             self.assertNotEqual(
                 experiment.share_level,
                 ExperimentShareLevel.PUBLIC.value,
-                "Public experiment should not be returned with exclude_public filter: %s"
-                % experiment,
+                f"Public experiment should not be returned with exclude_public filter: {experiment}",
             )
             non_public_experiment_uuids.append(experiment.experiment_id)
         self.assertIn(
             private_exp_id,
             non_public_experiment_uuids,
-            "Non-public experiment not returned with exclude_public filter: %s"
-            % private_exp_id,
+            f"Non-public experiment not returned with exclude_public filter:{private_exp_id}",
         )
         self.assertNotIn(
             public_exp_id,
             non_public_experiment_uuids,
-            "Public experiment returned with exclude_public filter: %s" % public_exp_id,
+            f"Public experiment returned with exclude_public filter: {public_exp_id}",
         )
 
     def test_experiments_with_public_only(self):
@@ -357,21 +343,18 @@ class TestExperimentServerIntegration(IBMTestCase):
             self.assertEqual(
                 experiment.share_level,
                 ExperimentShareLevel.PUBLIC.value,
-                "Only public experiments should be returned with public_only filter: %s"
-                % experiment,
+                f"Only public experiments should be returned with public_only filter: {experiment}",
             )
             public_experiment_uuids.append(experiment.experiment_id)
         self.assertIn(
             public_exp_id,
             public_experiment_uuids,
-            "Public experiment not returned with public_only filter: %s"
-            % public_exp_id,
+            f"Public experiment not returned with public_only filter: {public_exp_id}",
         )
         self.assertNotIn(
             private_exp_id,
             public_experiment_uuids,
-            "Non-public experiment returned with public_only filter: %s"
-            % private_exp_id,
+            f"Non-public experiment returned with public_only filter: {private_exp_id}",
         )
 
     def test_experiments_with_public_filters_error(self):
@@ -398,14 +381,14 @@ class TestExperimentServerIntegration(IBMTestCase):
             self.assertNotEqual(
                 experiment["owner"],
                 exp_owner,  # pylint: disable=no-member
-                "My experiment should not be returned with exclude_mine filter: %s"
-                % experiment["experiment_id"],
+                f"My experiment should not be returned with "
+                f"exclude_mine filter: {experiment['experiment_id']}",
             )
             not_mine_experiment_uuids.append(experiment["experiment_id"])
         self.assertNotIn(
             exp_id,
             not_mine_experiment_uuids,
-            "My experiment returned with exclude_mine filter: %s" % exp_id,
+            f"My experiment returned with exclude_mine filter: {exp_id}",
         )
 
     def test_experiments_with_mine_only(self):
@@ -423,14 +406,14 @@ class TestExperimentServerIntegration(IBMTestCase):
             self.assertEqual(
                 experiment.owner,
                 exp_owner,  # pylint: disable=no-member
-                "Only my experiments should be returned with mine_only filter: %s"
-                % experiment.experiment_id,
+                f"Only my experiments should be returned with "
+                f"mine_only filter: {experiment.experiment_id}",
             )
             my_experiment_uuids.append(experiment.experiment_id)
         self.assertIn(
             exp_id,
             my_experiment_uuids,
-            "My experiment not returned with mine_only filter: %s" % exp_id,
+            f"My experiment not returned with mine_only filter: {exp_id}",
         )
 
     def test_experiments_with_owner_filters_error(self):
@@ -459,17 +442,17 @@ class TestExperimentServerIntegration(IBMTestCase):
         tags = [str(uuid.uuid4())]
         exp1 = self._create_experiment(
             tags=tags,
-            experiment_type="{}1".format(self.default_exp_type),
+            experiment_type=f"{self.default_exp_type}1",
             start_datetime=datetime.now() - timedelta(hours=1),
         )
         exp2 = self._create_experiment(
             tags=tags,
-            experiment_type="{}2".format(self.default_exp_type),
+            experiment_type=f"{self.default_exp_type}2",
             start_datetime=datetime.now(),
         )
         exp3 = self._create_experiment(
             tags=tags,
-            experiment_type="{}1".format(self.default_exp_type),
+            experiment_type=f"{self.default_exp_type}1",
             start_datetime=datetime.now() - timedelta(hours=2),
         )
 
@@ -557,9 +540,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         rexp = self.service.experiment(exp_id)
         self.assertEqual(exp_id, rexp.experiment_id)
         for attr in ["hub", "group", "project", "owner", "share_level"]:
-            self.assertIsNotNone(
-                getattr(rexp, attr), "{} does not have a {}".format(rexp, attr)
-            )
+            self.assertIsNotNone(getattr(rexp, attr), f"{rexp} does not have a {attr}")
 
     def test_upload_experiment(self):
         """Test uploading an experiment."""
@@ -773,7 +754,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         for res in results:
             self.assertIsInstance(res.verified, bool)
             self.assertIsInstance(res.result_data, dict)
-            self.assertTrue(res.result_id, "{} does not have an uuid!".format(res))
+            self.assertTrue(res.result_id, f"{res} does not have an uuid!")
             for dt_attr in ["creation_datetime", "updated_datetime"]:
                 result_datetime = getattr(res, dt_attr)
                 self.assertTrue(result_datetime is None or result_datetime.tzinfo)
@@ -878,10 +859,8 @@ class TestExperimentServerIntegration(IBMTestCase):
                 self.assertEqual(
                     found,
                     expected,
-                    "Analysis result {} (not)found unexpectedly when filter using"
-                    "start_dt={}, end_dt={}. Found={}".format(
-                        result_id, start_dt, end_dt, found
-                    ),
+                    f"Analysis result {result_id} (not)found unexpectedly when filter using"
+                    f"start_dt={start_dt}, end_dt={end_dt}. Found={found}",
                 )
 
     def test_analysis_results_type(self):
@@ -1019,7 +998,7 @@ class TestExperimentServerIntegration(IBMTestCase):
                 )
                 res_found = False
                 for res in results:
-                    msg = "Tags {} not fond in result tags {}".format(tags, res.tags)
+                    msg = f"Tags {tags} not fond in result tags {res.tags}"
                     if operator == "AND":
                         self.assertTrue(all(f_tag in res.tags for f_tag in tags), msg)
                     else:
@@ -1028,9 +1007,7 @@ class TestExperimentServerIntegration(IBMTestCase):
                         res_found = True
                 self.assertTrue(
                     res_found == found,
-                    "Result tags {} unexpectedly (not)found. Found={}".format(
-                        ref_tags, found
-                    ),
+                    f"Result tags {ref_tags} unexpectedly (not)found. Found={found}",
                 )
 
     def test_analysis_results_with_limit(self):

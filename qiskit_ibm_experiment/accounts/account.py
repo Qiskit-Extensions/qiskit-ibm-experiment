@@ -112,10 +112,10 @@ class Account:
         """Assert that the URL is valid."""
         try:
             urlparse(url)
-        except:
+        except Exception as err:
             raise InvalidAccountError(
                 f"Invalid `url` value. Failed to parse '{url}' as URL."
-            )
+            ) from err
 
     @staticmethod
     def _assert_valid_proxies(config: ProxyConfiguration) -> None:
