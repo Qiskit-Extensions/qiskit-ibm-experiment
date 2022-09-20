@@ -75,8 +75,8 @@ class LocalExperimentClient:
             main_dir: The dir in which to place the db files and subdirs
             local_save: whether to store data to disk or not
         """
-        self._experiments = None
-        self._results = None
+        self._experiments = pd.DataFrame()
+        self._results = pd.DataFrame()
         self._figures = None
         self._files = None
         self._files_list = {}
@@ -225,7 +225,7 @@ class LocalExperimentClient:
             backend_name: Name of the backend.
             tags: Tags used for filtering.
             parent_id: Filter by parent experiment ID.
-            filters: A set of additional filters/sorters for the results
+            **filters: A set of additional filters/sorters for the results
             (currently only "start_time" and "sort_by")
 
         Returns:
