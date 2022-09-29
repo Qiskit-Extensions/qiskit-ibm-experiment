@@ -104,6 +104,8 @@ class IBMExperimentService:
             local_save: If using a local client, whether to enable save to disk or not.
         """
         super().__init__()
+        self.options = self._default_options
+        self.set_option(**kwargs)
         if url is None:
             url = DEFAULT_BASE_URL
         self._account = self._discover_account(
@@ -135,8 +137,6 @@ class IBMExperimentService:
             self._api_client = LocalExperimentClient(
                 main_dir=self._DEFAULT_LOCAL_DB_DIR, local_save=local_save
             )
-        self.options = self._default_options
-        self.set_option(**kwargs)
 
     @property
     def local(self):
