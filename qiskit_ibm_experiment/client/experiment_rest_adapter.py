@@ -29,6 +29,7 @@ class ExperimentRestAdapter:
         "experiments": "/experiments",
         "analysis_results": "/analysis_results",
         "analysis_result": "/analysis_results/{uuid}",
+        "bulk_update_analysis_results": "/analysis_results/bulkupdate",
         "plot": "/experiments/{uuid}/plots/{name}",
         "plot_upload": "/experiments/{uuid}/plots/upload/{name}",
         "files": "/experiments/{uuid}/files",
@@ -292,6 +293,22 @@ class ExperimentRestAdapter:
         """
         url = self.get_url("analysis_result")
         url = url.format(uuid=result_id)
+        return self.session.put(
+            url, data=new_data, headers=self._HEADER_JSON_CONTENT
+        ).json()
+
+    def bulk_analysis_result_update(self, new_data: str) -> Dict:
+        """Bulk updates the analysis results.
+
+        Args:
+            new_data: The new data to update in the analysis result
+
+        Returns:
+            JSON response.
+        """
+        url = self.get_url("bulk_update_analysis_results")
+        print("bulk analysis update")
+        print("data = ", new_data)
         return self.session.put(
             url, data=new_data, headers=self._HEADER_JSON_CONTENT
         ).json()

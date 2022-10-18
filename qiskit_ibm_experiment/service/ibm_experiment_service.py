@@ -757,7 +757,7 @@ class IBMExperimentService:
 
         Args:
             data: The data to save. Note that the following fields will be ignored:
-            'uuid', 'experiment_uuid', 'device_components', 'type'
+            'experiment_uuid', 'device_components', 'type'
             json_encoder: Custom JSON encoder to use to encode the analysis result.
 
         Raises:
@@ -791,6 +791,36 @@ class IBMExperimentService:
             create,
             max_attempts,
         )
+
+    def bulk_update_analysis_result(
+        self,
+        data: List[AnalysisResultData],
+        json_encoder: Type[json.JSONEncoder] = json.JSONEncoder,
+    ) -> None:
+        """Bulk updates existing analysis results.
+
+        Args:
+            data: An array of the analysis data to save. Note that the following fields will be ignored:
+            ''experiment_uuid', 'device_components', 'type'
+            json_encoder: Custom JSON encoder to use to encode the analysis result.
+
+        Raises:
+            IBMApiError: If the request to the server failed.
+        """
+
+
+        unused_fields = ["experiment_uuid", "device_components", "type"]
+        request_list = {"analysis_results": []}
+        for analysis_result in data:
+            request = self._analysis_result_to_api(analysis_result)
+            for field_name in unused_fields:
+                if field_name in request:
+                    del request[field_name]
+            request_list["analysis_results"].append(request)
+        with map_api_error(f"Bulk analysis result update failed."):
+            self._api_client.bulk_analysis_result_update(
+                json.dumps(request_list, cls=json_encoder)
+            )
 
     def _confirm_delete(self, msg: str) -> bool:
         """Confirms a delete command; if the options indicate a prompt should be
