@@ -27,6 +27,7 @@ import numpy as np
 from qiskit_ibm_experiment.exceptions import (
     IBMExperimentEntryNotFound,
     IBMExperimentEntryExists,
+    IBMApiError,
     RequestsApiError,
 )
 
@@ -669,17 +670,24 @@ class LocalExperimentClient:
             Analysis result data.
 
         Raises:
-            IBMExperimentEntryNotFound: If the analysis result is not found
+            IBMExperimentEntryNotFound: If at least one analysis result is not found
+            IBMApiError: If the input is not given in the expected format
         """
 
         # naive implementation, can be optimized if needed
         new_data_dict = json.loads(new_data)
         # expected format is {"analysis_results": [...]}
-        if "analysis_results" not in new_data_dict or not isinstance(new_data_dict["analysis_results"], list):
-            raise IBMApiError('Data not given in the correct bulk update format, pass {"analysis_results": [...]}')
+        if "analysis_results" not in new_data_dict or not isinstance(
+            new_data_dict["analysis_results"], list
+        ):
+            raise IBMApiError(
+                'Data not given in the correct bulk update format, pass {"analysis_results": [...]}'
+            )
         response = {"analysis_results": []}
         for new_analysis_result in new_data_dict["analysis_results"]:
-            result = self.analysis_result_update(new_analysis_result['uuid'], json.dumps(new_analysis_result))
+            result = self.analysis_result_update(
+                new_analysis_result["uuid"], json.dumps(new_analysis_result)
+            )
             response["analysis_results"].append(result)
         return response
 

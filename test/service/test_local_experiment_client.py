@@ -20,7 +20,7 @@ from test.service.ibm_test_case import IBMTestCase
 from dateutil import tz
 from qiskit_ibm_experiment import IBMExperimentService
 from qiskit_ibm_experiment import ExperimentData, AnalysisResultData
-from qiskit_ibm_experiment.service import ResultQuality, ExperimentShareLevel
+from qiskit_ibm_experiment.service import ResultQuality
 from qiskit_ibm_experiment.exceptions import (
     IBMExperimentEntryNotFound,
     IBMExperimentEntryExists,
@@ -216,8 +216,11 @@ class TestExperimentLocalClient(IBMTestCase):
         """Test bulk updating analysis results."""
         num_results = 4
         result_ids = [self._create_analysis_result() for _ in range(num_results)]
-        fits = [dict(value=41.456+i*0.17, variance=4.051+i*0.53) for i in range(num_results)]
-        chisqs = [1.3253 + i*0.13 for i in range(num_results)]
+        fits = [
+            dict(value=41.456 + i * 0.17, variance=4.051 + i * 0.53)
+            for i in range(num_results)
+        ]
+        chisqs = [1.3253 + i * 0.13 for i in range(num_results)]
 
         new_results = [
             AnalysisResultData(
@@ -400,7 +403,6 @@ class TestExperimentLocalClient(IBMTestCase):
     def _create_experiment(
         self,
         experiment_type: Optional[str] = None,
-        backend_name: Optional[str] = None,
         json_encoder: Optional[json.JSONEncoder] = None,
         **kwargs,
     ) -> str:
@@ -438,14 +440,6 @@ class TestExperimentLocalClient(IBMTestCase):
         )
         return aresult_id
 
-# if __name__ == "__main__":
-    # unittest.main()
-def suite():
-    suite = unittest.TestSuite()
-    suite.addTest(TestExperimentLocalClient('test_bulk_update_analysis_result'))
-    return suite
 
-
-if __name__ == '__main__':
-    runner = unittest.TextTestRunner()
-    runner.run(suite())
+if __name__ == "__main__":
+    unittest.main()

@@ -715,8 +715,11 @@ class TestExperimentServerIntegration(IBMTestCase):
         """Test bulk updating analysis results."""
         num_results = 4
         result_ids = [self._create_analysis_result() for _ in range(num_results)]
-        fits = [dict(value=41.456+i*0.17, variance=4.051+i*0.53) for i in range(num_results)]
-        chisqs = [1.3253 + i*0.13 for i in range(num_results)]
+        fits = [
+            dict(value=41.456 + i * 0.17, variance=4.051 + i * 0.53)
+            for i in range(num_results)
+        ]
+        chisqs = [1.3253 + i * 0.13 for i in range(num_results)]
 
         new_results = [
             AnalysisResultData(

@@ -808,7 +808,6 @@ class IBMExperimentService:
             IBMApiError: If the request to the server failed.
         """
 
-
         unused_fields = ["experiment_uuid", "device_components", "type"]
         request_list = {"analysis_results": []}
         for analysis_result in data:
@@ -817,7 +816,7 @@ class IBMExperimentService:
                 if field_name in request:
                     del request[field_name]
             request_list["analysis_results"].append(request)
-        with map_api_error(f"Bulk analysis result update failed."):
+        with map_api_error("Bulk analysis result update failed."):
             self._api_client.bulk_analysis_result_update(
                 json.dumps(request_list, cls=json_encoder)
             )
