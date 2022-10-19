@@ -711,6 +711,34 @@ class TestExperimentServerIntegration(IBMTestCase):
         self.assertTrue(rresult.verified)
         self.assertEqual(chisq, rresult.chisq)
 
+    def test_bulk_update_analysis_result(self):
+        """Test bulk updating analysis results."""
+        num_results = 4
+        result_ids = [self._create_analysis_result() for _ in range(num_results)]
+        fits = [dict(value=41.456+i*0.17, variance=4.051+i*0.53) for i in range(num_results)]
+        chisqs = [1.3253 + i*0.13 for i in range(num_results)]
+
+        new_results = [
+            AnalysisResultData(
+                result_id=result_ids[i],
+                result_data=fits[i],
+                tags=["qiskit_test"],
+                quality=ResultQuality.GOOD,
+                verified=True,
+                chisq=chisqs[i],
+            )
+            for i in range(num_results)
+        ]
+        self.service.bulk_update_analysis_result(new_results)
+        for i in range(num_results):
+            rresult = self.service.analysis_result(result_ids[i])
+            self.assertEqual(result_ids[i], rresult.result_id)
+            self.assertEqual(fits[i], rresult.result_data)
+            self.assertEqual(["qiskit_test"], rresult.tags)
+            self.assertEqual(ResultQuality.GOOD, rresult.quality)
+            self.assertTrue(rresult.verified)
+            self.assertEqual(chisqs[i], rresult.chisq)
+
     def test_create_or_update_analysis_result(self):
         """Test updating an analysis result."""
         experiment_id = self._create_experiment()

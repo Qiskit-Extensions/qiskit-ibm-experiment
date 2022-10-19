@@ -307,8 +307,6 @@ class ExperimentRestAdapter:
             JSON response.
         """
         url = self.get_url("bulk_update_analysis_results")
-        print("bulk analysis update")
-        print("data = ", new_data)
         return self.session.put(
             url, data=new_data, headers=self._HEADER_JSON_CONTENT
         ).json()
