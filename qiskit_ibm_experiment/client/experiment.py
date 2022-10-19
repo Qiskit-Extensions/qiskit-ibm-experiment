@@ -273,6 +273,17 @@ class ExperimentClient:
         """
         return self.api.analysis_result_update(result_id, new_data)
 
+    def bulk_analysis_result_update(self, new_data: str) -> Dict:
+        """Bulk updates analysis results.
+
+        Args:
+            new_data: New analysis result data.
+
+        Returns:
+            Analysis result data.
+        """
+        return self.api.bulk_analysis_result_update(new_data)
+
     def analysis_result_delete(self, result_id: str) -> Dict:
         """Delete an analysis result.
 

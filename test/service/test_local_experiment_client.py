@@ -13,11 +13,14 @@
 """Local experiment client tests"""
 import unittest
 import uuid
+import json
+from typing import Optional, Dict, Any
 from datetime import datetime, timedelta
 from test.service.ibm_test_case import IBMTestCase
 from dateutil import tz
 from qiskit_ibm_experiment import IBMExperimentService
 from qiskit_ibm_experiment import ExperimentData, AnalysisResultData
+from qiskit_ibm_experiment.service import ResultQuality
 from qiskit_ibm_experiment.exceptions import (
     IBMExperimentEntryNotFound,
     IBMExperimentEntryExists,
@@ -184,6 +187,62 @@ class TestExperimentLocalClient(IBMTestCase):
         with self.assertRaises(IBMExperimentEntryNotFound):
             result = self.service.analysis_result(result_id)
 
+    def test_update_analysis_result(self):
+        """Test updating an analysis result."""
+        result_id = self._create_analysis_result()
+        fit = dict(value=41.456, variance=4.051)
+        chisq = 1.3253
+
+        self.service.update_analysis_result(
+            AnalysisResultData(
+                result_id=result_id,
+                result_data=fit,
+                tags=["qiskit_test"],
+                quality=ResultQuality.GOOD,
+                verified=True,
+                chisq=chisq,
+            )
+        )
+
+        rresult = self.service.analysis_result(result_id)
+        self.assertEqual(result_id, rresult.result_id)
+        self.assertEqual(fit, rresult.result_data)
+        self.assertEqual(["qiskit_test"], rresult.tags)
+        self.assertEqual(ResultQuality.GOOD, rresult.quality)
+        self.assertTrue(rresult.verified)
+        self.assertEqual(chisq, rresult.chisq)
+
+    def test_bulk_update_analysis_result(self):
+        """Test bulk updating analysis results."""
+        num_results = 4
+        result_ids = [self._create_analysis_result() for _ in range(num_results)]
+        fits = [
+            dict(value=41.456 + i * 0.17, variance=4.051 + i * 0.53)
+            for i in range(num_results)
+        ]
+        chisqs = [1.3253 + i * 0.13 for i in range(num_results)]
+
+        new_results = [
+            AnalysisResultData(
+                result_id=result_ids[i],
+                result_data=fits[i],
+                tags=["qiskit_test"],
+                quality=ResultQuality.GOOD,
+                verified=True,
+                chisq=chisqs[i],
+            )
+            for i in range(num_results)
+        ]
+        self.service.bulk_update_analysis_result(new_results)
+        for i in range(num_results):
+            rresult = self.service.analysis_result(result_ids[i])
+            self.assertEqual(result_ids[i], rresult.result_id)
+            self.assertEqual(fits[i], rresult.result_data)
+            self.assertEqual(["qiskit_test"], rresult.tags)
+            self.assertEqual(ResultQuality.GOOD, rresult.quality)
+            self.assertTrue(rresult.verified)
+            self.assertEqual(chisqs[i], rresult.chisq)
+
     def test_figure(self):
         """Test getting a figure."""
         exp_id = self.service.create_experiment(
@@ -340,6 +399,46 @@ class TestExperimentLocalClient(IBMTestCase):
                     experiment_type="qiskit_test",
                 )
                 self.assertEqual(expected, [exp.experiment_id for exp in experiments])
+
+    def _create_experiment(
+        self,
+        experiment_type: Optional[str] = None,
+        json_encoder: Optional[json.JSONEncoder] = None,
+        **kwargs,
+    ) -> str:
+        """Create a new experiment."""
+        experiment_type = experiment_type or "qiskit_test"
+        exp_id = self.service.create_experiment(
+            ExperimentData(
+                experiment_type=experiment_type,
+                **kwargs,
+            ),
+            json_encoder=json_encoder,
+        )
+        return exp_id
+
+    def _create_analysis_result(
+        self,
+        exp_id: Optional[str] = None,
+        result_type: Optional[str] = None,
+        result_data: Optional[Dict] = None,
+        json_encoder: Optional[json.JSONEncoder] = None,
+        **kwargs: Any,
+    ):
+        """Create a simple analysis result."""
+        experiment_id = exp_id or self._create_experiment()
+        result_type = result_type or "qiskit_test"
+        result_data = result_data or {}
+        aresult_id = self.service.create_analysis_result(
+            AnalysisResultData(
+                experiment_id=experiment_id,
+                result_data=result_data,
+                result_type=result_type,
+                **kwargs,
+            ),
+            json_encoder=json_encoder,
+        )
+        return aresult_id
 
 
 if __name__ == "__main__":
