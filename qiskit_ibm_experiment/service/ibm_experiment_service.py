@@ -802,6 +802,33 @@ class IBMExperimentService:
             return False
         return True
 
+    def create_analysis_results(
+        self,
+        data: List[AnalysisResultData],
+        blocking: bool = True,
+        max_workers: int = 100,
+        json_encoder: Type[json.JSONEncoder] = json.JSONEncoder,
+    ):
+        """Create multiple analysis results in the database using asynchronous calls.
+
+        If you choose `blocking==True`, the method will run until all the save threads terminated.
+        To improve running time, multithreading is used.
+
+        If `blocking==False` it is up to the user to verify all the threads finished; `block_for_save()` can
+        be called to ensure all threads finish. `save_status()` returns the information
+        on the status of the threads.
+
+        Args:
+            data: The data to save.
+            blocking: Whether to wait for all the save threads to finish before returning control
+            max_workers: Maximum number of worker threads to write to the server.
+            json_encoder: Custom JSON encoder to use to encode the analysis result.
+
+        Raises:
+            IBMExperimentEntryExists: If the analysis result already exits.
+            IBMApiError: If the request to the server failed.
+        """
+
     def _analysis_result_to_api(self, data: AnalysisResultData) -> Dict:
         """Convert analysis result fields to server format.
 
