@@ -20,6 +20,7 @@ from typing import Optional, List, Dict, Union, Tuple, Any, Type
 from datetime import datetime
 from collections import defaultdict
 import requests
+from pandas import DataFrame
 from .constants import (
     ExperimentShareLevel,
     ResultQuality,
@@ -804,7 +805,7 @@ class IBMExperimentService:
 
     def create_analysis_results(
         self,
-        data: List[AnalysisResultData],
+        data: Union[List[AnalysisResultData], DataFrame],
         blocking: bool = True,
         max_workers: int = 100,
         json_encoder: Type[json.JSONEncoder] = json.JSONEncoder,
@@ -819,7 +820,7 @@ class IBMExperimentService:
         on the status of the threads.
 
         Args:
-            data: The data to save.
+            data: The data to save, either as a list of `AnalysisResultData` or as a pandas `DataFrame`.
             blocking: Whether to wait for all the save threads to finish before returning control
             max_workers: Maximum number of worker threads to write to the server.
             json_encoder: Custom JSON encoder to use to encode the analysis result.
@@ -828,6 +829,8 @@ class IBMExperimentService:
             IBMExperimentEntryExists: If the analysis result already exits.
             IBMApiError: If the request to the server failed.
         """
+        if isinstance(data, DataFrame):
+            data = self.dataframe_to_analysis_result_list(data)
 
     def _analysis_result_to_api(self, data: AnalysisResultData) -> Dict:
         """Convert analysis result fields to server format.
@@ -1564,3 +1567,16 @@ class IBMExperimentService:
         """
 
         return AccountManager.delete(name=name)
+
+    @staticmethod
+    def dataframe_to_analysis_result_list(df: DataFrame) -> List[AnalysisResultData]:
+        """Converts an analysis result dataframe to a list"""
+        results = []
+        data_dict = df.replace({np.nan: None}).to_dict("records")
+        for result in data_dict:
+            analysis_result_data_dict = self._api_to_analysis_result(result)
+            results.append(AnalysisResultData(**analysis_result_data_dict))
+        return results
+
+
+
