@@ -16,6 +16,7 @@ import logging
 import json
 import copy
 import os
+import numpy as np
 from typing import Optional, List, Dict, Union, Tuple, Any, Type
 from datetime import datetime
 from collections import defaultdict
@@ -1574,8 +1575,7 @@ class IBMExperimentService:
         results = []
         data_dict = df.replace({np.nan: None}).to_dict("records")
         for result in data_dict:
-            analysis_result_data_dict = self._api_to_analysis_result(result)
-            results.append(AnalysisResultData(**analysis_result_data_dict))
+            results.append(AnalysisResultData(**result))
         return results
 
 
