@@ -27,6 +27,8 @@ from .constants import (
     ResultQuality,
     RESULT_QUALITY_FROM_API,
     RESULT_QUALITY_TO_API,
+    RESULT_QUALITY_FROM_DATAFRAME,
+    RESULT_QUALITY_TO_DATAFRAME,
     DEFAULT_BASE_URL,
 )
 from .utils import map_api_error, local_to_utc_str, utc_to_local
@@ -1216,6 +1218,51 @@ class IBMExperimentService:
         }
         return out_dict
 
+    def _dataframe_to_analysis_result(
+        self,
+        raw_data: Dict,
+    ) -> AnalysisResultData:
+        """Map dataframe dictionary to an analysis result.
+
+        Args:
+            raw_data: API response data.
+
+        Returns:
+            Converted analysis result data.
+        """
+
+        # raw data might contain iterated data structures unknown to us, so deep copy to prevent problems
+        raw_data = copy.deepcopy(raw_data)
+
+        data_field_map = {
+            'name': 'result_type',
+            'device_components': 'device_components',
+            'result_id': 'result_id',
+            'experiment_id': 'experiment_id',
+            'verified': 'verified',
+            'tags': 'tags',
+            'chisq': 'chisq',
+            'creation_datetime': 'creation_datetime',
+        }
+        analysis_result_data = {}
+        for src_key, dest_key in data_field_map.items():
+            analysis_result_data[dest_key] = raw_data[src_key]
+
+        # extra data is stored in the 'result_data' field
+        result_data_field_map = {
+            'value': '_value',
+            'source': '_source',
+            'extra': '_extra',
+        }
+        result_data = {}
+        for src_key, dest_key in result_data_field_map.items():
+            result_data[dest_key] = raw_data[src_key]
+
+        # values which require specific conversions
+        result_data['quality'] = RESULT_QUALITY_FROM_DATAFRAME[raw_data['quality']]
+
+        return AnalysisResultData(**result_data)
+
     def delete_analysis_result(self, result_id: str) -> None:
         """Delete an analysis result.
 
@@ -1569,13 +1616,12 @@ class IBMExperimentService:
 
         return AccountManager.delete(name=name)
 
-    @staticmethod
-    def dataframe_to_analysis_result_list(df: DataFrame) -> List[AnalysisResultData]:
+    def dataframe_to_analysis_result_list(self, df: DataFrame) -> List[AnalysisResultData]:
         """Converts an analysis result dataframe to a list"""
         results = []
         data_dict = df.replace({np.nan: None}).to_dict("records")
         for result in data_dict:
-            results.append(AnalysisResultData(**result))
+            results.append(self._dataframe_to_analysis_result(result))
         return results
 
 
