@@ -22,6 +22,7 @@ from datetime import datetime
 from collections import defaultdict
 import requests
 from pandas import DataFrame
+import pandas as pd
 from .constants import (
     ExperimentShareLevel,
     ResultQuality,
@@ -1225,7 +1226,7 @@ class IBMExperimentService:
         """Map dataframe dictionary to an analysis result.
 
         Args:
-            raw_data: API response data.
+            raw_data: Dataframe dictionary data
 
         Returns:
             Converted analysis result data.
@@ -1264,6 +1265,37 @@ class IBMExperimentService:
         # values which require specific conversions
         analysis_result_data['quality'] = RESULT_QUALITY_FROM_DATAFRAME[raw_data['quality']]
         return AnalysisResultData(**analysis_result_data)
+
+    def _analysis_result_to_dataframe(
+        self,
+        raw_data: AnalysisResultData,
+    ) -> Dict:
+        """Map analysis result to a dataframe dictionary.
+
+        Args:
+            raw_data: Analysis result data
+
+        Returns:
+            Converted analysis result data dictionary.
+        """
+
+        # raw data might contain iterated data structures unknown to us, so deep copy to prevent problems
+        raw_data = copy.deepcopy(raw_data)
+        analysis_result_data = {
+            'name': raw_data.result_type,
+            'device_components': raw_data.device_components,
+            '_result_id': raw_data.result_id,
+            '_experiment_id': raw_data.experiment_id,
+            '_verified': raw_data.verified,
+            '_tags': raw_data.tags,
+            'chisq': raw_data.chisq,
+            'creation_datetime': raw_data.creation_datetime,
+            'value': raw_data.result_data.get('_value', None),
+            '_source': raw_data.result_data.get('_source', None),
+            '_extra': raw_data.result_data.get('_extra', None),
+            'quality': RESULT_QUALITY_TO_DATAFRAME[raw_data.quality],
+        }
+        return analysis_result_data
 
     def delete_analysis_result(self, result_id: str) -> None:
         """Delete an analysis result.
@@ -1625,6 +1657,15 @@ class IBMExperimentService:
         for result in data_dict:
             results.append(self._dataframe_to_analysis_result(result))
         return results
+
+    def analysis_result_list_to_dataframe(self, result_list: List[AnalysisResultData] ) -> DataFrame:
+        if len(result_list) == 0:
+            return pd.DataFrame()
+        result_dicts = [self._analysis_result_to_dataframe(result) for result in result_list]
+        columns = result_dicts[0].keys()
+        pandas_dict = {key: [result[key] for result in result_dicts] for key in columns}
+        df = DataFrame.from_dict(pandas_dict)
+        return df
 
 
 
