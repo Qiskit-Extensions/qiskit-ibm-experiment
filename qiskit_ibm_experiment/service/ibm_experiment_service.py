@@ -1237,31 +1237,33 @@ class IBMExperimentService:
         data_field_map = {
             'name': 'result_type',
             'device_components': 'device_components',
-            'result_id': 'result_id',
-            'experiment_id': 'experiment_id',
-            'verified': 'verified',
-            'tags': 'tags',
+            '_result_id': 'result_id',
+            '_experiment_id': 'experiment_id',
+            '_verified': 'verified',
+            '_tags': 'tags',
             'chisq': 'chisq',
             'creation_datetime': 'creation_datetime',
         }
         analysis_result_data = {}
         for src_key, dest_key in data_field_map.items():
-            analysis_result_data[dest_key] = raw_data[src_key]
+            if src_key in raw_data:
+                analysis_result_data[dest_key] = raw_data[src_key]
 
         # extra data is stored in the 'result_data' field
         result_data_field_map = {
             'value': '_value',
-            'source': '_source',
-            'extra': '_extra',
+            '_source': '_source',
+            '_extra': '_extra',
         }
         result_data = {}
         for src_key, dest_key in result_data_field_map.items():
-            result_data[dest_key] = raw_data[src_key]
+            if src_key in raw_data:
+                result_data[dest_key] = raw_data[src_key]
+        analysis_result_data['result_data'] = result_data
 
         # values which require specific conversions
-        result_data['quality'] = RESULT_QUALITY_FROM_DATAFRAME[raw_data['quality']]
-
-        return AnalysisResultData(**result_data)
+        analysis_result_data['quality'] = RESULT_QUALITY_FROM_DATAFRAME[raw_data['quality']]
+        return AnalysisResultData(**analysis_result_data)
 
     def delete_analysis_result(self, result_id: str) -> None:
         """Delete an analysis result.
