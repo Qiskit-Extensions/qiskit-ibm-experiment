@@ -16,6 +16,7 @@ import logging
 import json
 import copy
 import os
+from concurrent import futures
 import numpy as np
 from typing import Optional, List, Dict, Union, Tuple, Any, Type
 from datetime import datetime
@@ -32,7 +33,7 @@ from .constants import (
     RESULT_QUALITY_TO_DATAFRAME,
     DEFAULT_BASE_URL,
 )
-from .utils import map_api_error, local_to_utc_str, utc_to_local
+from .utils import map_api_error, local_to_utc_str, utc_to_local, ThreadSaveHandler
 from .device_component import DeviceComponent
 from .experiment_dataclasses import ExperimentData, AnalysisResultData
 from ..client.experiment import ExperimentClient
@@ -835,6 +836,49 @@ class IBMExperimentService:
         """
         if isinstance(data, DataFrame):
             data = self.dataframe_to_analysis_result_list(data)
+        save_executor = futures.ThreadPoolExecutor(max_workers=max_workers)
+        save_futures = {}
+        for result_data in data:
+            cid = uuid.uuid4().hex
+            save_futures[cid] = save_executor.submit(
+                self.create_or_update_analysis_result,
+                result_data,
+                json_encoder,
+                True,  # create = True
+                3  # max_attempts = 3
+            )
+        handler = ThreadSaveHandler(save_futures)
+        if blocking:
+            handler.block_for_save()
+            return handler.save_status()
+        return handler
+
+    def block_for_save(self) -> "ExperimentData":
+        """Block until all pending save operations finish.
+
+        Returns:
+            The experiment data with finished jobs and post-processing.
+        """
+        waited = futures.wait(futs, timeout=timeout)
+        start_time = time.time()
+        self._wait_for_futures(save_futs, name="database save", timeout=timeout)
+        # Clean up done job futures
+        num_saves = len(save_futs)
+        for save_id, fut in zip(save_ids, save_futs):
+            if (fut.done() and not fut.exception()) or fut.cancelled():
+                del self._save_futures[save_id]
+                num_saves -= 1
+
+        # Check if more futures got added while this function was running
+        # and block recursively. This could happen if an analysis callback
+        # spawns another callback or creates more jobs
+        if len(self._save_futures) > num_saves:
+            time_taken = time.time() - start_time
+            if timeout is not None:
+                timeout = max(0, timeout - time_taken)
+            return self.block_for_save(timeout=timeout)
+
+        return self
 
     def _analysis_result_to_api(self, data: AnalysisResultData) -> Dict:
         """Convert analysis result fields to server format.

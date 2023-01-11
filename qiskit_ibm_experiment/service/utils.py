@@ -14,6 +14,7 @@
 
 import logging
 import os
+from concurrent import futures
 from typing import Generator, Union, Optional
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
@@ -177,3 +178,15 @@ def str_to_utc(utc_dt: Optional[str]) -> Optional[datetime]:
     parsed_dt = dateutil.parser.isoparse(utc_dt)
     result = parsed_dt.replace(tzinfo=timezone.utc)
     return result
+
+class ThreadSaveHandler:
+    """Utility class to keep track of multithreaded operations"""
+    def __init__(self, save_futures):
+        self._save_futures = save_futures
+
+    def block_for_save(self):
+        futures.wait(self._save_futures, timeout=timeout)
+
+    def save_status(self):
+        status = {}
+        return status
