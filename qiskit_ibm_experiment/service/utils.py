@@ -193,18 +193,43 @@ class ThreadSaveHandler:
         save_executor = futures.ThreadPoolExecutor(max_workers=max_workers)
         self._save_futures = {}
         self._save_data = {}
+        self._running_tasks = []
         for result_data in data:
-            cid = uuid.uuid4().hex
-            self._save_data[cid] = result_data
-            self._save_futures[cid] = save_executor.submit(
-                save_method,
-                result_data,
-                **kwargs
-            )
+            # cid = uuid.uuid4().hex
+            task = {
+                'data': result_data,
+                'future': save_executor.submit(save_method, result_data,**kwargs)
+            }
+            self._running_tasks.append(task)
+            # self._save_data[cid] = result_data
+            # self._save_futures[cid] = save_executor.submit(
+            #     save_method,
+            #     result_data,
+            #     **kwargs
+            # )
+        self._successful_tasks = []
+        self._failed_tasks = []
 
     def block_for_save(self):
-        futures.wait(self._save_futures.values())
+        # futures.wait(self._save_futures.values())
+        futures.wait([task['future'] for task in self._running_tasks])
 
     def save_status(self):
-        status = {}
+        new_running_tasks = []
+        for task in self._running_tasks:
+            if not task['future'].done():
+                new_running_tasks.append(task)
+                continue
+            ex = task['future'].exception()
+            if ex is None:
+                self._successful_tasks.append(task['data'])
+                continue
+            self._failed_tasks.append({'data': task['data'], 'exception': ex})
+        self._running_tasks = new_running_tasks
+
+        status = {
+            'running': [task['data'] for task in self._running_tasks],
+            'done': self._successful_tasks,
+            'fail': self._failed_tasks
+        }
         return status

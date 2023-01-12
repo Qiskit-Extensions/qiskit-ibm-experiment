@@ -842,33 +842,6 @@ class IBMExperimentService:
             return handler.save_status()
         return handler
 
-    def block_for_save(self) -> "ExperimentData":
-        """Block until all pending save operations finish.
-
-        Returns:
-            The experiment data with finished jobs and post-processing.
-        """
-        waited = futures.wait(futs, timeout=timeout)
-        start_time = time.time()
-        self._wait_for_futures(save_futs, name="database save", timeout=timeout)
-        # Clean up done job futures
-        num_saves = len(save_futs)
-        for save_id, fut in zip(save_ids, save_futs):
-            if (fut.done() and not fut.exception()) or fut.cancelled():
-                del self._save_futures[save_id]
-                num_saves -= 1
-
-        # Check if more futures got added while this function was running
-        # and block recursively. This could happen if an analysis callback
-        # spawns another callback or creates more jobs
-        if len(self._save_futures) > num_saves:
-            time_taken = time.time() - start_time
-            if timeout is not None:
-                timeout = max(0, timeout - time_taken)
-            return self.block_for_save(timeout=timeout)
-
-        return self
-
     def _analysis_result_to_api(self, data: AnalysisResultData) -> Dict:
         """Convert analysis result fields to server format.
 
