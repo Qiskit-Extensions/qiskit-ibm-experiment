@@ -16,6 +16,7 @@ import os
 import uuid
 import unittest
 import json
+import re
 from unittest import mock, SkipTest, skipIf
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
@@ -685,6 +686,42 @@ class TestExperimentServerIntegration(IBMTestCase):
         self.assertTrue(rresult.verified)
         self.assertEqual(result_id, rresult.result_id)
         self.assertEqual(chisq, rresult.chisq)
+
+    def test_upload_multiple_analysis_results(self):
+        """Test uploading multiple analysis results."""
+        exp_id = self._create_experiment()
+        num_results = 10
+        results = []
+        for i in range(num_results):
+            fit = dict(value=i+5, variance=2)
+            chisq = 1.3253
+            result = AnalysisResultData(
+                experiment_id=exp_id,
+                result_type= f"{i}_qiskit_test",
+                result_data=fit,
+                device_components=self.device_components,
+                tags=["qiskit_test"],
+                quality=ResultQuality.GOOD,
+                verified=True,
+                chisq=chisq,
+            )
+            results.append(result)
+        save_status = self.service.create_analysis_results(results, blocking=False)
+        rresults = self.service.analysis_results(exp_id=exp_id)
+        for rresult in rresults:
+            print(rresult.result_type)
+            i = int(re.match('(\d+)_', rresult.result_type)[1])
+            fit = dict(value=i + 5, variance=2)
+            self.assertEqual(exp_id, rresult.experiment_id)
+            self.assertEqual(f"{i}_qiskit_test", rresult.result_type)
+            self.assertEqual(fit, rresult.result_data)
+            self.assertEqual(
+                self.device_components, [str(comp) for comp in rresult.device_components]
+            )
+            self.assertEqual(["qiskit_test"], rresult.tags)
+            self.assertEqual(ResultQuality.GOOD, rresult.quality)
+            self.assertTrue(rresult.verified)
+            self.assertEqual(chisq, rresult.chisq)
 
     def test_update_analysis_result(self):
         """Test updating an analysis result."""
@@ -1394,5 +1431,13 @@ class TestExperimentServerIntegration(IBMTestCase):
         return backend_name, device_components
 
 
-if __name__ == "__main__":
-    unittest.main()
+# if __name__ == "__main__":
+#     unittest.main()
+def suite():
+    suite = unittest.TestSuite()
+    suite.addTest(TestExperimentServerIntegration('test_upload_multiple_analysis_results'))
+    return suite
+
+if __name__ == '__main__':
+    runner = unittest.TextTestRunner()
+    runner.run(suite())

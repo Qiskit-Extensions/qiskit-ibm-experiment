@@ -185,7 +185,7 @@ class ThreadSaveHandler:
         self._save_futures = save_futures
 
     def block_for_save(self):
-        futures.wait(self._save_futures, timeout=timeout)
+        futures.wait(self._save_futures.values())
 
     def save_status(self):
         status = {}
