@@ -16,7 +16,6 @@ import logging
 import json
 import copy
 import os
-import uuid
 from concurrent import futures
 import numpy as np
 from typing import Optional, List, Dict, Union, Tuple, Any, Type
@@ -837,18 +836,7 @@ class IBMExperimentService:
         """
         if isinstance(data, DataFrame):
             data = self.dataframe_to_analysis_result_list(data)
-        save_executor = futures.ThreadPoolExecutor(max_workers=max_workers)
-        save_futures = {}
-        for result_data in data:
-            cid = uuid.uuid4().hex
-            save_futures[cid] = save_executor.submit(
-                self.create_or_update_analysis_result,
-                result_data,
-                json_encoder,
-                True,  # create = True
-                3  # max_attempts = 3
-            )
-        handler = ThreadSaveHandler(save_futures)
+        handler = ThreadSaveHandler(data, self.create_or_update_analysis_result, max_workers, json_encoder=json_encoder, create=True, max_attempts=3)
         if blocking:
             handler.block_for_save()
             return handler.save_status()

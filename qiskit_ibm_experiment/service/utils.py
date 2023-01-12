@@ -14,11 +14,14 @@
 
 import logging
 import os
+import uuid
 from concurrent import futures
-from typing import Generator, Union, Optional
+from pandas import DataFrame
+from typing import Generator, Union, Optional, List
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 import dateutil
+from .experiment_dataclasses import AnalysisResultData
 
 from ..exceptions import (
     IBMExperimentEntryNotFound,
@@ -181,8 +184,23 @@ def str_to_utc(utc_dt: Optional[str]) -> Optional[datetime]:
 
 class ThreadSaveHandler:
     """Utility class to keep track of multithreaded operations"""
-    def __init__(self, save_futures):
-        self._save_futures = save_futures
+    def __init__(self,
+                 data: Union[List[AnalysisResultData], DataFrame],
+                 save_method,
+                 max_workers: int = 100,
+                 **kwargs,
+    ):
+        save_executor = futures.ThreadPoolExecutor(max_workers=max_workers)
+        self._save_futures = {}
+        self._save_data = {}
+        for result_data in data:
+            cid = uuid.uuid4().hex
+            self._save_data[cid] = result_data
+            self._save_futures[cid] = save_executor.submit(
+                save_method,
+                result_data,
+                **kwargs
+            )
 
     def block_for_save(self):
         futures.wait(self._save_futures.values())
