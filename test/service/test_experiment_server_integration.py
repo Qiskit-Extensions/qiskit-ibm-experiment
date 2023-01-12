@@ -27,7 +27,7 @@ import numpy as np
 from dateutil import tz
 from qiskit.providers.ibmq import IBMQFactory, least_busy
 from qiskit_ibm_experiment.service import ResultQuality, ExperimentShareLevel
-from qiskit_ibm_experiment import IBMExperimentEntryNotFound
+from qiskit_ibm_experiment import IBMExperimentEntryNotFound, IBMApiError
 from qiskit_ibm_experiment import IBMExperimentService
 from qiskit_ibm_experiment import ExperimentData, AnalysisResultData
 
@@ -764,6 +764,38 @@ class TestExperimentServerIntegration(IBMTestCase):
             self.assertTrue(rresult.verified)
             self.assertEqual(chisq, rresult.chisq)
 
+    def test_upload_multiple_analysis_results_failures(self):
+        """Test uploading multiple analysis results."""
+        exp_id = self._create_experiment()
+        fake_exp_id = f"FAKE_ID_{exp_id}"
+        num_results = 9
+        results = []
+        for i in range(num_results):
+            fit = dict(value=i+5, variance=2)
+            chisq = 1.3253
+            result = AnalysisResultData(
+                experiment_id=exp_id if i % 2 == 0 else fake_exp_id,
+                result_type= f"{i}_qiskit_test",
+                result_data=fit,
+                device_components=self.device_components,
+                tags=["qiskit_test"],
+                quality=ResultQuality.GOOD,
+                verified=True,
+                chisq=chisq,
+            )
+            results.append(result)
+        save_status = self.service.create_analysis_results(results, blocking=True)
+        self.assertEqual(len(save_status['running']), 0)
+        self.assertEqual(len(save_status['fail']), num_results // 2)
+        self.assertEqual(len(save_status['done']), num_results - (num_results // 2 ))
+        for result in save_status['done']:
+            i = int(re.match('(\d+)_', result.result_type)[1])
+            self.assertEqual(i % 2, 0)
+        for result in save_status['fail']:
+            i = int(re.match('(\d+)_', result['data'].result_type)[1])
+            self.assertEqual(i % 2, 1)
+            self.assertTrue(isinstance(result['exception'], IBMApiError))
+
     def test_update_analysis_result(self):
         """Test updating an analysis result."""
         result_id = self._create_analysis_result()
@@ -1476,7 +1508,7 @@ class TestExperimentServerIntegration(IBMTestCase):
 #     unittest.main()
 def suite():
     suite = unittest.TestSuite()
-    suite.addTest(TestExperimentServerIntegration('test_upload_multiple_analysis_results_nonblocking'))
+    suite.addTest(TestExperimentServerIntegration('test_upload_multiple_analysis_results_failures'))
     return suite
 
 if __name__ == '__main__':
