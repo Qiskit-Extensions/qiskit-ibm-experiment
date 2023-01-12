@@ -706,10 +706,51 @@ class TestExperimentServerIntegration(IBMTestCase):
                 chisq=chisq,
             )
             results.append(result)
-        save_status = self.service.create_analysis_results(results, blocking=False)
-        rresults = self.service.analysis_results(exp_id=exp_id)
+        self.service.create_analysis_results(results,blocking=True)
+        rresults = self.service.analysis_results(experiment_id=exp_id, limit=num_results)
+        self.assertEqual(len(rresults), num_results)
         for rresult in rresults:
-            print(rresult.result_type)
+            if rresult.result_type == "qiskit_test":
+                print(rresult)
+            i = int(re.match('(\d+)_', rresult.result_type)[1])
+            fit = dict(value=i + 5, variance=2)
+            self.assertEqual(exp_id, rresult.experiment_id)
+            self.assertEqual(f"{i}_qiskit_test", rresult.result_type)
+            self.assertEqual(fit, rresult.result_data)
+            self.assertEqual(
+                self.device_components, [str(comp) for comp in rresult.device_components]
+            )
+            self.assertEqual(["qiskit_test"], rresult.tags)
+            self.assertEqual(ResultQuality.GOOD, rresult.quality)
+            self.assertTrue(rresult.verified)
+            self.assertEqual(chisq, rresult.chisq)
+
+    def test_upload_multiple_analysis_results_nonblocking(self):
+        """Test uploading multiple analysis results."""
+        exp_id = self._create_experiment()
+        num_results = 100
+        results = []
+        for i in range(num_results):
+            fit = dict(value=i+5, variance=2)
+            chisq = 1.3253
+            result = AnalysisResultData(
+                experiment_id=exp_id,
+                result_type= f"{i}_qiskit_test",
+                result_data=fit,
+                device_components=self.device_components,
+                tags=["qiskit_test"],
+                quality=ResultQuality.GOOD,
+                verified=True,
+                chisq=chisq,
+            )
+            results.append(result)
+        handler = self.service.create_analysis_results(results, blocking=False)
+        handler.block_for_save()
+        rresults = self.service.analysis_results(experiment_id=exp_id, limit=num_results)
+        self.assertEqual(len(rresults), num_results)
+        for rresult in rresults:
+            if rresult.result_type == "qiskit_test":
+                print(rresult)
             i = int(re.match('(\d+)_', rresult.result_type)[1])
             fit = dict(value=i + 5, variance=2)
             self.assertEqual(exp_id, rresult.experiment_id)
@@ -1435,7 +1476,7 @@ class TestExperimentServerIntegration(IBMTestCase):
 #     unittest.main()
 def suite():
     suite = unittest.TestSuite()
-    suite.addTest(TestExperimentServerIntegration('test_upload_multiple_analysis_results'))
+    suite.addTest(TestExperimentServerIntegration('test_upload_multiple_analysis_results_nonblocking'))
     return suite
 
 if __name__ == '__main__':
