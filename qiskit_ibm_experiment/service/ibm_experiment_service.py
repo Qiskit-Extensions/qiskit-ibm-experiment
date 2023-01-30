@@ -89,6 +89,7 @@ class IBMExperimentService:
         token: Optional[str] = None,
         url: Optional[str] = None,
         name: Optional[str] = None,
+        hgp: Optional[str] = None,
         proxies: Optional[dict] = None,
         verify: Optional[bool] = True,
         local: Optional[bool] = False,
@@ -105,6 +106,7 @@ class IBMExperimentService:
         """
         super().__init__()
         self.options = self._default_options
+        self.hgp = hgp
         self.set_option(**kwargs)
         if url is None:
             url = DEFAULT_BASE_URL
@@ -283,6 +285,7 @@ class IBMExperimentService:
         self,
         data: ExperimentData,
         provider: Optional[Any] = None,
+        hgp: Optional[str] = None,
         json_encoder: Type[json.JSONEncoder] = json.JSONEncoder,
     ) -> str:
         """Create a new experiment in the database.
@@ -299,6 +302,12 @@ class IBMExperimentService:
             IBMExperimentEntryExists: If the experiment already exits.
             IBMApiError: If the request to the server failed.
         """
+        if self.hgp is not None:
+            try:
+                data.hub, data.group, data.project = self.hgp.split("/")
+            except RuntimeError:
+                pass
+
         if provider is not None:
             # attempt to get hub/group/project data from the provider
             data.hub = provider.credentials.hub
