@@ -29,6 +29,7 @@ class ExperimentRestAdapter:
         "experiments": "/experiments",
         "analysis_results": "/analysis_results",
         "analysis_result": "/analysis_results/{uuid}",
+        "bulk_update_analysis_results": "/analysis_results/bulkupdate",
         "plot": "/experiments/{uuid}/plots/{name}",
         "plot_upload": "/experiments/{uuid}/plots/upload/{name}",
         "files": "/experiments/{uuid}/files",
@@ -213,7 +214,7 @@ class ExperimentRestAdapter:
         """Return an analysis result.
 
         Args:
-            analysis_result_id: UUID of the analysis result.
+            result_id: UUID of the analysis result.
 
         Returns:
             The analysis result.
@@ -296,7 +297,21 @@ class ExperimentRestAdapter:
             url, data=new_data, headers=self._HEADER_JSON_CONTENT
         ).json()
 
-    def analysis_result_delete(self, result_id) -> Dict:
+    def bulk_analysis_result_update(self, new_data: str) -> Dict:
+        """Bulk updates the analysis results.
+
+        Args:
+            new_data: The new data to update in the analysis result
+
+        Returns:
+            JSON response.
+        """
+        url = self.get_url("bulk_update_analysis_results")
+        return self.session.put(
+            url, data=new_data, headers=self._HEADER_JSON_CONTENT
+        ).json()
+
+    def analysis_result_delete(self, result_id: str) -> Dict:
         """Delete the analysis result.
         Args:
             result_id: The id of the analysis result to update
@@ -408,7 +423,7 @@ class ExperimentRestAdapter:
         """Uploads a file to the DB
         Args:
             experiment_id: Experiment ID.
-            file_name: The intended name of the data file
+            file_pathname: The intended name of the data file
             file_data: The contents of the data file
         """
         upload_request_url = self.get_url("files_upload")

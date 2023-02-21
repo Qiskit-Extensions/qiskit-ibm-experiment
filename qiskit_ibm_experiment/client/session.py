@@ -275,7 +275,7 @@ class RetrySession(Session):
         headers.update(kwargs.pop("headers", {}))
 
         try:
-            self._log_request_info(final_url, method, kwargs)
+            self._log_request_info(final_url, method)
             response = super().request(method, final_url, headers=headers, **kwargs)
             response.raise_for_status()
         except RequestException as ex:
@@ -287,8 +287,8 @@ class RetrySession(Session):
                 status_code = ex.response.status_code
                 try:
                     error_json = ex.response.json()["error"]
-                    message += ". {}, Error code: {}.".format(
-                        error_json["message"], error_json["code"]
+                    message += (
+                        f". {error_json['message']}, Error code: {error_json['code']}."
                     )
                     logger.debug(
                         "Response uber-trace-id: %s",
@@ -302,9 +302,7 @@ class RetrySession(Session):
 
         return response
 
-    def _log_request_info(
-        self, url: str, method: str, request_data: Dict[str, Any]
-    ) -> None:
+    def _log_request_info(self, url: str, method: str) -> None:
         """Log the request data, filtering out specific information.
 
         Note:
@@ -320,7 +318,6 @@ class RetrySession(Session):
         Args:
             url: URL for the new request.
             method: Method for the new request (e.g. ``POST``)
-            request_data:Additional arguments for the request.
 
         Raises:
             Exception: If there was an error logging the request information.
@@ -334,8 +331,8 @@ class RetrySession(Session):
                     request_data_to_log = ""
                     if filtered_url in ("/devices/.../properties", "/Jobs"):
                         # Log filtered request data for these endpoints.
-                        request_data_to_log = "Request Data: {}.".format(
-                            filter_data(request_data)
+                        request_data_to_log = (
+                            "Request Data: {filter_data(request_data)}."
                         )
                     logger.debug(
                         "Endpoint: %s. Method: %s. %s",

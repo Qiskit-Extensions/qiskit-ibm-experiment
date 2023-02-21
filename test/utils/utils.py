@@ -26,13 +26,13 @@ import numpy as np
 class ExperimentEncoder(json.JSONEncoder):
     """A test json encoder for experiments"""
 
-    def default(self, obj: Any) -> Any:
-        if isinstance(obj, complex):
-            return {"__type__": "complex", "__value__": [obj.real, obj.imag]}
-        if hasattr(obj, "tolist"):
-            return {"__type__": "array", "__value__": obj.tolist()}
+    def default(self, o: Any) -> Any:
+        if isinstance(o, complex):
+            return {"__type__": "complex", "__value__": [o.real, o.imag]}
+        if hasattr(o, "tolist"):
+            return {"__type__": "array", "__value__": o.tolist()}
 
-        return json.JSONEncoder.default(self, obj)
+        return json.JSONEncoder.default(self, o)
 
 
 class ExperimentDecoder(json.JSONDecoder):
@@ -60,9 +60,7 @@ def setup_test_logging(logger: logging.Logger, filename: str):
         filename: Name of the output file, if log to file is enabled.
     """
     # Set up formatter.
-    log_fmt = "{}.%(funcName)s:%(levelname)s:%(asctime)s:" " %(message)s".format(
-        logger.name
-    )
+    log_fmt = f"{logger.name}.%(funcName)s:%(levelname)s:%(asctime)s:" " %(message)s"
     formatter = logging.Formatter(log_fmt)
 
     if os.getenv("STREAM_LOG", "true"):

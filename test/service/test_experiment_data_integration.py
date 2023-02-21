@@ -54,8 +54,8 @@ class TestExperimentDataIntegration(IBMTestCase):
             cls._setup_service()
             cls._setup_provider()
             cls.circuit = transpile(ReferenceCircuits.bell(), cls.backend)
-        except Exception:
-            raise SkipTest("Not authorized to use experiment service.")
+        except Exception as err:
+            raise SkipTest("Not authorized to use experiment service.") from err
 
     @classmethod
     def _setup_service(cls):

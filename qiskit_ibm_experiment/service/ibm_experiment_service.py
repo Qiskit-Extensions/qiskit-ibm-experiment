@@ -79,7 +79,7 @@ class IBMExperimentService:
     """
 
     _default_preferences = {"auto_save": False}
-    _default_options = {"prompt_for_delete": True}
+    _default_options = {"prompt_for_delete": True, "requests_timeout": 100}
     _DEFAULT_LOCAL_DB_DIR = os.path.join(os.path.expanduser("~"), ".qiskit", "resultdb")
     _AUTHENTICATION_CMD = "/users/loginWithToken"
     _USER_DATA_CMD = "/users/me"
@@ -89,6 +89,7 @@ class IBMExperimentService:
         token: Optional[str] = None,
         url: Optional[str] = None,
         name: Optional[str] = None,
+        hgp: Optional[str] = None,
         proxies: Optional[dict] = None,
         verify: Optional[bool] = True,
         local: Optional[bool] = False,
@@ -104,6 +105,9 @@ class IBMExperimentService:
             local_save: If using a local client, whether to enable save to disk or not.
         """
         super().__init__()
+        self.options = self._default_options
+        self.hgp = hgp
+        self.set_option(**kwargs)
         if url is None:
             url = DEFAULT_BASE_URL
         self._account = self._discover_account(
@@ -135,8 +139,6 @@ class IBMExperimentService:
             self._api_client = LocalExperimentClient(
                 main_dir=self._DEFAULT_LOCAL_DB_DIR, local_save=local_save
             )
-        self.options = self._default_options
-        self.set_option(**kwargs)
 
     @property
     def local(self):
@@ -155,18 +157,21 @@ class IBMExperimentService:
         if api_token is None:
             try:
                 api_token = self._account.token
-            except RuntimeError:
-                raise IBMApiError("No API token; cannot connect to service")
+            except RuntimeError as err:
+                raise IBMApiError("No API token; cannot connect to service") from err
         headers = {"accept": "application/json", "Content-Type": "application/json"}
         data = {"apiToken": api_token}
         url = self._account.url + self._AUTHENTICATION_CMD
-        response = requests.post(url=url, json=data, headers=headers)
+        response = requests.post(
+            url=url,
+            json=data,
+            headers=headers,
+            timeout=self.options["requests_timeout"],
+        )
         access_token = response.json().get("id", None)
         if access_token is None:
             raise IBMApiError(
-                "Did not receive access token (request returned {})".format(
-                    response.json()
-                )
+                f"Did not receive access token (request returned {response.json()})"
             )
         self._access_token = access_token
         return access_token
@@ -180,15 +185,15 @@ class IBMExperimentService:
         }
         url = self._account.url + self._USER_DATA_CMD
         try:
-            response = requests.get(url=url, headers=headers)
+            response = requests.get(
+                url=url, headers=headers, timeout=self.options["requests_timeout"]
+            )
             db_url = response.json()["urls"]["services"]["resultsDB"]
             return db_url
-        except KeyError:
+        except KeyError as err:
             raise IBMApiError(
-                "Unable to retrieve the API url for the database (request returned {})".format(
-                    response.json()
-                )
-            )
+                f"Unable to retrieve the API url for the database (request returned {response.json()})"
+            ) from err
 
     @classmethod
     def save_account(
@@ -280,35 +285,15 @@ class IBMExperimentService:
         self,
         data: ExperimentData,
         provider: Optional[Any] = None,
+        hgp: Optional[str] = None,
         json_encoder: Type[json.JSONEncoder] = json.JSONEncoder,
     ) -> str:
         """Create a new experiment in the database.
 
         Args:
-            experiment_type: Experiment type.
-            backend_name: Name of the backend the experiment ran on.
+            data: The dataclass containing the experiment's data
             provider: The provider used when running the experiment
-            metadata: Experiment metadata.
-            experiment_id: Experiment ID. It must be in the ``uuid4`` format.
-                One will be generated if not supplied.
-            parent_id: The experiment ID of the parent experiment.
-                The parent experiment must exist, must be on the same backend as the child,
-                and an experiment cannot be its own parent.
-            job_ids: IDs of experiment jobs.
-            tags: Tags to be associated with the experiment.
-            notes: Freeform notes about the experiment.
-            share_level: The level at which the experiment is shared. This determines who can
-                view the experiment (but not update it). This defaults to "private"
-                for new experiments. Possible values include:
-
-                - private: The experiment is only visible to its owner (default)
-                - project: The experiment is shared within its project
-                - group: The experiment is shared within its group
-                - hub: The experiment is shared within its hub
-                - public: The experiment is shared publicly regardless of provider
-            start_datetime: Timestamp when the experiment started, in local time zone.
             json_encoder: Custom JSON encoder to use to encode the experiment.
-            kwargs: Additional experiment attributes that are not supported and will be ignored.
 
         Returns:
             Experiment ID.
@@ -317,7 +302,11 @@ class IBMExperimentService:
             IBMExperimentEntryExists: If the experiment already exits.
             IBMApiError: If the request to the server failed.
         """
-        # pylint: disable=arguments-differ
+        if self.hgp is not None:
+            try:
+                data.hub, data.group, data.project = self.hgp.split("/")
+            except RuntimeError:
+                pass
 
         if provider is not None:
             # attempt to get hub/group/project data from the provider
@@ -351,24 +340,8 @@ class IBMExperimentService:
         """Update an existing experiment.
 
         Args:
-            experiment_id: Experiment ID.
-            metadata: Experiment metadata.
-            job_ids: IDs of experiment jobs.
-            notes: Freeform notes about the experiment.
-            tags: Tags to be associated with the experiment.
-            share_level: The level at which the experiment is shared. This determines who can
-                view the experiment (but not update it). This defaults to "private"
-                for new experiments. Possible values include:
-
-                - private: The experiment is only visible to its owner (default)
-                - project: The experiment is shared within its project
-                - group: The experiment is shared within its group
-                - hub: The experiment is shared within its hub
-                - public: The experiment is shared publicly regardless of provider
-
-            end_datetime: Timestamp for when the experiment ended, in local time.
+            data: The dataclass containing the experiment's data
             json_encoder: Custom JSON encoder to use to encode the experiment.
-            kwargs: Additional experiment attributes that are not supported and will be ignored.
 
         Raises:
             IBMExperimentEntryNotFound: If the experiment does not exist.
@@ -417,15 +390,7 @@ class IBMExperimentService:
         """Convert experiment data to API request data.
 
         Args:
-            metadata: Experiment metadata.
-            experiment_id: Experiment ID.
-            parent_id: Parent experiment ID
-            job_ids: IDs of experiment jobs.
-            tags: Tags to be associated with the experiment.
-            notes: Freeform notes about the experiment.
-            share_level: The level at which the experiment is shared.
-            start_dt: Experiment start time.
-            end_dt: Experiment end time.
+            data: The dataclass containing the experiment's data
 
         Returns:
             API request data.
@@ -596,6 +561,7 @@ class IBMExperimentService:
             IBMApiError: If the request to the server failed.
         """
         # pylint: disable=arguments-differ
+        # pylint: disable=missing-param-doc
         if filters:
             logger.info(
                 "Keywords %s are not supported by IBM Quantum experiment service "
@@ -619,10 +585,10 @@ class IBMExperimentService:
 
         start_time_filters = []
         if start_datetime_after is not None:
-            st_filter = "ge:{}".format(local_to_utc_str(start_datetime_after))
+            st_filter = f"ge:{local_to_utc_str(start_datetime_after)}"
             start_time_filters.append(st_filter)
         if start_datetime_before is not None:
-            st_filter = "le:{}".format(local_to_utc_str(start_datetime_before))
+            st_filter = f"le:{local_to_utc_str(start_datetime_before)}"
             start_time_filters.append(st_filter)
 
         if exclude_public and public_only:
@@ -649,7 +615,7 @@ class IBMExperimentService:
         experiments = []
         marker = None
         while limit is None or limit > 0:
-            with map_api_error(f"Request failed."):
+            with map_api_error("Request failed."):
                 response = self._api_client.experiments(
                     limit=limit,
                     marker=marker,
@@ -800,7 +766,7 @@ class IBMExperimentService:
 
         Args:
             data: The data to save. Note that the following fields will be ignored:
-            'uuid', 'experiment_uuid', 'device_components', 'type'
+            'experiment_uuid', 'device_components', 'type'
             json_encoder: Custom JSON encoder to use to encode the analysis result.
 
         Raises:
@@ -834,6 +800,35 @@ class IBMExperimentService:
             create,
             max_attempts,
         )
+
+    def bulk_update_analysis_result(
+        self,
+        data: List[AnalysisResultData],
+        json_encoder: Type[json.JSONEncoder] = json.JSONEncoder,
+    ) -> None:
+        """Bulk updates existing analysis results.
+
+        Args:
+            data: An array of the analysis data to save. Note that the following fields will be ignored:
+            ''experiment_uuid', 'device_components', 'type'
+            json_encoder: Custom JSON encoder to use to encode the analysis result.
+
+        Raises:
+            IBMApiError: If the request to the server failed.
+        """
+
+        unused_fields = ["experiment_uuid", "device_components", "type"]
+        request_list = {"analysis_results": []}
+        for analysis_result in data:
+            request = self._analysis_result_to_api(analysis_result)
+            for field_name in unused_fields:
+                if field_name in request:
+                    del request[field_name]
+            request_list["analysis_results"].append(request)
+        with map_api_error("Bulk analysis result update failed."):
+            self._api_client.bulk_analysis_result_update(
+                json.dumps(request_list, cls=json_encoder)
+            )
 
     def _confirm_delete(self, msg: str) -> bool:
         """Confirms a delete command; if the options indicate a prompt should be
@@ -998,6 +993,8 @@ class IBMExperimentService:
             IBMApiError: If the request to the server failed.
         """
         # pylint: disable=arguments-differ
+        # pylint: disable=missing-param-doc
+
         if filters:
             logger.info(
                 "Keywords %s are not supported by IBM Quantum experiment service "
@@ -1014,10 +1011,10 @@ class IBMExperimentService:
 
         created_at_filters = []
         if creation_datetime_after:
-            ca_filter = "ge:{}".format(local_to_utc_str(creation_datetime_after))
+            ca_filter = f"ge:{local_to_utc_str(creation_datetime_after)}"
             created_at_filters.append(ca_filter)
         if creation_datetime_before:
-            ca_filter = "le:{}".format(local_to_utc_str(creation_datetime_before))
+            ca_filter = f"le:{local_to_utc_str(creation_datetime_before)}"
             created_at_filters.append(ca_filter)
 
         converted = self._filtering_to_api(
@@ -1127,8 +1124,8 @@ class IBMExperimentService:
                 tags_filter = "contains:" + ",".join(tags)
             else:
                 raise ValueError(
-                    "{} is not a valid `tags_operator`. Valid values are "
-                    '"AND" and "OR".'.format(tags_operator)
+                    f"{tags_operator} is not a valid `tags_operator`. Valid values are "
+                    '"AND" and "OR".'
                 )
 
         sort_list = []
@@ -1278,7 +1275,7 @@ class IBMExperimentService:
             if isinstance(figure, str):
                 figure_name = figure
             else:
-                figure_name = "figure_{}.svg".format(datetime.now().isoformat())
+                figure_name = f"figure_{datetime.now().isoformat()}.svg"
 
         # currently the resultdb enforces files to end with .svg
         if not figure_name.endswith(".svg"):
@@ -1321,7 +1318,7 @@ class IBMExperimentService:
             if isinstance(figure, str):
                 figure_name = figure
             else:
-                figure_name = "figure_{}.svg".format(datetime.now().isoformat())
+                figure_name = f"figure_{datetime.now().isoformat()}.svg"
 
         # currently the resultdb enforces files to end with .svg
         if not figure_name.endswith(".svg"):
@@ -1517,7 +1514,7 @@ class IBMExperimentService:
         # currently the resultdb enforces files to end with .json or .yaml
         if not file_name.endswith(".json"):
             file_name += ".json"
-        if isinstance(file_data, Dict):
+        if isinstance(file_data, dict):
             file_data = json.dumps(file_data)
         self._api_client.experiment_file_upload(experiment_id, file_name, file_data)
 
@@ -1537,7 +1534,7 @@ class IBMExperimentService:
         file_data = self._api_client.experiment_file_download(experiment_id, file_name)
         return file_data
 
-    def experiment_has_file(self, exp_id: str, filename: str) -> bool:
+    def experiment_has_file(self, experiment_id: str, file_name: str) -> bool:
         """Checks whether a specific expriment has a specific file
         Args:
             experiment_id: The experiment the data file belongs to
@@ -1545,9 +1542,9 @@ class IBMExperimentService:
         Returns:
             True if the file exists for the specified experiment
         """
-        files = self.files(exp_id)["files"]
+        files = self.files(experiment_id)["files"]
         for file_data in files:
-            if file_data["Key"] == filename:
+            if file_data["Key"] == file_name:
                 return True
         return False
 
@@ -1571,8 +1568,6 @@ class IBMExperimentService:
 
         Args:
             name: Name of the saved account to delete.
-            auth: Authentication type of the default account to delete.
-                Ignored if account name is provided.
 
         Returns:
             True if the account was deleted.
