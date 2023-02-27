@@ -1,0 +1,4 @@
+---
+features:
+  - |
+    Migration guide from `qiskit-ibmq-provider`.

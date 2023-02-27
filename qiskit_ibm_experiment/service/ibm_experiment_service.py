@@ -285,7 +285,6 @@ class IBMExperimentService:
         self,
         data: ExperimentData,
         provider: Optional[Any] = None,
-        hgp: Optional[str] = None,
         json_encoder: Type[json.JSONEncoder] = json.JSONEncoder,
     ) -> str:
         """Create a new experiment in the database.
