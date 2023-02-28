@@ -4,4 +4,5 @@ matplotlib>=2.1
 reno>=2.11.0
 scipy>=1.0
 black~=22.0
-qiskit-ibmq-provider
+qiskit-ibm-provider
+qiskit-experiments
