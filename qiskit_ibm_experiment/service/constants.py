@@ -15,7 +15,7 @@
 import enum
 import os
 
-DEFAULT_BASE_URL = "https://api.quantum-computing.ibm.com"
+DEFAULT_BASE_URL = "https://auth.quantum-computing.ibm.com/api"
 DEFAULT_ACCOUNT_CONFIG_JSON_FILE = os.path.join(
     os.path.expanduser("~"), ".qiskit", "qiskit-ibm.json"
 )

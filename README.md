@@ -21,7 +21,7 @@ pip install qiskit-ibm-experiment
 3. Copy (and/or optionally regenerate) your API token from your
    [IBM Quantum account page].
 
-4. Take your token from step 2, here called `MY_API_TOKEN`, and save it by calling `IBMProvider.save_account()`:
+4. Take your token from step 2, here called `MY_API_TOKEN`, and save it by calling `IBMExperimentService.save_account()`:
 
    ```python
    from qiskit_ibm_experiment import IBMExperimentService
