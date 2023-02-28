@@ -310,12 +310,12 @@ class IBMExperimentService:
         if provider is not None:
             # attempt to get hub/group/project data from the provider
             # old IBMQ style
-            if hasattr(provider, 'credentials'):
+            if hasattr(provider, "credentials"):
                 data.hub = provider.credentials.hub
                 data.group = provider.credentials.group
                 data.project = provider.credentials.project
             # new IBMProvider style
-            if hasattr(provider, '_hgps'):
+            if hasattr(provider, "_hgps"):
                 data.hub, data.group, data.project = list(provider._hgps)[0].split("/")
 
         api_data = self._experiment_data_to_api(data)

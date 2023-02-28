@@ -31,6 +31,7 @@ from qiskit_ibm_experiment import IBMExperimentService
 from qiskit_ibm_experiment import ExperimentData, AnalysisResultData
 from qiskit_ibm_experiment.exceptions import IBMApiError
 
+
 @skipIf(
     not os.environ.get("QISKIT_IBM_USE_STAGING_CREDENTIALS", ""), "Only runs on staging"
 )
@@ -64,7 +65,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         cls.provider = IBMProvider(
             token=os.getenv("QISKIT_IBM_STAGING_API_TOKEN"),
             url=os.getenv("QISKIT_IBM_STAGING_API_URL"),
-            instance=os.getenv("QISKIT_IBM_STAGING_HGP")
+            instance=os.getenv("QISKIT_IBM_STAGING_HGP"),
         )
         cls.backend = cls.provider.get_backend(os.getenv("QISKIT_IBM_STAGING_BACKEND"))
         try:
@@ -570,9 +571,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         hub, group, project = list(self.provider._hgps)[0].split("/")
         self.assertEqual(hub, new_exp.hub)  # pylint: disable=no-member
         self.assertEqual(group, new_exp.group)  # pylint: disable=no-member
-        self.assertEqual(
-            project, new_exp.project
-        )  # pylint: disable=no-member
+        self.assertEqual(project, new_exp.project)  # pylint: disable=no-member
         self.assertEqual("qiskit_test", new_exp.experiment_type)
         self.assertEqual(self.backend.name, new_exp.backend)
         self.assertEqual({"foo": "bar"}, new_exp.metadata)
