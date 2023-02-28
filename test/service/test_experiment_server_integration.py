@@ -24,11 +24,12 @@ from test.service.ibm_test_case import IBMTestCase
 from test.utils.utils import ExperimentEncoder, ExperimentDecoder
 import numpy as np
 from dateutil import tz
-from qiskit.providers.ibmq import IBMQFactory, least_busy
+from qiskit_ibm_provider import IBMProvider
 from qiskit_ibm_experiment.service import ResultQuality, ExperimentShareLevel
 from qiskit_ibm_experiment import IBMExperimentEntryNotFound
 from qiskit_ibm_experiment import IBMExperimentService
 from qiskit_ibm_experiment import ExperimentData, AnalysisResultData
+from qiskit_ibm_experiment.exceptions import IBMApiError
 
 
 @skipIf(
@@ -43,9 +44,8 @@ class TestExperimentServerIntegration(IBMTestCase):
         super().setUpClass()
         cls.default_exp_type = "qiskit_test"
         try:
-            cls._setup_provider()
             cls._setup_service()
-            cls.device_components = cls.service.device_components(cls.backend.name())
+            cls._setup_provider()
         except Exception as err:
             cls.log.info("Error while setting the service/provider: %s", err)
             raise SkipTest("Not authorized to use experiment service.") from err
@@ -56,16 +56,22 @@ class TestExperimentServerIntegration(IBMTestCase):
         cls.service = IBMExperimentService(
             token=os.getenv("QISKIT_IBM_STAGING_API_TOKEN"),
             url=os.getenv("QISKIT_IBM_STAGING_API_URL"),
+            hgp=os.getenv("QISKIT_IBM_STAGING_HGP"),
         )
 
     @classmethod
     def _setup_provider(cls):
         """Get the provider for the class."""
-        cls.provider = IBMQFactory().enable_account(
+        cls.provider = IBMProvider(
             token=os.getenv("QISKIT_IBM_STAGING_API_TOKEN"),
             url=os.getenv("QISKIT_IBM_STAGING_API_URL"),
+            instance=os.getenv("QISKIT_IBM_STAGING_HGP"),
         )
-        cls.backend = least_busy(cls.provider.backends())
+        cls.backend = cls.provider.get_backend(os.getenv("QISKIT_IBM_STAGING_BACKEND"))
+        try:
+            cls.device_components = cls.service.device_components(cls.backend.name)
+        except IBMApiError:
+            cls.device_components = None
 
     @classmethod
     def get_experiments(cls, **kwargs):
@@ -115,16 +121,16 @@ class TestExperimentServerIntegration(IBMTestCase):
     def test_experiments_with_backend(self):
         """Test retrieving all experiments for a specific backend."""
         exp_id = self._create_experiment()
-        backend_experiments = self.get_experiments(backend_name=self.backend.name())
+        backend_experiments = self.get_experiments(backend_name=self.backend.name)
 
         found = False
         for exp in backend_experiments:
-            self.assertEqual(self.backend.name(), exp.backend)
+            self.assertEqual(self.backend.name, exp.backend)
             if exp.experiment_id == exp_id:
                 found = True
         self.assertTrue(
             found,
-            f"Experiment {exp_id} not found when filter by backend name {self.backend.name()}.",
+            f"Experiment {exp_id} not found when filter by backend name {self.backend.name}.",
         )
 
     def test_experiments_with_type(self):
@@ -263,12 +269,11 @@ class TestExperimentServerIntegration(IBMTestCase):
     def test_experiments_with_hgp(self):
         """Test retrieving all experiments for a specific h/g/p."""
         exp_id = self._create_experiment()
-        credentials = self.provider.credentials
-        hgp = [credentials.hub, credentials.group, credentials.project]
+        hub, group, project = list(self.provider._hgps)[0].split("/")
         sub_tests = [
-            {"hub": hgp[0]},
-            {"hub": hgp[0], "group": hgp[1]},
-            {"hub": hgp[0], "group": hgp[1], "project": hgp[2]},
+            {"hub": hub},
+            {"hub": hub, "group": group},
+            {"hub": hub, "group": group, "project": project},
         ]
 
         for hgp_kwargs in sub_tests:
@@ -548,7 +553,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         new_exp_id = self.service.create_experiment(
             ExperimentData(
                 experiment_type="qiskit_test",
-                backend=self.backend.name(),
+                backend=self.backend.name,
                 metadata={"foo": "bar"},
                 experiment_id=exp_id,
                 job_ids=["job1", "job2"],
@@ -563,14 +568,12 @@ class TestExperimentServerIntegration(IBMTestCase):
         self.assertEqual(exp_id, new_exp_id)
         new_exp = self.service.experiment(new_exp_id)
 
-        credentials = self.provider.credentials
-        self.assertEqual(credentials.hub, new_exp.hub)  # pylint: disable=no-member
-        self.assertEqual(credentials.group, new_exp.group)  # pylint: disable=no-member
-        self.assertEqual(
-            credentials.project, new_exp.project
-        )  # pylint: disable=no-member
+        hub, group, project = list(self.provider._hgps)[0].split("/")
+        self.assertEqual(hub, new_exp.hub)  # pylint: disable=no-member
+        self.assertEqual(group, new_exp.group)  # pylint: disable=no-member
+        self.assertEqual(project, new_exp.project)  # pylint: disable=no-member
         self.assertEqual("qiskit_test", new_exp.experiment_type)
-        self.assertEqual(self.backend.name(), new_exp.backend)
+        self.assertEqual(self.backend.name, new_exp.backend)
         self.assertEqual({"foo": "bar"}, new_exp.metadata)
         self.assertEqual(["job1", "job2"], new_exp.job_ids)
         self.assertEqual(["qiskit_test"], new_exp.tags)
@@ -617,7 +620,7 @@ class TestExperimentServerIntegration(IBMTestCase):
     def test_create_or_update_experiment(self):
         """Test updating an experiment."""
         new_exp_id = self.service.create_or_update_experiment(
-            ExperimentData(experiment_type="qiskit_test", backend=self.backend.name()),
+            ExperimentData(experiment_type="qiskit_test", backend=self.backend.name),
             provider=self.provider,
         )
 
@@ -992,7 +995,7 @@ class TestExperimentServerIntegration(IBMTestCase):
     def test_analysis_results_backend_name(self):
         """Test filtering analysis results with backend name."""
         result_id = self._create_analysis_result()
-        results = self.service.analysis_results(backend_name=self.backend.name())
+        results = self.service.analysis_results(backend_name=self.backend.name)
         self.assertIn(result_id, [res.result_id for res in results])
 
     def test_analysis_results_verified(self):
@@ -1059,7 +1062,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         """Test retrieving analysis results with sort_by."""
         tags = [str(uuid.uuid4())]
         backend, components = self._find_backend_device_components(3)
-        backend_name = backend or self.backend.name()
+        backend_name = backend or self.backend.name
         device_components = components or self.device_components
         if len(device_components) < 3:
             device_components = [None] * 3  # Skip testing device components.
@@ -1179,7 +1182,7 @@ class TestExperimentServerIntegration(IBMTestCase):
     def test_retrieve_backends(self):
         """Test retrieving all backends."""
         backends = self.service.backends()
-        self.assertIn(self.backend.name(), [b["name"] for b in backends])
+        self.assertIn(self.backend.name, [b["name"] for b in backends])
 
     def test_create_figure(self):
         """Test creating a figure."""
@@ -1372,14 +1375,13 @@ class TestExperimentServerIntegration(IBMTestCase):
     ) -> str:
         """Create a new experiment."""
         experiment_type = experiment_type or "qiskit_test"
-        backend_name = backend_name or self.backend.name()
+        backend_name = backend_name or self.backend.name
         exp_id = self.service.create_experiment(
             ExperimentData(
                 experiment_type=experiment_type,
                 backend=backend_name,
                 **kwargs,
             ),
-            provider=self.provider,
             json_encoder=json_encoder,
         )
         self.experiments_to_delete.append(exp_id)
@@ -1410,7 +1412,7 @@ class TestExperimentServerIntegration(IBMTestCase):
 
     def _find_backend_device_components(self, min_components):
         """Find a backend with the minimum number of device components."""
-        backend_name = self.backend.name()
+        backend_name = self.backend.name
         device_components = self.device_components
         if len(device_components) < min_components:
             all_components = self.service.device_components()
