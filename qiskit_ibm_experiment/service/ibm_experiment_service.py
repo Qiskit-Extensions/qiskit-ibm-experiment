@@ -1291,13 +1291,13 @@ class IBMExperimentService:
 
         data_field_map = {
             "name": "result_type",
-            "device_components": "device_components",
+            "components": "device_components",
             "_result_id": "result_id",
             "_experiment_id": "experiment_id",
-            "_verified": "verified",
             "_tags": "tags",
             "chisq": "chisq",
-            "creation_datetime": "creation_datetime",
+            "created_time": "creation_datetime",
+            "backend": "backend_name",
         }
         analysis_result_data = {}
         for src_key, dest_key in data_field_map.items():
@@ -1309,6 +1309,7 @@ class IBMExperimentService:
             "value": "_value",
             "_source": "_source",
             "_extra": "_extra",
+            "experiment": "_experiment",
         }
         result_data = {}
         for src_key, dest_key in result_data_field_map.items():
@@ -1318,12 +1319,12 @@ class IBMExperimentService:
 
         # values which require specific conversions
         analysis_result_data["quality"] = RESULT_QUALITY_FROM_DATAFRAME[
-            raw_data["quality"]
+            raw_data.get("quality", "unknown")
         ]
         return AnalysisResultData(**analysis_result_data)
 
+    @staticmethod
     def _analysis_result_to_dataframe(
-        self,
         raw_data: AnalysisResultData,
     ) -> Dict:
         """Map analysis result to a dataframe dictionary.
@@ -1339,17 +1340,18 @@ class IBMExperimentService:
         raw_data = copy.deepcopy(raw_data)
         analysis_result_data = {
             "name": raw_data.result_type,
-            "device_components": raw_data.device_components,
+            "components": raw_data.device_components,
             "_result_id": raw_data.result_id,
             "_experiment_id": raw_data.experiment_id,
-            "_verified": raw_data.verified,
             "_tags": raw_data.tags,
             "chisq": raw_data.chisq,
-            "creation_datetime": raw_data.creation_datetime,
+            "created_time": raw_data.creation_datetime,
             "value": raw_data.result_data.get("_value", None),
             "_source": raw_data.result_data.get("_source", None),
             "_extra": raw_data.result_data.get("_extra", None),
+            "experiment": raw_data.result_data.get("_experiment", None),
             "quality": RESULT_QUALITY_TO_DATAFRAME[raw_data.quality],
+            "backend": raw_data.backend_name,
         }
         return analysis_result_data
 
@@ -1715,14 +1717,16 @@ class IBMExperimentService:
             results.append(IBMExperimentService._dataframe_to_analysis_result(result))
         return results
 
+    @staticmethod
     def analysis_result_list_to_dataframe(
-        self, result_list: List[AnalysisResultData]
+        result_list: List[AnalysisResultData],
     ) -> DataFrame:
         """Converts a list of analysis results to a pandas dataframe"""
         if len(result_list) == 0:
             return pd.DataFrame()
         result_dicts = [
-            self._analysis_result_to_dataframe(result) for result in result_list
+            IBMExperimentService._analysis_result_to_dataframe(result)
+            for result in result_list
         ]
         columns = result_dicts[0].keys()
         pandas_dict = {key: [result[key] for result in result_dicts] for key in columns}

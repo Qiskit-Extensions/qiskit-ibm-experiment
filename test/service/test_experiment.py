@@ -13,9 +13,11 @@
 """Experiment tests."""
 
 import unittest
+from datetime import timedelta, datetime
 from test.service.ibm_test_case import IBMTestCase
 import pandas as pd
 from qiskit_ibm_experiment import IBMExperimentService, AnalysisResultData
+from qiskit_ibm_experiment.service.constants import RESULT_QUALITY_FROM_DATAFRAME
 
 
 class TestExperiment(IBMTestCase):
@@ -78,13 +80,34 @@ class TestExperiment(IBMTestCase):
             "4347d04d97364c5c80bf10b064064914",
             "ba2a0a92d4224ea1802c48d1785a6ce8",
         ]
-        result_types = ["type_A", "type_B"]
 
+        tags = [["qiskit_test", "foo"], []]
+        result_types = ["type_A", "type_B"]
+        result_quality = ["good", "bad"]
+        backends = ["backend1", "backend2"]
+        device_components = [["Q0", "Q1"], ["Q2"]]
+        experiments = ["T1", "T2"]
+        chisqs = [0.3, 0.5]
+        sources = ["qiskit", "qiskit"]
+        extras = [None, None]
+        created_times = [
+            datetime.now() - timedelta(days=1),
+            datetime.now() - timedelta(days=2),
+        ]
         d = {
-            "result_id": result_ids,
-            "experiment_id": experiment_ids,
-            "result_data": analysis_result_values,
-            "result_type": result_types,
+            "_result_id": result_ids,
+            "_experiment_id": experiment_ids,
+            "_tags": tags,
+            "value": analysis_result_values,
+            "name": result_types,
+            "quality": result_quality,
+            "components": device_components,
+            "backend": backends,
+            "experiment": experiments,
+            "created_time": created_times,
+            "chisq": chisqs,
+            "_source": sources,
+            "_extra": extras,
         }
         df = pd.DataFrame(data=d)
         results = IBMExperimentService.dataframe_to_analysis_result_list(df)
@@ -92,13 +115,27 @@ class TestExperiment(IBMTestCase):
             AnalysisResultData(
                 result_id=result_ids[i],
                 experiment_id=experiment_ids[i],
-                result_data=analysis_result_values[i],
+                result_data={
+                    "_value": analysis_result_values[i],
+                    "_experiment": experiments[i],
+                    "_source": sources[i],
+                    "_extra": extras[i],
+                },
                 result_type=result_types[i],
+                quality=RESULT_QUALITY_FROM_DATAFRAME[result_quality[i]],
+                backend_name=backends[i],
+                creation_datetime=created_times[i],
+                device_components=device_components[i],
+                tags=tags[i],
+                chisq=chisqs[i],
             )
             for i in range(num_values)
         ]
         for (result, expected_result) in zip(results, expected_results):
             self.assertEqual(result, expected_result)
+
+        result_df = IBMExperimentService.analysis_result_list_to_dataframe(results)
+        self.assertEqual(result_df.to_dict(), df.to_dict())
 
 
 if __name__ == "__main__":
