@@ -67,27 +67,24 @@ class TestExperiment(IBMTestCase):
         num_values = 2
         analysis_result_values = [
             {"str": "foo", "float": 3.14},
-            {"int": 3, "float": 2.78}
+            {"int": 3, "float": 2.78},
         ]
         result_ids = [
-            '9347d04d97464c5c80bf10b064064914',
-            'ca2a0a92d4224ea1802c48d1785a6ce7'
+            "9347d04d97464c5c80bf10b064064914",
+            "ca2a0a92d4224ea1802c48d1785a6ce7",
         ]
 
         experiment_ids = [
-            '4347d04d97364c5c80bf10b064064914',
-            'ba2a0a92d4224ea1802c48d1785a6ce8'
+            "4347d04d97364c5c80bf10b064064914",
+            "ba2a0a92d4224ea1802c48d1785a6ce8",
         ]
-        result_types = [
-            "type_A",
-            "type_B"
-        ]
+        result_types = ["type_A", "type_B"]
 
         d = {
-            'result_id': result_ids,
-            'experiment_id': experiment_ids,
-            'result_data': analysis_result_values,
-            'result_type': result_types,
+            "result_id": result_ids,
+            "experiment_id": experiment_ids,
+            "result_data": analysis_result_values,
+            "result_type": result_types,
         }
         df = pd.DataFrame(data=d)
         results = IBMExperimentService.dataframe_to_analysis_result_list(df)
@@ -97,12 +94,11 @@ class TestExperiment(IBMTestCase):
                 experiment_id=experiment_ids[i],
                 result_data=analysis_result_values[i],
                 result_type=result_types[i],
-            ) for i in range(num_values)
+            )
+            for i in range(num_values)
         ]
         for (result, expected_result) in zip(results, expected_results):
             self.assertEqual(result, expected_result)
-
-
 
 
 if __name__ == "__main__":

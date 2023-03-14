@@ -16,12 +16,11 @@ import logging
 import json
 import copy
 import os
-from concurrent import futures
-import numpy as np
 from typing import Optional, List, Dict, Union, Tuple, Any, Type
 from datetime import datetime
 from collections import defaultdict
 import requests
+import numpy as np
 from pandas import DataFrame
 import pandas as pd
 from .constants import (
@@ -862,9 +861,9 @@ class IBMExperimentService:
         If you choose `blocking==True`, the method will run until all the save threads terminated.
         To improve running time, multithreading is used.
 
-        If `blocking==False` it is up to the user to verify all the threads finished; `block_for_save()` can
-        be called to ensure all threads finish. `save_status()` returns the information
-        on the status of the threads.
+        If `blocking==False` it is up to the user to verify all the threads finished;
+        `block_for_save()` can be called to ensure all threads finish.
+        `save_status()` returns the information on the status of the threads.
 
         Args:
             data: The data to save, either as a list of `AnalysisResultData` or as a pandas `DataFrame`.
@@ -878,7 +877,14 @@ class IBMExperimentService:
         """
         if isinstance(data, DataFrame):
             data = self.dataframe_to_analysis_result_list(data)
-        handler = ThreadSaveHandler(data, self.create_or_update_analysis_result, max_workers, json_encoder=json_encoder, create=True, max_attempts=3)
+        handler = ThreadSaveHandler(
+            data,
+            self.create_or_update_analysis_result,
+            max_workers,
+            json_encoder=json_encoder,
+            create=True,
+            max_attempts=3,
+        )
         if blocking:
             handler.block_for_save()
             return handler.save_status()
@@ -1267,8 +1273,8 @@ class IBMExperimentService:
         }
         return out_dict
 
+    @staticmethod
     def _dataframe_to_analysis_result(
-        self,
         raw_data: Dict,
     ) -> AnalysisResultData:
         """Map dataframe dictionary to an analysis result.
@@ -1284,14 +1290,14 @@ class IBMExperimentService:
         raw_data = copy.deepcopy(raw_data)
 
         data_field_map = {
-            'name': 'result_type',
-            'device_components': 'device_components',
-            '_result_id': 'result_id',
-            '_experiment_id': 'experiment_id',
-            '_verified': 'verified',
-            '_tags': 'tags',
-            'chisq': 'chisq',
-            'creation_datetime': 'creation_datetime',
+            "name": "result_type",
+            "device_components": "device_components",
+            "_result_id": "result_id",
+            "_experiment_id": "experiment_id",
+            "_verified": "verified",
+            "_tags": "tags",
+            "chisq": "chisq",
+            "creation_datetime": "creation_datetime",
         }
         analysis_result_data = {}
         for src_key, dest_key in data_field_map.items():
@@ -1300,18 +1306,20 @@ class IBMExperimentService:
 
         # extra data is stored in the 'result_data' field
         result_data_field_map = {
-            'value': '_value',
-            '_source': '_source',
-            '_extra': '_extra',
+            "value": "_value",
+            "_source": "_source",
+            "_extra": "_extra",
         }
         result_data = {}
         for src_key, dest_key in result_data_field_map.items():
             if src_key in raw_data:
                 result_data[dest_key] = raw_data[src_key]
-        analysis_result_data['result_data'] = result_data
+        analysis_result_data["result_data"] = result_data
 
         # values which require specific conversions
-        analysis_result_data['quality'] = RESULT_QUALITY_FROM_DATAFRAME[raw_data['quality']]
+        analysis_result_data["quality"] = RESULT_QUALITY_FROM_DATAFRAME[
+            raw_data["quality"]
+        ]
         return AnalysisResultData(**analysis_result_data)
 
     def _analysis_result_to_dataframe(
@@ -1330,18 +1338,18 @@ class IBMExperimentService:
         # raw data might contain iterated data structures unknown to us, so deep copy to prevent problems
         raw_data = copy.deepcopy(raw_data)
         analysis_result_data = {
-            'name': raw_data.result_type,
-            'device_components': raw_data.device_components,
-            '_result_id': raw_data.result_id,
-            '_experiment_id': raw_data.experiment_id,
-            '_verified': raw_data.verified,
-            '_tags': raw_data.tags,
-            'chisq': raw_data.chisq,
-            'creation_datetime': raw_data.creation_datetime,
-            'value': raw_data.result_data.get('_value', None),
-            '_source': raw_data.result_data.get('_source', None),
-            '_extra': raw_data.result_data.get('_extra', None),
-            'quality': RESULT_QUALITY_TO_DATAFRAME[raw_data.quality],
+            "name": raw_data.result_type,
+            "device_components": raw_data.device_components,
+            "_result_id": raw_data.result_id,
+            "_experiment_id": raw_data.experiment_id,
+            "_verified": raw_data.verified,
+            "_tags": raw_data.tags,
+            "chisq": raw_data.chisq,
+            "creation_datetime": raw_data.creation_datetime,
+            "value": raw_data.result_data.get("_value", None),
+            "_source": raw_data.result_data.get("_source", None),
+            "_extra": raw_data.result_data.get("_extra", None),
+            "quality": RESULT_QUALITY_TO_DATAFRAME[raw_data.quality],
         }
         return analysis_result_data
 
@@ -1698,22 +1706,25 @@ class IBMExperimentService:
 
         return AccountManager.delete(name=name)
 
-    def dataframe_to_analysis_result_list(self, df: DataFrame) -> List[AnalysisResultData]:
+    @staticmethod
+    def dataframe_to_analysis_result_list(df: DataFrame) -> List[AnalysisResultData]:
         """Converts an analysis result dataframe to a list"""
         results = []
         data_dict = df.replace({np.nan: None}).to_dict("records")
         for result in data_dict:
-            results.append(self._dataframe_to_analysis_result(result))
+            results.append(IBMExperimentService._dataframe_to_analysis_result(result))
         return results
 
-    def analysis_result_list_to_dataframe(self, result_list: List[AnalysisResultData] ) -> DataFrame:
+    def analysis_result_list_to_dataframe(
+        self, result_list: List[AnalysisResultData]
+    ) -> DataFrame:
+        """Converts a list of analysis results to a pandas dataframe"""
         if len(result_list) == 0:
             return pd.DataFrame()
-        result_dicts = [self._analysis_result_to_dataframe(result) for result in result_list]
+        result_dicts = [
+            self._analysis_result_to_dataframe(result) for result in result_list
+        ]
         columns = result_dicts[0].keys()
         pandas_dict = {key: [result[key] for result in result_dicts] for key in columns}
         df = DataFrame.from_dict(pandas_dict)
         return df
-
-
-
