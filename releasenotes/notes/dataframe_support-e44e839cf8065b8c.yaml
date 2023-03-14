@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    * Added support for reading and writing pandas dataframes via the `dataframe_to_analysis_result_list`
+    and `analysis_result_list_to_dataframe` methods
+    * Added support for creating multiple analysis results concurrently via the `create_analysis_results` method.
+
