@@ -13,3 +13,4 @@ Contents
 
   API References <apidocs/index>
   Release Notes <release_notes>
+  Tutorials <tutorials/index>

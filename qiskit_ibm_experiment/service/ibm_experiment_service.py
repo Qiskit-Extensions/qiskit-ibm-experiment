@@ -95,6 +95,7 @@ class IBMExperimentService:
         token: Optional[str] = None,
         url: Optional[str] = None,
         name: Optional[str] = None,
+        hgp: Optional[str] = None,
         proxies: Optional[dict] = None,
         verify: Optional[bool] = True,
         local: Optional[bool] = False,
@@ -111,6 +112,7 @@ class IBMExperimentService:
         """
         super().__init__()
         self.options = self._default_options
+        self.hgp = hgp
         self.set_option(**kwargs)
         if url is None:
             url = DEFAULT_BASE_URL
@@ -305,11 +307,22 @@ class IBMExperimentService:
             IBMExperimentEntryExists: If the experiment already exits.
             IBMApiError: If the request to the server failed.
         """
+        if self.hgp is not None:
+            try:
+                data.hub, data.group, data.project = self.hgp.split("/")
+            except RuntimeError:
+                pass
+
         if provider is not None:
             # attempt to get hub/group/project data from the provider
-            data.hub = provider.credentials.hub
-            data.group = provider.credentials.group
-            data.project = provider.credentials.project
+            # old IBMQ style
+            if hasattr(provider, "credentials"):
+                data.hub = provider.credentials.hub
+                data.group = provider.credentials.group
+                data.project = provider.credentials.project
+            # new IBMProvider style
+            if hasattr(provider, "_hgps"):
+                data.hub, data.group, data.project = list(provider._hgps)[0].split("/")
 
         api_data = self._experiment_data_to_api(data)
 
@@ -763,7 +776,7 @@ class IBMExperimentService:
 
         Args:
             data: The data to save. Note that the following fields will be ignored:
-            'uuid', 'experiment_uuid', 'device_components', 'type'
+            'experiment_uuid', 'device_components', 'type'
             json_encoder: Custom JSON encoder to use to encode the analysis result.
 
         Raises:
@@ -797,6 +810,35 @@ class IBMExperimentService:
             create,
             max_attempts,
         )
+
+    def bulk_update_analysis_result(
+        self,
+        data: List[AnalysisResultData],
+        json_encoder: Type[json.JSONEncoder] = json.JSONEncoder,
+    ) -> None:
+        """Bulk updates existing analysis results.
+
+        Args:
+            data: An array of the analysis data to save. Note that the following fields will be ignored:
+            ''experiment_uuid', 'device_components', 'type'
+            json_encoder: Custom JSON encoder to use to encode the analysis result.
+
+        Raises:
+            IBMApiError: If the request to the server failed.
+        """
+
+        unused_fields = ["experiment_uuid", "device_components", "type"]
+        request_list = {"analysis_results": []}
+        for analysis_result in data:
+            request = self._analysis_result_to_api(analysis_result)
+            for field_name in unused_fields:
+                if field_name in request:
+                    del request[field_name]
+            request_list["analysis_results"].append(request)
+        with map_api_error("Bulk analysis result update failed."):
+            self._api_client.bulk_analysis_result_update(
+                json.dumps(request_list, cls=json_encoder)
+            )
 
     def _confirm_delete(self, msg: str) -> bool:
         """Confirms a delete command; if the options indicate a prompt should be
