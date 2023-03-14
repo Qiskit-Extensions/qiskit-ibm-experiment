@@ -53,3 +53,15 @@ RESULT_QUALITY_TO_API = {
     ResultQuality.BAD: "Bad",
     ResultQuality.UNKNOWN: "No Information",
 }
+
+RESULT_QUALITY_FROM_DATAFRAME = {
+    "good": ResultQuality.GOOD,
+    "bad": ResultQuality.BAD,
+    "unknown": ResultQuality.UNKNOWN,
+}
+
+RESULT_QUALITY_TO_DATAFRAME = {
+    ResultQuality.GOOD: "good",
+    ResultQuality.BAD: "bad",
+    ResultQuality.UNKNOWN: "unknown",
+}

@@ -14,10 +14,13 @@
 
 import logging
 import os
-from typing import Generator, Union, Optional
+from concurrent import futures
+from typing import Generator, Union, Optional, List
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 import dateutil
+from pandas import DataFrame
+from .experiment_dataclasses import AnalysisResultData
 
 from ..exceptions import (
     IBMExperimentEntryNotFound,
@@ -177,3 +180,53 @@ def str_to_utc(utc_dt: Optional[str]) -> Optional[datetime]:
     parsed_dt = dateutil.parser.isoparse(utc_dt)
     result = parsed_dt.replace(tzinfo=timezone.utc)
     return result
+
+
+class ThreadSaveHandler:
+    """Utility class to keep track of multithreaded operations"""
+
+    def __init__(
+        self,
+        data: Union[List[AnalysisResultData], DataFrame],
+        save_method,
+        max_workers: int = 100,
+        **kwargs,
+    ):
+        save_executor = futures.ThreadPoolExecutor(max_workers=max_workers)
+        self._save_futures = {}
+        self._save_data = {}
+        self._running_tasks = []
+        for result_data in data:
+            # cid = uuid.uuid4().hex
+            task = {
+                "data": result_data,
+                "future": save_executor.submit(save_method, result_data, **kwargs),
+            }
+            self._running_tasks.append(task)
+        self._successful_tasks = []
+        self._failed_tasks = []
+
+    def block_for_save(self):
+        """Blocks running until all save threads are done"""
+        futures.wait([task["future"] for task in self._running_tasks])
+
+    def save_status(self):
+        """Returns the status of the save process"""
+        new_running_tasks = []
+        for task in self._running_tasks:
+            if not task["future"].done():
+                new_running_tasks.append(task)
+                continue
+            ex = task["future"].exception()
+            if ex is None:
+                self._successful_tasks.append(task["data"])
+                continue
+            self._failed_tasks.append({"data": task["data"], "exception": ex})
+        self._running_tasks = new_running_tasks
+
+        status = {
+            "running": [task["data"] for task in self._running_tasks],
+            "done": self._successful_tasks,
+            "fail": self._failed_tasks,
+        }
+        return status

@@ -16,20 +16,19 @@ import os
 import uuid
 import unittest
 import json
+import re
 from unittest import mock, SkipTest, skipIf
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
-import re
 from test.service.ibm_test_case import IBMTestCase
 from test.utils.utils import ExperimentEncoder, ExperimentDecoder
 import numpy as np
 from dateutil import tz
 from qiskit_ibm_provider import IBMProvider
 from qiskit_ibm_experiment.service import ResultQuality, ExperimentShareLevel
-from qiskit_ibm_experiment import IBMExperimentEntryNotFound
+from qiskit_ibm_experiment import IBMExperimentEntryNotFound, IBMApiError
 from qiskit_ibm_experiment import IBMExperimentService
 from qiskit_ibm_experiment import ExperimentData, AnalysisResultData
-from qiskit_ibm_experiment.exceptions import IBMApiError
 
 
 @skipIf(
@@ -688,6 +687,121 @@ class TestExperimentServerIntegration(IBMTestCase):
         self.assertTrue(rresult.verified)
         self.assertEqual(result_id, rresult.result_id)
         self.assertEqual(chisq, rresult.chisq)
+
+    def test_upload_multiple_analysis_results(self):
+        """Test uploading multiple analysis results."""
+        exp_id = self._create_experiment()
+        num_results = 10
+        results = []
+        for i in range(num_results):
+            fit = dict(value=i + 5, variance=2)
+            chisq = 1.3253
+            result = AnalysisResultData(
+                experiment_id=exp_id,
+                result_type=f"{i}_qiskit_test",
+                result_data=fit,
+                device_components=self.device_components,
+                tags=["qiskit_test"],
+                quality=ResultQuality.GOOD,
+                verified=True,
+                chisq=chisq,
+            )
+            results.append(result)
+        self.service.create_analysis_results(results, blocking=True)
+        rresults = self.service.analysis_results(
+            experiment_id=exp_id, limit=num_results
+        )
+        self.assertEqual(len(rresults), num_results)
+        for rresult in rresults:
+            if rresult.result_type == "qiskit_test":
+                print(rresult)
+            i = int(re.match(r"(\d+)_", rresult.result_type)[1])
+            fit = dict(value=i + 5, variance=2)
+            self.assertEqual(exp_id, rresult.experiment_id)
+            self.assertEqual(f"{i}_qiskit_test", rresult.result_type)
+            self.assertEqual(fit, rresult.result_data)
+            self.assertEqual(
+                self.device_components,
+                [str(comp) for comp in rresult.device_components],
+            )
+            self.assertEqual(["qiskit_test"], rresult.tags)
+            self.assertEqual(ResultQuality.GOOD, rresult.quality)
+            self.assertTrue(rresult.verified)
+            self.assertEqual(chisq, rresult.chisq)
+
+    def test_upload_multiple_analysis_results_nonblocking(self):
+        """Test uploading multiple analysis results."""
+        exp_id = self._create_experiment()
+        num_results = 100
+        results = []
+        for i in range(num_results):
+            fit = dict(value=i + 5, variance=2)
+            chisq = 1.3253
+            result = AnalysisResultData(
+                experiment_id=exp_id,
+                result_type=f"{i}_qiskit_test",
+                result_data=fit,
+                device_components=self.device_components,
+                tags=["qiskit_test"],
+                quality=ResultQuality.GOOD,
+                verified=True,
+                chisq=chisq,
+            )
+            results.append(result)
+        handler = self.service.create_analysis_results(results, blocking=False)
+        handler.block_for_save()
+        rresults = self.service.analysis_results(
+            experiment_id=exp_id, limit=num_results
+        )
+        self.assertEqual(len(rresults), num_results)
+        for rresult in rresults:
+            if rresult.result_type == "qiskit_test":
+                print(rresult)
+            i = int(re.match(r"(\d+)_", rresult.result_type)[1])
+            fit = dict(value=i + 5, variance=2)
+            self.assertEqual(exp_id, rresult.experiment_id)
+            self.assertEqual(f"{i}_qiskit_test", rresult.result_type)
+            self.assertEqual(fit, rresult.result_data)
+            self.assertEqual(
+                self.device_components,
+                [str(comp) for comp in rresult.device_components],
+            )
+            self.assertEqual(["qiskit_test"], rresult.tags)
+            self.assertEqual(ResultQuality.GOOD, rresult.quality)
+            self.assertTrue(rresult.verified)
+            self.assertEqual(chisq, rresult.chisq)
+
+    def test_upload_multiple_analysis_results_failures(self):
+        """Test uploading multiple analysis results."""
+        exp_id = self._create_experiment()
+        fake_exp_id = f"FAKE_ID_{exp_id}"
+        num_results = 9
+        results = []
+        for i in range(num_results):
+            fit = dict(value=i + 5, variance=2)
+            chisq = 1.3253
+            result = AnalysisResultData(
+                experiment_id=exp_id if i % 2 == 0 else fake_exp_id,
+                result_type=f"{i}_qiskit_test",
+                result_data=fit,
+                device_components=self.device_components,
+                tags=["qiskit_test"],
+                quality=ResultQuality.GOOD,
+                verified=True,
+                chisq=chisq,
+            )
+            results.append(result)
+        save_status = self.service.create_analysis_results(results, blocking=True)
+        self.assertEqual(len(save_status["running"]), 0)
+        self.assertEqual(len(save_status["fail"]), num_results // 2)
+        self.assertEqual(len(save_status["done"]), num_results - (num_results // 2))
+        for result in save_status["done"]:
+            i = int(re.match(r"(\d+)_", result.result_type)[1])
+            self.assertEqual(i % 2, 0)
+        for result in save_status["fail"]:
+            i = int(re.match(r"(\d+)_", result["data"].result_type)[1])
+            self.assertEqual(i % 2, 1)
+            self.assertTrue(isinstance(result["exception"], IBMApiError))
 
     def test_update_analysis_result(self):
         """Test updating an analysis result."""
