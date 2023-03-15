@@ -15,12 +15,10 @@
 import logging
 import os
 from concurrent import futures
-from typing import Generator, Union, Optional, List
+from typing import Generator, Union, Optional, List, Tuple
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 import dateutil
-from pandas import DataFrame
-from .experiment_dataclasses import AnalysisResultData
 
 from ..exceptions import (
     IBMExperimentEntryNotFound,
@@ -187,7 +185,7 @@ class ThreadSaveHandler:
 
     def __init__(
         self,
-        data: Union[List[AnalysisResultData], DataFrame],
+        data: List[Tuple],
         save_method,
         max_workers: int = 100,
         **kwargs,
@@ -197,10 +195,11 @@ class ThreadSaveHandler:
         self._save_data = {}
         self._running_tasks = []
         for result_data in data:
-            # cid = uuid.uuid4().hex
+            if not isinstance(result_data, tuple):
+                result_data = (result_data,)
             task = {
                 "data": result_data,
-                "future": save_executor.submit(save_method, result_data, **kwargs),
+                "future": save_executor.submit(save_method, *result_data, **kwargs),
             }
             self._running_tasks.append(task)
         self._successful_tasks = []

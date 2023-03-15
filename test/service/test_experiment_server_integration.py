@@ -796,10 +796,10 @@ class TestExperimentServerIntegration(IBMTestCase):
         self.assertEqual(len(save_status["fail"]), num_results // 2)
         self.assertEqual(len(save_status["done"]), num_results - (num_results // 2))
         for result in save_status["done"]:
-            i = int(re.match(r"(\d+)_", result.result_type)[1])
+            i = int(re.match(r"(\d+)_", result[0].result_type)[1])
             self.assertEqual(i % 2, 0)
         for result in save_status["fail"]:
-            i = int(re.match(r"(\d+)_", result["data"].result_type)[1])
+            i = int(re.match(r"(\d+)_", result["data"][0].result_type)[1])
             self.assertEqual(i % 2, 1)
             self.assertTrue(isinstance(result["exception"], IBMApiError))
 
@@ -1328,6 +1328,28 @@ class TestExperimentServerIntegration(IBMTestCase):
                     self.assertEqual(figure, name)
                 expr = self.service.experiment(expr_id)
                 self.assertIn(name, expr.figure_names)
+
+    def test_create_multiple_figures(self):
+        """Test creating multiple figures at once."""
+        file_names = []
+        figure_names = []
+        for name in ["hello world", "another test"]:
+            bytes = str.encode(name)
+            words = name.split(" ")
+            file_name = f"{words[0]}_{words[1]}.svg"
+            file_names.append(file_name)
+            figure_names.append(f"{words[0]}.svg")
+            with open(file_names[-1], "wb") as file:
+                file.write(bytes)
+            self.assertTrue(os.path.isfile(file_name), f"File {file_name} was not created")
+            self.addCleanup(os.remove, file_name)
+
+        expr_id = self._create_experiment()
+        figure_list = zip(file_names, figure_names)
+        self.service.create_figures(experiment_id=expr_id, figure_list=figure_list)
+        expr = self.service.experiment(expr_id)
+        for name in figure_names:
+            self.assertIn(name, expr.figure_names)
 
     def test_figure(self):
         """Test getting a figure."""
