@@ -1429,7 +1429,7 @@ class IBMExperimentService:
     def create_figures(
         self,
         experiment_id: str,
-        figure_list: List[Tuple[Union[str,bytes], str]],
+        figure_list: List[Tuple[Union[str, bytes], str]],
         blocking: bool = True,
         max_workers: int = 100,
     ):
@@ -1456,7 +1456,10 @@ class IBMExperimentService:
             IBMExperimentEntryExists: If the figure already exits.
             IBMApiError: If the request to the server failed.
         """
-        figure_params = [(experiment_id, figure, figure_name) for (figure, figure_name) in figure_list]
+        figure_params = [
+            (experiment_id, figure, figure_name)
+            for (figure, figure_name) in figure_list
+        ]
         handler = ThreadSaveHandler(
             figure_params,
             self.create_or_update_figure,

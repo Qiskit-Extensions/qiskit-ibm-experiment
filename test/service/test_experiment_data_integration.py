@@ -140,15 +140,16 @@ class TestExperimentDataIntegration(IBMTestCase):
             exp_data.add_jobs(job)
             job_ids.append(job.job_id())
 
-        exp_data.save()
+        exp_data.block_for_results().save()
         self.experiments_to_delete.append(exp_data.experiment_id)
 
-        credentials = self.backend.provider().credentials
+        hub, group, project = list(self.backend.provider._hgps)[0].split("/")
+
         rexp = ExperimentData.load(exp_data.experiment_id, self.service)
         self._verify_experiment_data(exp_data, rexp)
-        self.assertEqual(credentials.hub, rexp.hub)  # pylint: disable=no-member
-        self.assertEqual(credentials.group, rexp.group)  # pylint: disable=no-member
-        self.assertEqual(credentials.project, rexp.project)  # pylint: disable=no-member
+        self.assertEqual(hub, rexp.hub)  # pylint: disable=no-member
+        self.assertEqual(group, rexp.group)  # pylint: disable=no-member
+        self.assertEqual(project, rexp.project)  # pylint: disable=no-member
 
     def test_update_experiment_data(self):
         """Test updating an experiment."""
@@ -160,7 +161,7 @@ class TestExperimentDataIntegration(IBMTestCase):
         exp_data.tags = ["foo", "bar"]
         exp_data.share_level = "hub"
         exp_data.notes = "some notes"
-        exp_data.save()
+        exp_data.block_for_results().save()
 
         rexp = ExperimentData.load(exp_data.experiment_id, self.service)
         self._verify_experiment_data(exp_data, rexp)

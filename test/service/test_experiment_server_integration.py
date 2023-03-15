@@ -1334,14 +1334,16 @@ class TestExperimentServerIntegration(IBMTestCase):
         file_names = []
         figure_names = []
         for name in ["hello world", "another test"]:
-            bytes = str.encode(name)
+            bytes_data = str.encode(name)
             words = name.split(" ")
             file_name = f"{words[0]}_{words[1]}.svg"
             file_names.append(file_name)
             figure_names.append(f"{words[0]}.svg")
             with open(file_names[-1], "wb") as file:
-                file.write(bytes)
-            self.assertTrue(os.path.isfile(file_name), f"File {file_name} was not created")
+                file.write(bytes_data)
+            self.assertTrue(
+                os.path.isfile(file_name), f"File {file_name} was not created"
+            )
             self.addCleanup(os.remove, file_name)
 
         expr_id = self._create_experiment()
