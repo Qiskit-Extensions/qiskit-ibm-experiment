@@ -1,0 +1,4 @@
+---
+features:
+  - |
+    Added the `create_figures` method for uploading multiple figures concurrently.

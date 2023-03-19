@@ -1426,6 +1426,52 @@ class IBMExperimentService:
             return None
         return figure_name, len(figure)
 
+    def create_figures(
+        self,
+        experiment_id: str,
+        figure_list: List[Tuple[Union[str, bytes], str]],
+        blocking: bool = True,
+        max_workers: int = 100,
+    ):
+        """Create multiple figures in the database using asynchronous calls.
+
+        If you choose `blocking==True`, the method will run until all the save threads terminated.
+        To improve running time, multithreading is used.
+
+        If `blocking==False` it is up to the user to verify all the threads finished;
+        `block_for_save()` can be called to ensure all threads finish.
+        `save_status()` returns the information on the status of the threads.
+
+        Args:
+            experiment_id: ID of the experiment this figure is for.
+            figure_list: A list of the figures to save.
+                Every figure is given by a tuple of the form (figure, name)
+                where `figure` can be the actual figure or its filename
+                and `name` is the name given to the figure in the db.
+                If ``None``, the figure file name, if given, or a generated name is used.
+            blocking: Whether to wait for all the save threads to finish before returning control
+            max_workers: Maximum number of worker threads to write to the server.
+
+        Raises:
+            IBMExperimentEntryExists: If the figure already exits.
+            IBMApiError: If the request to the server failed.
+        """
+        figure_params = [
+            (experiment_id, figure, figure_name)
+            for (figure, figure_name) in figure_list
+        ]
+        handler = ThreadSaveHandler(
+            figure_params,
+            self.create_or_update_figure,
+            max_workers,
+            create=True,
+            max_attempts=3,
+        )
+        if blocking:
+            handler.block_for_save()
+            return handler.save_status()
+        return handler
+
     def update_figure(
         self,
         experiment_id: str,
