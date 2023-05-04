@@ -378,7 +378,7 @@ class IBMExperimentService:
 
         if not data:
             logger.warning("update_experiment() called with nothing to update.")
-            return
+            return None
 
         with map_api_error(f"Experiment {data.experiment_id} update failed."):
             response_data = self._api_client.experiment_update(
