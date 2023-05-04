@@ -1,8 +1,16 @@
 pylint==2.12.1
 stestr
 matplotlib>=2.1
-reno>=2.11.0
 scipy>=1.0
 black~=22.0
 qiskit-ibm-provider
 qiskit-experiments
+
+# Documentation
+jupyter-sphinx
+sphinx-intl
+sphinx-tabs
+sphinx-autodoc-typehints
+nbsphinx
+reno>=2.11.0
+qiskit-sphinx-theme~=1.11.1
