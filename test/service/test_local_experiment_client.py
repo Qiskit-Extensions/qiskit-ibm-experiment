@@ -44,7 +44,7 @@ class TestExperimentLocalClient(IBMTestCase):
             backend="ibmq_qasm_simulator",
             metadata={"float_data": 3.14, "string_data": "foo"},
         )
-        exp_id = self.service.create_experiment(data)
+        exp_id = self.service.create_experiment(data)['uuid']
         self.assertIsNotNone(exp_id)
 
         exp = self.service.experiment(experiment_id=exp_id)
@@ -64,7 +64,7 @@ class TestExperimentLocalClient(IBMTestCase):
             backend="ibmq_qasm_simulator",
             metadata={"float_data": 3.14, "string_data": "foo"},
         )
-        exp_id = self.service.create_experiment(data)
+        exp_id = self.service.create_experiment(data)['uuid']
         data = self.service.experiment(exp_id)
         data.metadata["float_data"] = 2.71
         data.experiment_type = "foo_type"  # this should NOT change
@@ -85,7 +85,7 @@ class TestExperimentLocalClient(IBMTestCase):
             experiment_type="test_experiment",
             backend="ibmq_qasm_simulator",
         )
-        exp_id = self.service.create_experiment(data)
+        exp_id = self.service.create_experiment(data)['uuid']
         # Check the experiment exists
         self.service.experiment(experiment_id=exp_id)
         self.service.delete_experiment(exp_id)
@@ -124,7 +124,7 @@ class TestExperimentLocalClient(IBMTestCase):
             ExperimentData(
                 experiment_type="test_experiment", backend="ibmq_qasm_simulator"
             )
-        )
+        )['uuid']
         analysis_result_value = {"str": "foo", "float": 3.14}
         analysis_data = AnalysisResultData(
             experiment_id=exp_id,
@@ -143,7 +143,7 @@ class TestExperimentLocalClient(IBMTestCase):
             ExperimentData(
                 experiment_type="test_experiment", backend="ibmq_qasm_simulator"
             )
-        )
+        )['uuid']
         result_ids = ["00", "01", "10", "11"]
         for result_id in result_ids:
             analysis_result_value = {
@@ -174,7 +174,7 @@ class TestExperimentLocalClient(IBMTestCase):
             ExperimentData(
                 experiment_type="test_experiment", backend="ibmq_qasm_simulator"
             )
-        )
+        )['uuid']
         analysis_data = AnalysisResultData(
             experiment_id=exp_id,
             result_data={"foo": "delete_bar"},
@@ -249,7 +249,7 @@ class TestExperimentLocalClient(IBMTestCase):
             ExperimentData(
                 experiment_type="test_experiment", backend="ibmq_qasm_simulator"
             )
-        )
+        )['uuid']
         hello_bytes = str.encode("hello world")
         figure_name = "hello.svg"
         self.service.create_figure(
@@ -264,7 +264,7 @@ class TestExperimentLocalClient(IBMTestCase):
             ExperimentData(
                 experiment_type="test_experiment", backend="ibmq_qasm_simulator"
             )
-        )
+        )['uuid']
         hello_data = {"hello": "world", "foo": "bar"}
         filename = "test_file.json"
         self.service.file_upload(exp_id, filename, hello_data)
@@ -279,7 +279,7 @@ class TestExperimentLocalClient(IBMTestCase):
             ExperimentData(
                 experiment_type="test_experiment", backend="ibmq_qasm_simulator"
             )
-        )
+        )['uuid']
         file_list = self.service.files(exp_id2)["files"]
         self.assertEqual(len(file_list), 0)
 
@@ -291,7 +291,7 @@ class TestExperimentLocalClient(IBMTestCase):
                 experiment_type="qiskit_time_test",
                 backend="ibmq_qasm_simulator",
             )
-        )
+        )['uuid']
         experiments = self.service.experiments(
             start_datetime_after=ref_start_dt,
             experiment_type="qiskit_time_test",
@@ -312,7 +312,7 @@ class TestExperimentLocalClient(IBMTestCase):
                 backend="ibmq_qasm_simulator",
                 start_datetime=ref_start_dt,
             )
-        )
+        )['uuid']
 
         before_start = ref_start_dt - timedelta(hours=1)
         after_start = ref_start_dt + timedelta(hours=1)
@@ -357,21 +357,21 @@ class TestExperimentLocalClient(IBMTestCase):
                 experiment_type="qiskit_test_1",
                 start_datetime=datetime.now() - timedelta(hours=1),
             )
-        )
+        )['uuid']
         exp2 = self.service.create_experiment(
             ExperimentData(
                 tags=tags,
                 experiment_type="qiskit_test_2",
                 start_datetime=datetime.now(),
             )
-        )
+        )['uuid']
         exp3 = self.service.create_experiment(
             ExperimentData(
                 tags=tags,
                 experiment_type="qiskit_test_1",
                 start_datetime=datetime.now() - timedelta(hours=2),
             )
-        )
+        )['uuid']
 
         subtests = [
             (
@@ -414,7 +414,7 @@ class TestExperimentLocalClient(IBMTestCase):
                 **kwargs,
             ),
             json_encoder=json_encoder,
-        )
+        )['uuid']
         return exp_id
 
     def _create_analysis_result(
