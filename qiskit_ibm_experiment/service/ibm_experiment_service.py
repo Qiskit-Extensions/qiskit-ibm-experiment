@@ -291,7 +291,7 @@ class IBMExperimentService:
         data: ExperimentData,
         provider: Optional[Any] = None,
         json_encoder: Type[json.JSONEncoder] = json.JSONEncoder,
-    ) -> str:
+    ) -> dict:
         """Create a new experiment in the database.
 
         Args:
@@ -305,6 +305,9 @@ class IBMExperimentService:
         Raises:
             IBMExperimentEntryExists: If the experiment already exits.
             IBMApiError: If the request to the server failed.
+
+        Returns:
+            The upload response data
         """
         if self.hgp is not None:
             try:
@@ -339,13 +342,13 @@ class IBMExperimentService:
             response_data = self._api_client.experiment_upload(
                 json.dumps(api_data, cls=json_encoder)
             )
-        return response_data["uuid"]
+        return response_data
 
     def update_experiment(
         self,
         data: ExperimentData,
         json_encoder: Type[json.JSONEncoder] = json.JSONEncoder,
-    ) -> None:
+    ) -> dict:
         """Update an existing experiment.
 
         Args:
@@ -355,6 +358,8 @@ class IBMExperimentService:
         Raises:
             IBMExperimentEntryNotFound: If the experiment does not exist.
             IBMApiError: If the request to the server failed.
+        Returns:
+            The update response data
         """
 
         api_data = self._experiment_data_to_api(data)
@@ -373,12 +378,13 @@ class IBMExperimentService:
 
         if not data:
             logger.warning("update_experiment() called with nothing to update.")
-            return
+            return None
 
         with map_api_error(f"Experiment {data.experiment_id} update failed."):
-            self._api_client.experiment_update(
+            response_data = self._api_client.experiment_update(
                 data.experiment_id, json.dumps(api_data, cls=json_encoder)
             )
+            return response_data
 
     def create_or_update_experiment(
         self,
