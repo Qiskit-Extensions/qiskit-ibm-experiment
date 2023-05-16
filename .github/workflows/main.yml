@@ -9,6 +9,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   lint:
+    if: github.repository_owner == 'Qiskit'
     name: lint
     runs-on: ubuntu-latest
     steps:
@@ -31,6 +32,7 @@ jobs:
       - name: Run lint
         run: tox -elint
   docs:
+    if: github.repository_owner == 'Qiskit'
     name: docs
     runs-on: ubuntu-latest
     steps:
@@ -61,11 +63,12 @@ jobs:
           name: html_docs
           path: docs/_build/html
   tests:
+    if: github.repository_owner == 'Qiskit'
     name: tests-python${{ matrix.python-version }}-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: [3.8, 3.9]
         os: ["ubuntu-latest", "macOS-latest", "windows-latest"]
     steps:
       - name: Print Concurrency Group
