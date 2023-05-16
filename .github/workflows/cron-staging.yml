@@ -3,8 +3,8 @@ on:
   schedule:
     - cron: "0 4 * * *"
 jobs:
-  if: github.repository_owner == 'Qiskit'
   experiment-integration:
+    if: github.repository_owner == 'Qiskit'
     name: ibm-experiment-integration
     runs-on: macOS-latest
     env:
