@@ -371,6 +371,7 @@ class IBMExperimentService:
             "project_id",
             "type",
             "start_time",
+            "parent_experiment_uuid",
         ]
         for field_name in unused_fields:
             if field_name in api_data:
