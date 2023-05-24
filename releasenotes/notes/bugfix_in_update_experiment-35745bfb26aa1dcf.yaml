@@ -1,0 +1,4 @@
+---
+fixes:
+  - |
+    :meth:`.IBMExperimentService.update_experiment` now filters correctly the `parent_experiment_uuid` field.
