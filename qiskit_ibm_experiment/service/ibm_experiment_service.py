@@ -1513,12 +1513,13 @@ class IBMExperimentService:
             with open(figure, "rb") as file:
                 figure = file.read()
 
+        response = None
         with map_api_error(f"Figure {figure_name} update failed."):
             response = self._api_client.experiment_plot_update(
                 experiment_id, figure, figure_name
             )
 
-        if response.status_code != 200:
+        if response is None:
             return None
         return figure_name, len(figure)
 
