@@ -17,7 +17,7 @@ import uuid
 import unittest
 import json
 import re
-from unittest import mock, SkipTest, skipIf
+from unittest import mock, skipIf
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from test.service.ibm_test_case import IBMTestCase
