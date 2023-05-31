@@ -47,7 +47,7 @@ class TestExperimentDataIntegration(IBMTestCase):
             cls._setup_provider()
             cls.circuit = transpile(ReferenceCircuits.bell(), cls.backend)
         except Exception as err:
-            print(err, "Not authorized to use experiment service.")
+            cls.log.info("Error while setting the service/provider: %s", err)
             raise
 
     @classmethod
