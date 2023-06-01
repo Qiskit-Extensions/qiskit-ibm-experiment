@@ -14,7 +14,7 @@
 
 import os
 import unittest
-from unittest import mock, SkipTest, skipIf
+from unittest import mock, skipIf
 import contextlib
 from test.service.ibm_test_case import IBMTestCase
 import numpy as np
@@ -47,7 +47,8 @@ class TestExperimentDataIntegration(IBMTestCase):
             cls._setup_provider()
             cls.circuit = transpile(ReferenceCircuits.bell(), cls.backend)
         except Exception as err:
-            raise SkipTest("Not authorized to use experiment service.") from err
+            cls.log.info("Error while setting the service/provider: %s", err)
+            raise
 
     @classmethod
     def _setup_service(cls):

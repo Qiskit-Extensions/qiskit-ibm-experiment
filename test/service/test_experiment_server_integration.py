@@ -17,7 +17,7 @@ import uuid
 import unittest
 import json
 import re
-from unittest import mock, SkipTest, skipIf
+from unittest import mock, skipIf
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from test.service.ibm_test_case import IBMTestCase
@@ -47,7 +47,7 @@ class TestExperimentServerIntegration(IBMTestCase):
             cls._setup_provider()
         except Exception as err:
             cls.log.info("Error while setting the service/provider: %s", err)
-            raise SkipTest("Not authorized to use experiment service.") from err
+            raise
 
     @classmethod
     def _setup_service(cls):
