@@ -257,6 +257,12 @@ class TestExperimentLocalClient(IBMTestCase):
         )
         fig = self.service.figure(exp_id, figure_name)
         self.assertEqual(fig, hello_bytes)
+        hello_bytes = str.encode("hello world version 2")
+        self.service.update_figure(
+            experiment_id=exp_id, figure=hello_bytes, figure_name=figure_name
+        )
+        fig = self.service.figure(exp_id, figure_name)
+        self.assertEqual(fig, hello_bytes)
 
     def test_files(self):
         """Test upload and download of files"""
