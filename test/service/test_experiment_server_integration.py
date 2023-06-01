@@ -562,7 +562,7 @@ class TestExperimentServerIntegration(IBMTestCase):
                 start_datetime=datetime.now(),
             ),
             provider=self.provider,
-        )
+        )["uuid"]
         self.experiments_to_delete.append(new_exp_id)
         self.assertEqual(exp_id, new_exp_id)
         new_exp = self.service.experiment(new_exp_id)
@@ -1521,7 +1521,7 @@ class TestExperimentServerIntegration(IBMTestCase):
                 **kwargs,
             ),
             json_encoder=json_encoder,
-        )
+        )["uuid"]
         self.experiments_to_delete.append(exp_id)
         return exp_id
 
