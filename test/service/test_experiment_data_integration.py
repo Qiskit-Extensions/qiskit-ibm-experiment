@@ -209,7 +209,7 @@ class TestExperimentDataIntegration(IBMTestCase):
         aresult.quality = "good"
         aresult.verified = True
         aresult.tags = ["foo", "bar"]
-        aresult.suppress_errors=False
+        aresult.save(suppress_errors=False)
 
         rexp = ExperimentData.load(exp_data.experiment_id, self.service)
         rresult = rexp.analysis_results(0)
