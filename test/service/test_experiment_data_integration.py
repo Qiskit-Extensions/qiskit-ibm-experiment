@@ -141,7 +141,7 @@ class TestExperimentDataIntegration(IBMTestCase):
             exp_data.add_jobs(job)
             job_ids.append(job.job_id())
 
-        exp_data.block_for_results().save()
+        exp_data.block_for_results().save(suppress_errors=False)
         self.experiments_to_delete.append(exp_data.experiment_id)
 
         hub, group, project = list(self.backend.provider._hgps)[0].split("/")
@@ -162,7 +162,7 @@ class TestExperimentDataIntegration(IBMTestCase):
         exp_data.tags = ["foo", "bar"]
         exp_data.share_level = "hub"
         exp_data.notes = "some notes"
-        exp_data.block_for_results().save()
+        exp_data.block_for_results().save(suppress_errors=False)
 
         rexp = ExperimentData.load(exp_data.experiment_id, self.service)
         self._verify_experiment_data(exp_data, rexp)
@@ -195,7 +195,7 @@ class TestExperimentDataIntegration(IBMTestCase):
             service=self.service,
         )
         exp_data.add_analysis_results(aresult)
-        exp_data.save()
+        exp_data.save(suppress_errors=False)
 
         rresult = AnalysisResult.load(aresult.result_id, self.service)
         self.assertEqual(exp_data.experiment_id, rresult.experiment_id)
@@ -210,7 +210,7 @@ class TestExperimentDataIntegration(IBMTestCase):
         aresult.quality = "good"
         aresult.verified = True
         aresult.tags = ["foo", "bar"]
-        aresult.save()
+        aresult.suppress_errors=False
 
         rexp = ExperimentData.load(exp_data.experiment_id, self.service)
         rresult = rexp.analysis_results(0)
@@ -235,7 +235,7 @@ class TestExperimentDataIntegration(IBMTestCase):
         aresult, exp_data = self._create_analysis_result()
         with mock.patch("builtins.input", lambda _: "y"):
             exp_data.delete_analysis_result(0)
-            exp_data.save()
+            exp_data.save(suppress_errors=False)
         rexp = ExperimentData.load(exp_data.experiment_id, self.service)
         self.assertRaises(
             ExperimentEntryNotFound, rexp.analysis_results, aresult.result_id
@@ -318,7 +318,7 @@ class TestExperimentDataIntegration(IBMTestCase):
         )
         with mock.patch("builtins.input", lambda _: "y"):
             exp_data.delete_figure(0)
-            exp_data.save()
+            exp_data.save(suppress_errors=False)
 
         rexp = ExperimentData.load(exp_data.experiment_id, self.service)
         self.assertRaises(IBMExperimentEntryNotFound, rexp.figure, figure_name)
@@ -342,7 +342,7 @@ class TestExperimentDataIntegration(IBMTestCase):
         exp_data.add_analysis_results(aresult)
         hello_bytes = str.encode("hello world")
         exp_data.add_figures(hello_bytes, figure_names="hello.svg")
-        exp_data.save()
+        exp_data.save(suppress_errors=False)
 
         rexp = ExperimentData.load(exp_data.experiment_id, self.service)
         # Experiment tag order is not necessarily preserved
@@ -354,7 +354,7 @@ class TestExperimentDataIntegration(IBMTestCase):
         exp_data.delete_analysis_result(0)
         exp_data.delete_figure(0)
         with mock.patch("builtins.input", lambda _: "y"):
-            exp_data.save()
+            exp_data.save(suppress_errors=False)
 
         rexp = ExperimentData.load(exp_data.experiment_id, self.service)
         self.assertRaises(IBMExperimentEntryNotFound, rexp.figure, "hello.svg")
@@ -367,7 +367,7 @@ class TestExperimentDataIntegration(IBMTestCase):
         exp_data = ExperimentData(experiment_type="qiskit_test", service=self.service)
         job = self._run_circuit()
         exp_data.add_jobs(job)
-        exp_data.save()
+        exp_data.save(suppress_errors=False)
         self.experiments_to_delete.append(exp_data.experiment_id)
 
         rexp = self.service.experiment(exp_data.experiment_id)
@@ -529,7 +529,7 @@ class TestExperimentDataIntegration(IBMTestCase):
             verbose=False,
             service=self.service,
         )
-        exp_data.save()
+        exp_data.save(suppress_errors=False)
         self.experiments_to_delete.append(exp_data.experiment_id)
         return exp_data
 
@@ -543,7 +543,7 @@ class TestExperimentDataIntegration(IBMTestCase):
             experiment_id=exp_data.experiment_id,
         )
         exp_data.add_analysis_results(aresult)
-        exp_data.save()
+        exp_data.save(suppress_errors=False)
         self.results_to_delete.append(aresult.result_id)
         return aresult, exp_data
 
