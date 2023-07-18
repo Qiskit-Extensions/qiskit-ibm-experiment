@@ -16,6 +16,7 @@ import os
 import uuid
 import unittest
 import json
+import yaml
 import re
 from unittest import mock, skipIf
 from datetime import datetime, timedelta
@@ -1501,6 +1502,25 @@ class TestExperimentServerIntegration(IBMTestCase):
         self.service.file_upload(exp_id, filename, data)
         rdata = self.service.file_download(exp_id, filename)
         self.assertEqual(data, rdata)
+        file_list = self.service.files(exp_id)["files"]
+        self.assertEqual(len(file_list), 2)
+
+    def test_file_upload_formats(self):
+        """Test file upload/download for JSON and YAML formats"""
+        exp_id = self._create_experiment()
+        data = {"string": "b-string", "int": 10, "float": 0.333}
+        yaml_data = yaml.dump(data)
+        json_data = json.dumps(data)
+        yaml_filename = "data.yaml"
+        json_filename = "data.json"
+
+        self.service.file_upload(exp_id, json_filename, json_data)
+        rjson_data = self.service.file_download(exp_id, json_filename)
+        self.assertEqual(data, rjson_data)
+
+        self.service.file_upload(exp_id, yaml_filename, yaml_data)
+        ryaml_data = self.service.file_download(exp_id, yaml_filename)
+        self.assertEqual(data, ryaml_data)
         file_list = self.service.files(exp_id)["files"]
         self.assertEqual(len(file_list), 2)
 

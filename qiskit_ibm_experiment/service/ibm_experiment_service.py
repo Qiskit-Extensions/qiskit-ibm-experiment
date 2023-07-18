@@ -14,6 +14,7 @@
 
 import logging
 import json
+import yaml
 import copy
 import os
 from typing import Optional, List, Dict, Union, Tuple, Any, Type
@@ -1698,10 +1699,14 @@ class IBMExperimentService:
             with the default encoder.
         """
         # currently the resultdb enforces files to end with .json or .yaml
-        if not file_name.endswith(".json"):
+        # without suffix, we assume json formatting
+        if not (file_name.endswith(".json") or file_name.endswith(".yaml")):
             file_name += ".json"
         if isinstance(file_data, dict):
-            file_data = json.dumps(file_data)
+            if file_name.endswith(".yaml"):
+                file_data = yaml.dump(file_data)
+            else:
+                file_data = json.dumps(file_data)
         self._api_client.experiment_file_upload(experiment_id, file_name, file_data)
 
     def file_download(self, experiment_id: str, file_name: str) -> Dict:
@@ -1715,7 +1720,7 @@ class IBMExperimentService:
             The filename is expected to end with ".json", otherwise
             it will be added.
         """
-        if not file_name.endswith(".json"):
+        if not (file_name.endswith(".json") or file_name.endswith(".yaml")):
             file_name += ".json"
         file_data = self._api_client.experiment_file_download(experiment_id, file_name)
         return file_data

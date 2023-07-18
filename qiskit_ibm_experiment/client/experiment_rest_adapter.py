@@ -13,6 +13,7 @@
 """Experiment REST adapter."""
 
 import logging
+import yaml
 from typing import Dict, List, Any, Union, Optional
 from qiskit_ibm_experiment.client.session import RetrySession
 
@@ -451,5 +452,7 @@ class ExperimentRestAdapter:
         )
         result = self.session.get(download_request_url)
         if result.status_code == 200:
+            if file_name.endswith(".yaml"):
+                return yaml.safe_load(result.content)
             return result.json()
         return result
