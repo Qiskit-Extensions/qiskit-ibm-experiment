@@ -16,6 +16,7 @@ import os
 import uuid
 import unittest
 import json
+import yaml
 import re
 from unittest import mock, skipIf
 from datetime import datetime, timedelta

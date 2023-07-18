@@ -13,6 +13,7 @@
 """Experiment REST adapter."""
 
 import logging
+import yaml
 from typing import Dict, List, Any, Union, Optional
 import yaml
 from qiskit_ibm_experiment.client.session import RetrySession
