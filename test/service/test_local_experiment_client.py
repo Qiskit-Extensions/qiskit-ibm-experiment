@@ -14,11 +14,11 @@
 import unittest
 import uuid
 import json
-import yaml
 from typing import Optional, Dict, Any
 from datetime import datetime, timedelta
 from test.service.ibm_test_case import IBMTestCase
 from dateutil import tz
+import yaml
 from qiskit_ibm_experiment import IBMExperimentService
 from qiskit_ibm_experiment import ExperimentData, AnalysisResultData
 from qiskit_ibm_experiment.service import ResultQuality

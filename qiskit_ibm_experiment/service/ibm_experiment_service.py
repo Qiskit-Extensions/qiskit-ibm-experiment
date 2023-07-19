@@ -14,7 +14,6 @@
 
 import logging
 import json
-import yaml
 import copy
 import os
 from typing import Optional, List, Dict, Union, Tuple, Any, Type
@@ -24,6 +23,7 @@ import requests
 import numpy as np
 from pandas import DataFrame
 import pandas as pd
+import yaml
 from .constants import (
     ExperimentShareLevel,
     ResultQuality,

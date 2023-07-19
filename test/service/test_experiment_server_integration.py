@@ -16,7 +16,6 @@ import os
 import uuid
 import unittest
 import json
-import yaml
 import re
 from unittest import mock, skipIf
 from datetime import datetime, timedelta
@@ -25,6 +24,7 @@ from test.service.ibm_test_case import IBMTestCase
 from test.utils.utils import ExperimentEncoder, ExperimentDecoder
 import numpy as np
 from dateutil import tz
+import yaml
 from qiskit_ibm_provider import IBMProvider
 from qiskit_ibm_experiment.service import ResultQuality, ExperimentShareLevel
 from qiskit_ibm_experiment import IBMExperimentEntryNotFound, IBMApiError
