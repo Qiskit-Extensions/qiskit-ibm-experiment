@@ -14,6 +14,7 @@
 import unittest
 import uuid
 import json
+import yaml
 from typing import Optional, Dict, Any
 from datetime import datetime, timedelta
 from test.service.ibm_test_case import IBMTestCase
