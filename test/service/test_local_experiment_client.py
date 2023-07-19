@@ -14,6 +14,7 @@
 import unittest
 import uuid
 import json
+import yaml
 from typing import Optional, Dict, Any
 from datetime import datetime, timedelta
 from test.service.ibm_test_case import IBMTestCase
@@ -405,6 +406,25 @@ class TestExperimentLocalClient(IBMTestCase):
                     experiment_type="qiskit_test",
                 )
                 self.assertEqual(expected, [exp.experiment_id for exp in experiments])
+
+    def test_file_upload_formats(self):
+        """Test file upload/download for JSON and YAML formats"""
+        exp_id = self._create_experiment()
+        data = {"string": "b-string", "int": 10, "float": 0.333}
+        yaml_data = yaml.dump(data)
+        json_data = json.dumps(data)
+        yaml_filename = "data.yaml"
+        json_filename = "data.json"
+
+        self.service.file_upload(exp_id, json_filename, json_data)
+        rjson_data = self.service.file_download(exp_id, json_filename)
+        self.assertEqual(data, rjson_data)
+
+        self.service.file_upload(exp_id, yaml_filename, yaml_data)
+        ryaml_data = self.service.file_download(exp_id, yaml_filename)
+        self.assertEqual(data, ryaml_data)
+        file_list = self.service.files(exp_id)["files"]
+        self.assertEqual(len(file_list), 2)
 
     def _create_experiment(
         self,

@@ -23,6 +23,7 @@ from datetime import datetime
 from typing import List, Dict, Optional, Union, Any
 import pandas as pd
 import numpy as np
+import yaml
 
 from qiskit_ibm_experiment.exceptions import (
     IBMExperimentEntryNotFound,
@@ -792,4 +793,6 @@ class LocalExperimentClient:
             raise IBMExperimentEntryNotFound
         if file_name not in self._files[experiment_id]:
             raise IBMExperimentEntryNotFound
+        if file_name.endswith(".yaml"):
+            return yaml.safe_load(self._files[experiment_id][file_name])
         return json.loads(self._files[experiment_id][file_name])
