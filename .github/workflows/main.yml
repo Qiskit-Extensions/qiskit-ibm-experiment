@@ -9,7 +9,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   lint:
-    if: github.repository_owner == 'Qiskit'
+    if: github.repository_owner == 'Qiskit-Extensions'
     name: lint
     runs-on: ubuntu-latest
     steps:
@@ -32,7 +32,7 @@ jobs:
       - name: Run lint
         run: tox -elint
   docs:
-    if: github.repository_owner == 'Qiskit'
+    if: github.repository_owner == 'Qiskit-Extensions'
     name: docs
     runs-on: ubuntu-latest
     steps:
@@ -63,7 +63,7 @@ jobs:
           name: html_docs
           path: docs/_build/html
   tests:
-    if: github.repository_owner == 'Qiskit'
+    if: github.repository_owner == 'Qiskit-Extensions'
     name: tests-python${{ matrix.python-version }}-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:

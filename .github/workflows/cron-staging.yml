@@ -4,7 +4,7 @@ on:
     - cron: "0 4 * * *"
 jobs:
   experiment-integration:
-    if: github.repository_owner == 'Qiskit'
+    if: github.repository_owner == 'Qiskit-Extensions'
     name: ibm-experiment-integration
     runs-on: macOS-latest
     env:
