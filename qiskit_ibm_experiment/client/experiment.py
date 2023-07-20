@@ -13,7 +13,8 @@
 """Client for accessing IBM Quantum experiment services."""
 
 import logging
-from typing import List, Dict, Optional, Union
+import json
+from typing import List, Dict, Optional, Union, Type
 from qiskit_ibm_experiment.client.session import RetrySession
 from .experiment_rest_adapter import ExperimentRestAdapter
 
@@ -329,17 +330,20 @@ class ExperimentClient:
         """
         self.api.file_upload(experiment_id, file_name, file_data)
 
-    def experiment_file_download(self, experiment_id: str, file_name: str) -> Dict:
+    def experiment_file_download(
+        self, experiment_id: str, file_name: str, json_decoder: Type[json.JSONDecoder]
+    ) -> Dict:
         """Downloads a data file from the DB
 
         Args:
             experiment_id: Experiment ID.
             file_name: The name of the data file
+            json_decoder: Custom decoder to use to decode the retrieved experiment.
 
         Returns:
             The Dictionary of contents of the file
         """
-        return self.api.file_download(experiment_id, file_name)
+        return self.api.file_download(experiment_id, file_name, json_decoder)
 
     def device_components(self, backend_name: Optional[str]) -> List[Dict]:
         """Return device components for the backend.

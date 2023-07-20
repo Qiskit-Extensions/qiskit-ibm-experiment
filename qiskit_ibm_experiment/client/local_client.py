@@ -20,7 +20,7 @@ import os
 import uuid
 import json
 from datetime import datetime
-from typing import List, Dict, Optional, Union, Any
+from typing import List, Dict, Optional, Union, Any, Type
 import pandas as pd
 import numpy as np
 import yaml
@@ -776,12 +776,15 @@ class LocalExperimentClient:
         self._files[experiment_id][file_name] = file_data
         self.save()
 
-    def experiment_file_download(self, experiment_id: str, file_name: str) -> Dict:
+    def experiment_file_download(
+        self, experiment_id: str, file_name: str, json_decoder: Type[json.JSONDecoder]
+    ) -> Dict:
         """Downloads a data file from the DB
 
         Args:
             experiment_id: Experiment ID.
             file_name: The name of the data file
+            json_decoder: Custom decoder to use to decode the retrieved experiment.
 
         Returns:
             The Dictionary of contents of the file
@@ -795,4 +798,4 @@ class LocalExperimentClient:
             raise IBMExperimentEntryNotFound
         if file_name.endswith(".yaml"):
             return yaml.safe_load(self._files[experiment_id][file_name])
-        return json.loads(self._files[experiment_id][file_name])
+        return json.loads(self._files[experiment_id][file_name], cls=json_decoder)

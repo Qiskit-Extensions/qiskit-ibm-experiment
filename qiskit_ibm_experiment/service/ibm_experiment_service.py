@@ -1684,7 +1684,11 @@ class IBMExperimentService:
         return data
 
     def file_upload(
-        self, experiment_id: str, file_name: str, file_data: Union[Dict, str]
+        self,
+        experiment_id: str,
+        file_name: str,
+        file_data: Union[Dict, str],
+        json_encoder: Type[json.JSONEncoder] = json.JSONEncoder,
     ):
         """Uploads a data file to the DB
 
@@ -1692,6 +1696,7 @@ class IBMExperimentService:
             experiment_id: The experiment the data file belongs to
             file_name: The expected filename of the data file
             file_data: The dictionary of data to save, or JSON serialization of it
+            json_encoder: Custom encoder to use to encode the experiment.
 
         Additional info:
             The filename is expected to end with ".json" (otherwise it will be added)
@@ -1703,17 +1708,24 @@ class IBMExperimentService:
         if not (file_name.endswith(".json") or file_name.endswith(".yaml")):
             file_name += ".json"
         if isinstance(file_data, dict):
+            # for now we avoid using custom encoder with yaml files
             if file_name.endswith(".yaml"):
                 file_data = yaml.dump(file_data)
             else:
-                file_data = json.dumps(file_data)
+                file_data = json.dumps(file_data, cls=json_encoder)
         self._api_client.experiment_file_upload(experiment_id, file_name, file_data)
 
-    def file_download(self, experiment_id: str, file_name: str) -> Dict:
+    def file_download(
+        self,
+        experiment_id: str,
+        file_name: str,
+        json_decoder: Type[json.JSONDecoder] = json.JSONDecoder,
+    ) -> Dict:
         """Downloads a data file from the DB and returns its deserialization
         Args:
             experiment_id: The experiment the data file belongs to
             file_name: The filename of the data file
+            json_decoder: Custom decoder to use to decode the retrieved experiment.
         Returns:
             The JSON deserialization of the data file
         Additional info:
@@ -1722,7 +1734,10 @@ class IBMExperimentService:
         """
         if not (file_name.endswith(".json") or file_name.endswith(".yaml")):
             file_name += ".json"
-        file_data = self._api_client.experiment_file_download(experiment_id, file_name)
+        # for now we avoid using custom decoder with yaml files
+        file_data = self._api_client.experiment_file_download(
+            experiment_id, file_name, json_decoder
+        )
         return file_data
 
     def experiment_has_file(self, experiment_id: str, file_name: str) -> bool:
