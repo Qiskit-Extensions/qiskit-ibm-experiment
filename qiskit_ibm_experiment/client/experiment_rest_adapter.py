@@ -13,7 +13,8 @@
 """Experiment REST adapter."""
 
 import logging
-from typing import Dict, List, Any, Union, Optional
+import json
+from typing import Dict, List, Any, Union, Optional, Type
 import yaml
 from qiskit_ibm_experiment.client.session import RetrySession
 
@@ -436,12 +437,15 @@ class ExperimentRestAdapter:
             upload_url, data=file_data, headers=self._HEADER_JSON_CONTENT, bare=True
         )
 
-    def file_download(self, experiment_id: str, file_name: str) -> Dict:
+    def file_download(
+        self, experiment_id: str, file_name: str, json_decoder: Type[json.JSONDecoder]
+    ) -> Dict:
         """Downloads a data file from the DB
 
         Args:
             experiment_id: Experiment ID.
             file_name: The name of the data file
+            json_decoder: Custom decoder to use to decode the retrieved experiment.
 
         Returns:
             The Dictionary of contents of the file
@@ -454,5 +458,5 @@ class ExperimentRestAdapter:
         if result.status_code == 200:
             if file_name.endswith(".yaml"):
                 return yaml.safe_load(result.content)
-            return result.json()
+            return result.json(cls=json_decoder)
         return result

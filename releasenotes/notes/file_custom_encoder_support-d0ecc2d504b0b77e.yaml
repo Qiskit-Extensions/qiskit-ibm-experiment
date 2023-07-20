@@ -1,0 +1,4 @@
+---
+features:
+  - |
+    `file_upload` and `file_download` now accept a custom JSON encoder/decoder.

@@ -18,10 +18,14 @@ from unittest import mock, skipIf
 import contextlib
 from test.service.ibm_test_case import IBMTestCase
 import numpy as np
-from qiskit import transpile
+from qiskit import transpile, QuantumCircuit
 from qiskit.providers import JobStatus
 from qiskit.test.reference_circuits import ReferenceCircuits
-from qiskit_experiments.framework import ExperimentData
+from qiskit_experiments.framework import (
+    ExperimentData,
+    ExperimentDecoder,
+    ExperimentEncoder,
+)
 from qiskit_experiments.framework.experiment_data import ExperimentStatus
 from qiskit_experiments.framework import AnalysisResult
 from qiskit_experiments.database_service.exceptions import ExperimentEntryNotFound
@@ -520,6 +524,23 @@ class TestExperimentDataIntegration(IBMTestCase):
         exp_data.block_for_results()
         self.assertTrue(all(job.status() == JobStatus.DONE for job in jobs))
         self.assertEqual(ExperimentStatus.DONE, exp_data.status())
+
+    def test_file_upload_download(self):
+        """test upload and download of actual experiment data"""
+        exp_id = self._create_experiment_data().experiment_id
+        qc = QuantumCircuit(2)
+        qc.h(0)
+        qc.measure_all()
+        data = {"string": "b-string", "int": 10, "float": 0.333, "circuit": qc}
+        json_filename = "data.json"
+
+        self.service.file_upload(
+            exp_id, json_filename, data, json_encoder=ExperimentEncoder
+        )
+        rjson_data = self.service.file_download(
+            exp_id, json_filename, json_decoder=ExperimentDecoder
+        )
+        self.assertEqual(data, rjson_data)
 
     def _create_experiment_data(self):
         """Create an experiment data."""
