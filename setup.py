@@ -27,6 +27,7 @@ REQUIREMENTS = [
     "python-dateutil>=2.8.0",
     "typing-extensions>=4.0.0",  # remove when support for Python 3.7 is dropped (use "from typing import" instead)
     "pandas>=1.3.0",
+    "pyyaml>=6.0.0",
 ]
 
 # Handle version.
