@@ -9,6 +9,11 @@ Contents
 =================
 
 .. toctree::
+  :hidden:
+
+  Home <self>
+
+.. toctree::
   :maxdepth: 2
 
   API References <apidocs/index>
