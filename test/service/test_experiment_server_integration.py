@@ -622,7 +622,7 @@ class TestExperimentServerIntegration(IBMTestCase):
         new_exp_id = self.service.create_or_update_experiment(
             ExperimentData(experiment_type="qiskit_test", backend=self.backend.name),
             provider=self.provider,
-        )['uuid']
+        )["uuid"]
 
         self.service.create_or_update_experiment(
             ExperimentData(
