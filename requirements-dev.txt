@@ -14,4 +14,4 @@ sphinx-tabs
 sphinx-autodoc-typehints
 nbsphinx
 reno>=2.11.0
-qiskit-sphinx-theme~=1.12.0
+qiskit-sphinx-theme~=1.16.0
