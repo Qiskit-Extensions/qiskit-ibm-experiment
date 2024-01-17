@@ -7,6 +7,8 @@ jobs:
   wheel-build:
     name: Build and Publish Release Artifacts
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
@@ -27,4 +29,4 @@ jobs:
         env:
           TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
           TWINE_USERNAME: qiskit
-        run: twine upload dist/qiskit*
+        uses: pypa/gh-action-pypi-publish@release/v1
