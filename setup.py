@@ -19,16 +19,20 @@ import os
 import setuptools
 
 REQUIREMENTS = [
-    "qiskit-terra>=0.18.0",
+    "qiskit-terra>=0.32,<1",
     "requests>=2.19",
     "requests-ntlm>=1.1.0",
     "numpy>=1.13",
     "urllib3>=1.21.1",
     "python-dateutil>=2.8.0",
-    "typing-extensions>=4.0.0",  # remove when support for Python 3.7 is dropped (use "from typing import" instead)
     "pandas>=1.3.0",
     "pyyaml>=6.0.0",
 ]
+REQUIREMENTS_PATH = os.path.join(
+    os.path.abspath(os.path.dirname(__file__)), "requirements.txt"
+)
+with open(REQUIREMENTS_PATH) as requirements_file:
+    REQUIREMENTS = requirements_file.read().splitlines()
 
 # Handle version.
 VERSION_PATH = os.path.join(
@@ -63,7 +67,6 @@ setuptools.setup(
         "Operating System :: MacOS",
         "Operating System :: POSIX :: Linux",
         "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Topic :: Scientific/Engineering",
