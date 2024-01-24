@@ -1,0 +1,5 @@
+---
+upgrade:
+  - |
+    The dependency on Qiskit was changed from specifying ``qiskit-terra`` to
+    ``qiskit``.
