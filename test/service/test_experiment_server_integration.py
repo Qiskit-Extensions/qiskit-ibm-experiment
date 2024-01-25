@@ -25,7 +25,7 @@ from test.utils.utils import ExperimentEncoder, ExperimentDecoder
 import numpy as np
 from dateutil import tz
 import yaml
-from qiskit_ibm_provider import IBMProvider
+from qiskit_ibm_runtime import QiskitRuntimeService
 from qiskit_ibm_experiment.service import ResultQuality, ExperimentShareLevel
 from qiskit_ibm_experiment import IBMExperimentEntryNotFound, IBMApiError
 from qiskit_ibm_experiment import IBMExperimentService
@@ -62,7 +62,8 @@ class TestExperimentServerIntegration(IBMTestCase):
     @classmethod
     def _setup_provider(cls):
         """Get the provider for the class."""
-        cls.provider = IBMProvider(
+        cls.provider = QiskitRuntimeService(
+            channel="ibm_quantum",
             token=os.getenv("QISKIT_IBM_STAGING_API_TOKEN"),
             url=os.getenv("QISKIT_IBM_STAGING_API_URL"),
             instance=os.getenv("QISKIT_IBM_STAGING_HGP"),
