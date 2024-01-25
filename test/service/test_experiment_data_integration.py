@@ -14,7 +14,7 @@
 
 import os
 import unittest
-from unittest import mock, skipIf, skip
+from unittest import mock, skipIf
 import contextlib
 from test.service.ibm_test_case import IBMTestCase
 import numpy as np
