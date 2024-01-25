@@ -105,7 +105,6 @@ class TestExperimentDataIntegration(IBMTestCase):
                 job.cancel()
         super().tearDown()
 
-
     def test_add_data_job(self):
         """Test add job to experiment data."""
         exp_data = ExperimentData(
@@ -122,7 +121,7 @@ class TestExperimentDataIntegration(IBMTestCase):
         self.assertEqual(result.get_counts(0), circuit_data["counts"])
         # currently the returned job_id is different; this is not a qiskit-ibm-experiment
         # problem but a known behaviour in the new provider
-        #self.assertEqual(job.job_id(), circuit_data["job_id"])
+        # self.assertEqual(job.job_id(), circuit_data["job_id"])
         self.assertEqual(transpiled.metadata, circuit_data["metadata"])
 
     def test_new_experiment_data(self):
