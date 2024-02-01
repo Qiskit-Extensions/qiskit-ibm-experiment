@@ -15,6 +15,7 @@
 # pylint treats the dataframes as JsonReader for some reason
 # pylint: disable=no-member
 
+import io
 import logging
 import os
 import uuid
@@ -767,9 +768,13 @@ class LocalExperimentClient:
             self._files_list[experiment_id] = []
         if experiment_id not in self._files:
             self._files[experiment_id] = {}
+        if isinstance(file_data, io.BytesIO):
+            size = len(file_data.getvalue())
+        else:
+            size = len(file_data)
         new_file_element = {
             "Key": file_name,
-            "Size": len(file_data),
+            "Size": size,
             "LastModified": str(datetime.now()),
         }
         self._files_list[experiment_id].append(new_file_element)
