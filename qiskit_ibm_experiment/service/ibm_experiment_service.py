@@ -1699,13 +1699,17 @@ class IBMExperimentService:
         """
         # currently resultdb enforces files to end with .json, .yaml, or .zip
         # without suffix, we assume json formatting
-        if not (file_name.endswith(".json") or file_name.endswith(".yaml") or file_name.endswith(".zip")):
+        if not (
+            file_name.endswith(".json")
+            or file_name.endswith(".yaml")
+            or file_name.endswith(".zip")
+        ):
             file_name += ".json"
         if isinstance(file_data, dict):
             # for now we avoid using custom encoder with yaml files
             if file_name.endswith(".yaml"):
                 file_data = yaml.dump(file_data)
-            elif file_name.endswith(".zip"):
+            elif file_name.endswith(".json"):
                 file_data = json.dumps(file_data, cls=json_encoder)
         self._api_client.experiment_file_upload(experiment_id, file_name, file_data)
 
@@ -1726,7 +1730,11 @@ class IBMExperimentService:
             The filename is expected to end with ".json", ".yaml", or ".zip", otherwise
             ".json" will be added.
         """
-        if not (file_name.endswith(".json") or file_name.endswith(".yaml") or file_name.endswith(".zip")):
+        if not (
+            file_name.endswith(".json")
+            or file_name.endswith(".yaml")
+            or file_name.endswith(".zip")
+        ):
             file_name += ".json"
         # for now we avoid using custom decoder with yaml files
         file_data = self._api_client.experiment_file_download(

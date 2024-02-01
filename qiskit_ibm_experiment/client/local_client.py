@@ -798,4 +798,6 @@ class LocalExperimentClient:
             raise IBMExperimentEntryNotFound
         if file_name.endswith(".yaml"):
             return yaml.safe_load(self._files[experiment_id][file_name])
-        return json.loads(self._files[experiment_id][file_name], cls=json_decoder)
+        elif file_name.endswith(".json"):
+            return json.loads(self._files[experiment_id][file_name], cls=json_decoder)
+        return self._files[experiment_id][file_name]
