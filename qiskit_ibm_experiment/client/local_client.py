@@ -805,4 +805,4 @@ class LocalExperimentClient:
             return yaml.safe_load(self._files[experiment_id][file_name])
         elif file_name.endswith(".json"):
             return json.loads(self._files[experiment_id][file_name], cls=json_decoder)
-        return self._files[experiment_id][file_name]
+        return self._files[experiment_id][file_name].read()
