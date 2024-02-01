@@ -1692,19 +1692,20 @@ class IBMExperimentService:
             json_encoder: Custom encoder to use to encode the experiment.
 
         Additional info:
-            The filename is expected to end with ".json" (otherwise it will be added)
+            The filename is expected to end with ".json", ".yaml", or ".zip", otherwise
+            ".json" will be added,
             and the data itself should be either a dictionary or a JSON serialization
             with the default encoder.
         """
-        # currently the resultdb enforces files to end with .json or .yaml
+        # currently resultdb enforces files to end with .json, .yaml, or .zip
         # without suffix, we assume json formatting
-        if not (file_name.endswith(".json") or file_name.endswith(".yaml")):
+        if not (file_name.endswith(".json") or file_name.endswith(".yaml") or file_name.endswith(".zip")):
             file_name += ".json"
         if isinstance(file_data, dict):
             # for now we avoid using custom encoder with yaml files
             if file_name.endswith(".yaml"):
                 file_data = yaml.dump(file_data)
-            else:
+            elif file_name.endswith(".zip"):
                 file_data = json.dumps(file_data, cls=json_encoder)
         self._api_client.experiment_file_upload(experiment_id, file_name, file_data)
 
@@ -1722,10 +1723,10 @@ class IBMExperimentService:
         Returns:
             The JSON deserialization of the data file
         Additional info:
-            The filename is expected to end with ".json", otherwise
-            it will be added.
+            The filename is expected to end with ".json", ".yaml", or ".zip", otherwise
+            ".json" will be added.
         """
-        if not (file_name.endswith(".json") or file_name.endswith(".yaml")):
+        if not (file_name.endswith(".json") or file_name.endswith(".yaml") or file_name.endswith(".zip")):
             file_name += ".json"
         # for now we avoid using custom decoder with yaml files
         file_data = self._api_client.experiment_file_download(
