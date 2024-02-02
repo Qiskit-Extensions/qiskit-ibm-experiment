@@ -458,5 +458,7 @@ class ExperimentRestAdapter:
         if result.status_code == 200:
             if file_name.endswith(".yaml"):
                 return yaml.safe_load(result.content)
-            return result.json(cls=json_decoder)
+            elif file_name.endswith(".json"):
+                return result.json(cls=json_decoder)
+            return result.content
         return result
