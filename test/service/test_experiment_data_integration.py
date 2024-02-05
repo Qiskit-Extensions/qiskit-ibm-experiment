@@ -108,7 +108,10 @@ class TestExperimentDataIntegration(IBMTestCase):
     def test_add_data_job(self):
         """Test add job to experiment data."""
         exp_data = ExperimentData(
-            backend=self.backend, provider=self.provider, experiment_type="qiskit_test", service=self.service
+            backend=self.backend,
+            provider=self.provider,
+            experiment_type="qiskit_test",
+            service=self.service,
         )
         transpiled = transpile(ReferenceCircuits.bell(), self.backend)
         transpiled.metadata = {"foo": "bar"}
@@ -501,7 +504,10 @@ class TestExperimentDataIntegration(IBMTestCase):
     def test_block_for_results(self):
         """Test blocking for jobs"""
         exp_data = ExperimentData(
-            backend=self.backend, provider=self.provider, experiment_type="qiskit_test", service=self.service
+            backend=self.backend,
+            provider=self.provider,
+            experiment_type="qiskit_test",
+            service=self.service,
         )
         jobs = []
         for _ in range(2):
