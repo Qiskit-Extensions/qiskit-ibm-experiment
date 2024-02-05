@@ -18,16 +18,6 @@ import os
 
 import setuptools
 
-REQUIREMENTS = [
-    "qiskit-terra>=0.32,<1",
-    "requests>=2.19",
-    "requests-ntlm>=1.1.0",
-    "numpy>=1.13",
-    "urllib3>=1.21.1",
-    "python-dateutil>=2.8.0",
-    "pandas>=1.3.0",
-    "pyyaml>=6.0.0",
-]
 REQUIREMENTS_PATH = os.path.join(
     os.path.abspath(os.path.dirname(__file__)), "requirements.txt"
 )

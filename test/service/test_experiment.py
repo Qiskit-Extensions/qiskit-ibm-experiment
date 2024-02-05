@@ -131,7 +131,7 @@ class TestExperiment(IBMTestCase):
             )
             for i in range(num_values)
         ]
-        for (result, expected_result) in zip(results, expected_results):
+        for result, expected_result in zip(results, expected_results):
             self.assertEqual(result, expected_result)
 
         result_df = IBMExperimentService.analysis_result_list_to_dataframe(results)
