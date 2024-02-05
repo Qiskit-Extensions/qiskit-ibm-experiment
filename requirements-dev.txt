@@ -1,17 +1,24 @@
-pylint==2.12.1
+# Test tooling
+fixtures
 stestr
+testtools
+
+# Extra test dependencies
 matplotlib>=2.1
-scipy>=1.0
-black~=22.0
 qiskit-ibm-runtime
 qiskit-experiments
+scipy>=1.0
+
+# Linters
+black~=22.0
+pylint==2.12.1
 
 # Documentation
-sphinx
 jupyter-sphinx
+nbsphinx
+qiskit-sphinx-theme~=1.16.0
+reno>=2.11.0
+sphinx
 sphinx-intl
 sphinx-tabs
 sphinx-autodoc-typehints
-nbsphinx
-reno>=2.11.0
-qiskit-sphinx-theme~=1.16.0
