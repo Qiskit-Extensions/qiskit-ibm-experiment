@@ -15,6 +15,7 @@
 # pylint treats the dataframes as JsonReader for some reason
 # pylint: disable=no-member
 
+import io
 import logging
 import os
 import uuid
@@ -767,9 +768,13 @@ class LocalExperimentClient:
             self._files_list[experiment_id] = []
         if experiment_id not in self._files:
             self._files[experiment_id] = {}
+        if isinstance(file_data, io.BytesIO):
+            size = len(file_data.getvalue())
+        else:
+            size = len(file_data)
         new_file_element = {
             "Key": file_name,
-            "Size": len(file_data),
+            "Size": size,
             "LastModified": str(datetime.now()),
         }
         self._files_list[experiment_id].append(new_file_element)
@@ -798,4 +803,6 @@ class LocalExperimentClient:
             raise IBMExperimentEntryNotFound
         if file_name.endswith(".yaml"):
             return yaml.safe_load(self._files[experiment_id][file_name])
-        return json.loads(self._files[experiment_id][file_name], cls=json_decoder)
+        elif file_name.endswith(".json"):
+            return json.loads(self._files[experiment_id][file_name], cls=json_decoder)
+        return self._files[experiment_id][file_name].read()
