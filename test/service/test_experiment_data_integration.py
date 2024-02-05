@@ -18,9 +18,8 @@ from unittest import mock, skipIf
 import contextlib
 from test.service.ibm_test_case import IBMTestCase
 import numpy as np
-from qiskit import transpile, QuantumCircuit
+from qiskit import transpile, QuantumCircuit, QuantumRegister, ClassicalRegister
 from qiskit.providers import JobStatus
-from qiskit.test.reference_circuits import ReferenceCircuits
 from qiskit_experiments.framework import (
     ExperimentData,
     ExperimentDecoder,
@@ -36,6 +35,18 @@ from qiskit_ibm_experiment.exceptions import IBMExperimentEntryNotFound
 from qiskit_ibm_experiment.exceptions import IBMApiError
 
 
+def bell():
+    """Return a Bell circuit."""
+    qr = QuantumRegister(2, name="qr")
+    cr = ClassicalRegister(2, name="qc")
+    qc = QuantumCircuit(qr, cr, name="bell")
+    qc.h(qr[0])
+    qc.cx(qr[0], qr[1])
+    qc.measure(qr, cr)
+
+    return qc
+
+
 @skipIf(
     not os.environ.get("QISKIT_IBM_USE_STAGING_CREDENTIALS", ""), "Only runs on staging"
 )
@@ -49,7 +60,7 @@ class TestExperimentDataIntegration(IBMTestCase):
         try:
             cls._setup_service()
             cls._setup_provider()
-            cls.circuit = transpile(ReferenceCircuits.bell(), cls.backend)
+            cls.circuit = transpile(bell(), cls.backend)
         except Exception as err:
             cls.log.info("Error while setting the service/provider: %s", err)
             raise
@@ -113,7 +124,7 @@ class TestExperimentDataIntegration(IBMTestCase):
             experiment_type="qiskit_test",
             service=self.service,
         )
-        transpiled = transpile(ReferenceCircuits.bell(), self.backend)
+        transpiled = transpile(bell(), self.backend)
         transpiled.metadata = {"foo": "bar"}
         job = self._run_circuit(transpiled)
         exp_data.add_jobs(job)
