@@ -2116,19 +2116,24 @@
 <span class="sd">            json_encoder: Custom encoder to use to encode the experiment.</span>
 
 <span class="sd">        Additional info:</span>
-<span class="sd">            The filename is expected to end with &quot;.json&quot; (otherwise it will be added)</span>
+<span class="sd">            The filename is expected to end with &quot;.json&quot;, &quot;.yaml&quot;, or &quot;.zip&quot;, otherwise</span>
+<span class="sd">            &quot;.json&quot; will be added,</span>
 <span class="sd">            and the data itself should be either a dictionary or a JSON serialization</span>
 <span class="sd">            with the default encoder.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># currently the resultdb enforces files to end with .json or .yaml</span>
+        <span class="c1"># currently resultdb enforces files to end with .json, .yaml, or .zip</span>
         <span class="c1"># without suffix, we assume json formatting</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">file_name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.json&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">file_name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.yaml&quot;</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+            <span class="n">file_name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.json&quot;</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="n">file_name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.yaml&quot;</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="n">file_name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.zip&quot;</span><span class="p">)</span>
+        <span class="p">):</span>
             <span class="n">file_name</span> <span class="o">+=</span> <span class="s2">&quot;.json&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">file_data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="c1"># for now we avoid using custom encoder with yaml files</span>
             <span class="k">if</span> <span class="n">file_name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.yaml&quot;</span><span class="p">):</span>
                 <span class="n">file_data</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">file_data</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
+            <span class="k">elif</span> <span class="n">file_name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.json&quot;</span><span class="p">):</span>
                 <span class="n">file_data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">file_data</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="n">json_encoder</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_api_client</span><span class="o">.</span><span class="n">experiment_file_upload</span><span class="p">(</span><span class="n">experiment_id</span><span class="p">,</span> <span class="n">file_name</span><span class="p">,</span> <span class="n">file_data</span><span class="p">)</span></div>
 
@@ -2149,10 +2154,14 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            The JSON deserialization of the data file</span>
 <span class="sd">        Additional info:</span>
-<span class="sd">            The filename is expected to end with &quot;.json&quot;, otherwise</span>
-<span class="sd">            it will be added.</span>
+<span class="sd">            The filename is expected to end with &quot;.json&quot;, &quot;.yaml&quot;, or &quot;.zip&quot;, otherwise</span>
+<span class="sd">            &quot;.json&quot; will be added.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">file_name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.json&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">file_name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.yaml&quot;</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+            <span class="n">file_name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.json&quot;</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="n">file_name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.yaml&quot;</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="n">file_name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.zip&quot;</span><span class="p">)</span>
+        <span class="p">):</span>
             <span class="n">file_name</span> <span class="o">+=</span> <span class="s2">&quot;.json&quot;</span>
         <span class="c1"># for now we avoid using custom decoder with yaml files</span>
         <span class="n">file_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api_client</span><span class="o">.</span><span class="n">experiment_file_download</span><span class="p">(</span>
@@ -2257,7 +2266,7 @@
             
             <a href="https://github.com/pradyunsg/furo">Furo</a>
             <div class="last-updated">
-              Last updated on 2024/02/02</div>
+              Last updated on 2024/02/05</div>
           </div>
           <div class="right-details">
             
