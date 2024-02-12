@@ -88,10 +88,9 @@ If you'd like to contribute to IBM Quantum Experiment Service, please take a loo
 [contribution guidelines]. This project adheres to Qiskit's [code of conduct].
 By participating, you are expect to uphold to this code.
 
-We use [GitHub issues] for tracking requests and bugs. Please use our [slack]
-for discussion and simple questions. To join our Slack community use the
-invite link at [Qiskit.org]. For questions that are more suited for a forum we
-use the `Qiskit` tag in [Stack Exchange].
+We use [GitHub issues] for tracking requests and bugs. Please use our [Slack]
+for discussion and simple questions. To join our Slack community, use the
+invite link [here](https://docs.quantum.ibm.com/support#qiskit).
 
 ## Next Steps
 
@@ -115,7 +114,6 @@ project at different levels. If you use Qiskit, please cite as per the included
 [code of conduct]: https://github.com/Qiskit/qiskit-ibm-experiment/blob/main/CODE_OF_CONDUCT.md
 [GitHub issues]: https://github.com/Qiskit/qiskit-ibm-experiment/issues
 [slack]: https://qiskit.slack.com
-[Qiskit.org]: https://qiskit.org
 [Stack Exchange]: https://quantumcomputing.stackexchange.com/questions/tagged/qiskit
 [Qiskit Tutorial]: https://github.com/Qiskit/qiskit-tutorial
 [many people]: https://github.com/Qiskit/qiskit-ibm-experiment/graphs/contributors
