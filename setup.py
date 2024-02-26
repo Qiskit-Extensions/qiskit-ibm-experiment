@@ -46,7 +46,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/Qiskit/qiskit-ibm-experiment",
     author="Qiskit Development Team",
-    author_email="hello@qiskit.org",
+    author_email="qiskit@us.ibm.com",
     license="Apache 2.0",
     classifiers=[
         "Environment :: Console",
@@ -69,7 +69,7 @@ setuptools.setup(
     zip_safe=False,
     project_urls={
         "Bug Tracker": "https://github.com/Qiskit/qiskit-ibm-experiment/issues",
-        "Documentation": "https://qiskit.org/documentation/",
+        "Documentation": "https://qiskit-extensions.github.io/qiskit-ibm-experiment",
         "Source Code": "https://github.com/Qiskit/qiskit-ibm-experiment",
     },
 )
