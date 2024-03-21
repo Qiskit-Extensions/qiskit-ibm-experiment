@@ -1745,11 +1745,27 @@ class IBMExperimentService:
     def file_delete(self, experiment_id: str, file_pathname: str):
         """Deletes a data file from the DB
 
+        Note:
+            This method prompts for confirmation and requires a response before proceeding.
+        
         Args:
-            experiment_id: The experiment the data file belongs to
+            experiment_id: The experiment the data file belongs to.
             file_pathname: The path of the data file to delete.
+        
+        Raises:
+            IBMApiError: If the request to the server failed.
         """
-        self._api_client.experiment_file_delete(experiment_id, file_pathname)
+        if not self._confirm_delete(
+            "Are you sure you want to delete the experiment plot? [y/N]: "
+        ):
+            return
+        try:
+            self._api_client.experiment_file_delete(experiment_id, file_pathname)
+        except RequestsApiError as api_err:
+            if api_err.status_code == 404:
+                logger.warning("File %s not found.", file_pathname)
+            else:
+                raise IBMApiError(f"Failed to process the request: {api_err}") from None
 
     def experiment_has_file(self, experiment_id: str, file_name: str) -> bool:
         """Checks whether a specific expriment has a specific file
