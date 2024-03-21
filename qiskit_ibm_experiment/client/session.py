@@ -17,7 +17,7 @@ import re
 import copy
 import logging
 from typing import List, Dict, Optional, Any, Tuple, Union
-import pkg_resources
+import importlib.metadata
 
 from requests import Session, RequestException, Response
 from requests.adapters import HTTPAdapter
@@ -49,7 +49,7 @@ RE_DEVICES_ENDPOINT = re.compile(r"^(.*/devices/)([^/}]{2,})(.*)$", re.IGNORECAS
 def _get_client_header() -> str:
     """Return the client version."""
     try:
-        client_header = "qiskit/" + pkg_resources.get_distribution("qiskit").version
+        client_header = "qiskit/" + importlib.metadata.distribution("qiskit").version
         return client_header
     except Exception:  # pylint: disable=broad-except
         pass
@@ -58,7 +58,7 @@ def _get_client_header() -> str:
     pkg_versions = {"qiskit-ibm-experiment": ibm_experiment_version}
     for pkg_name in qiskit_pkgs:
         try:
-            pkg_versions[pkg_name] = pkg_resources.get_distribution(pkg_name).version
+            pkg_versions[pkg_name] = importlib.metadata.distribution(pkg_name).version
         except Exception:  # pylint: disable=broad-except
             pass
     return ",".join(pkg_versions.keys()) + "/" + ",".join(pkg_versions.values())
