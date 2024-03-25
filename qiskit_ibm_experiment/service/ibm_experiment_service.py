@@ -1747,11 +1747,11 @@ class IBMExperimentService:
 
         Note:
             This method prompts for confirmation and requires a response before proceeding.
-        
+
         Args:
             experiment_id: The experiment the data file belongs to.
             file_pathname: The path of the data file to delete.
-        
+
         Raises:
             IBMApiError: If the request to the server failed.
         """

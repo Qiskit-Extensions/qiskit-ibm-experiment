@@ -344,7 +344,7 @@ class ExperimentClient:
             The Dictionary of contents of the file
         """
         return self.api.file_download(experiment_id, file_name, json_decoder)
-    
+
     def experiment_file_delete(self, experiment_id: str, file_pathname: str):
         """Deletes a data file from the DB
 
