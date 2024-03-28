@@ -463,7 +463,7 @@ class ExperimentRestAdapter:
                 return result.json(cls=json_decoder)
             return result.content
         return result
-    
+
     def file_delete(self, experiment_id: str, file_pathname: str):
         """Deletes a file from the DB
         Args:

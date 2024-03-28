@@ -1,0 +1,5 @@
+---
+
+features:
+  - |
+    Added `file_delete` method to delete experiment artifacts.
