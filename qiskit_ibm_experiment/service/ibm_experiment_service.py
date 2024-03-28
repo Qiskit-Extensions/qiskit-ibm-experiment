@@ -1742,6 +1742,15 @@ class IBMExperimentService:
         )
         return file_data
 
+    def file_delete(self, experiment_id: str, file_pathname: str):
+        """Deletes a data file from the DB
+
+        Args:
+            experiment_id: The experiment the data file belongs to
+            file_pathname: The path of the data file to delete.
+        """
+        self._api_client.experiment_file_delete(experiment_id, file_pathname)
+
     def experiment_has_file(self, experiment_id: str, file_name: str) -> bool:
         """Checks whether a specific expriment has a specific file
         Args:

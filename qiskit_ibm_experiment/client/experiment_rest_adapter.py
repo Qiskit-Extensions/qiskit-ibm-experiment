@@ -37,6 +37,7 @@ class ExperimentRestAdapter:
         "files": "/experiments/{uuid}/files",
         "files_upload": "/experiments/{uuid}/files/upload/{path}",
         "files_download": "/experiments/{uuid}/files/{path}",
+        "files_delete": "/experiments/{uuid}/files/{path}",
     }
 
     _HEADER_JSON_CONTENT = {"Content-Type": "application/json"}
@@ -462,3 +463,13 @@ class ExperimentRestAdapter:
                 return result.json(cls=json_decoder)
             return result.content
         return result
+    
+    def file_delete(self, experiment_id: str, file_pathname: str):
+        """Deletes a file from the DB
+        Args:
+            experiment_id: Experiment ID.
+            file_pathname: The path of the data file to delete.
+        """
+        url = self.get_url("files_delete")
+        url = url.format(uuid=experiment_id, path=file_pathname)
+        self.session.delete(url)
