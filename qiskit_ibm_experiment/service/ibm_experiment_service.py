@@ -1756,7 +1756,7 @@ class IBMExperimentService:
             IBMApiError: If the request to the server failed.
         """
         if not self._confirm_delete(
-            "Are you sure you want to delete the experiment plot? [y/N]: "
+            "Are you sure you want to delete the experiment file? [y/N]: "
         ):
             return
         try:

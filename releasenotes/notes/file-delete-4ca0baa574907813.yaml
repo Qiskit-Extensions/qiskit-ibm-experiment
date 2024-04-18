@@ -2,4 +2,4 @@
 
 features:
   - |
-    Added `file_delete` method to delete experiment artifacts.
+    Added the :meth:`~IBMExperimentService.file_delete` method to delete experiment artifacts.
