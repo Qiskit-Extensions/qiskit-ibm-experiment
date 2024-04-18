@@ -345,14 +345,14 @@ class ExperimentClient:
         """
         return self.api.file_download(experiment_id, file_name, json_decoder)
 
-    def experiment_file_delete(self, experiment_id: str, file_pathname: str):
+    def experiment_file_delete(self, experiment_id: str, file_name: str):
         """Deletes a data file from the DB
 
         Args:
             experiment_id: Experiment ID.
-            file_pathname: The path of the data file to delete.
+            file_name: The path of the data file to delete.
         """
-        return self.api.file_delete(experiment_id, file_pathname)
+        return self.api.file_delete(experiment_id, file_name)
 
     def device_components(self, backend_name: Optional[str]) -> List[Dict]:
         """Return device components for the backend.

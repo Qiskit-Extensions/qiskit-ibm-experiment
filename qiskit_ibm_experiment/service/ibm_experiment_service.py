@@ -1742,7 +1742,7 @@ class IBMExperimentService:
         )
         return file_data
 
-    def file_delete(self, experiment_id: str, file_pathname: str):
+    def file_delete(self, experiment_id: str, file_name: str):
         """Deletes a data file from the DB
 
         Note:
@@ -1750,7 +1750,7 @@ class IBMExperimentService:
 
         Args:
             experiment_id: The experiment the data file belongs to.
-            file_pathname: The path of the data file to delete.
+            file_name: The path of the data file to delete.
 
         Raises:
             IBMApiError: If the request to the server failed.
@@ -1760,10 +1760,10 @@ class IBMExperimentService:
         ):
             return
         try:
-            self._api_client.experiment_file_delete(experiment_id, file_pathname)
+            self._api_client.experiment_file_delete(experiment_id, file_name)
         except RequestsApiError as api_err:
             if api_err.status_code == 404:
-                logger.warning("File %s not found.", file_pathname)
+                logger.warning("File %s not found.", file_name)
             else:
                 raise IBMApiError(f"Failed to process the request: {api_err}") from None
 

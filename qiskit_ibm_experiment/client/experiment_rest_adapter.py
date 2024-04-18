@@ -464,12 +464,12 @@ class ExperimentRestAdapter:
             return result.content
         return result
 
-    def file_delete(self, experiment_id: str, file_pathname: str):
+    def file_delete(self, experiment_id: str, file_name: str):
         """Deletes a file from the DB
         Args:
             experiment_id: Experiment ID.
-            file_pathname: The path of the data file to delete.
+            file_name: The path of the data file to delete.
         """
         url = self.get_url("files_delete")
-        url = url.format(uuid=experiment_id, path=file_pathname)
+        url = url.format(uuid=experiment_id, path=file_name)
         self.session.delete(url)
