@@ -1,0 +1,5 @@
+---
+
+features:
+  - |
+    Added the :meth:`~IBMExperimentService.file_delete` method to delete experiment artifacts.
