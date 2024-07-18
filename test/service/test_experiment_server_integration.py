@@ -68,7 +68,7 @@ class TestExperimentServerIntegration(IBMTestCase):
             url=os.getenv("QISKIT_IBM_STAGING_API_URL"),
             instance=os.getenv("QISKIT_IBM_STAGING_HGP"),
         )
-        cls.backend = cls.provider.get_backend(os.getenv("QISKIT_IBM_STAGING_BACKEND"))
+        cls.backend = cls.provider.backend(os.getenv("QISKIT_IBM_STAGING_BACKEND"))
         try:
             cls.device_components = cls.service.device_components(cls.backend.name)
         except IBMApiError:
