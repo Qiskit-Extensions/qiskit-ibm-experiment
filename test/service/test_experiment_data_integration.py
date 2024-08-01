@@ -28,7 +28,7 @@ from qiskit_experiments.framework import (
 from qiskit_experiments.framework.experiment_data import ExperimentStatus
 from qiskit_experiments.framework import AnalysisResult
 from qiskit_experiments.database_service.exceptions import ExperimentEntryNotFound
-from qiskit_ibm_runtime import QiskitRuntimeService
+from qiskit_ibm_runtime import QiskitRuntimeService, SamplerV2 as Sampler
 
 from qiskit_ibm_experiment import IBMExperimentService
 from qiskit_ibm_experiment.exceptions import IBMExperimentEntryNotFound
@@ -83,6 +83,7 @@ class TestExperimentDataIntegration(IBMTestCase):
             instance=os.getenv("QISKIT_IBM_STAGING_HGP"),
         )
         cls.backend = cls.provider.backend(os.getenv("QISKIT_IBM_STAGING_BACKEND"))
+        cls.sampler = Sampler(cls.backend)
         try:
             cls.device_components = cls.service.device_components(cls.backend.name)
         except IBMApiError:
@@ -577,7 +578,7 @@ class TestExperimentDataIntegration(IBMTestCase):
     def _run_circuit(self, circuit=None):
         """Run a circuit."""
         circuit = circuit or self.circuit
-        job = self.backend.run(circuit, shots=1)
+        job = self.sampler.run(circuit, shots=1)
         self.jobs_to_cancel.append(job)
         return job
 
