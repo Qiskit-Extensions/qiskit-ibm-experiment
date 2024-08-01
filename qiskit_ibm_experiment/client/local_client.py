@@ -125,11 +125,16 @@ class LocalExperimentClient:
                     file.write(figure_data)
 
     def _save_files(self):
-        """Saves the figures to disk"""
+        """Saves the files to disk"""
         for exp_id in self._files:
             for file_name, file_data in self._files[exp_id].items():
                 filename = f"{exp_id}_{file_name}"
-                with open(os.path.join(self.files_dir, filename), "w") as file:
+                if isinstance(file_data, io.BytesIO):
+                    write_mode = "wb"
+                    file_data = file_data.getvalue()
+                else:
+                    write_mode = "w"
+                with open(os.path.join(self.files_dir, filename), write_mode) as file:
                     file.write(file_data)
 
     def serialize(self, dataframe):
@@ -183,7 +188,7 @@ class LocalExperimentClient:
         return figures
 
     def _get_files(self):
-        """Generates the figure dictionary based on stored data on disk"""
+        """Generates the files dictionary based on stored data on disk"""
         files = {}
         files_list = {}
         for exp_id in self._experiments.uuid:
@@ -194,13 +199,18 @@ class LocalExperimentClient:
             for filename in os.listdir(self.files_dir):
                 if filename.startswith(exp_id_string):
                     file_full_path = os.path.join(self.files_dir, filename)
-                    with open(file_full_path, "r") as file:
+                    file_ext = os.path.splitext(file_full_path)[1]
+                    read_mode = "rb" if file_ext == ".zip" else "r"
+                    with open(file_full_path, read_mode) as file:
                         file_data = file.read()
+                    file_size = len(file_data)
+                    if isinstance(file_data, bytes):
+                        file_data = io.BytesIO(file_data)
                     file_name = filename[len(exp_id_string) + 1 :]
                     files_for_exp[file_name] = file_data
                     new_file_element = {
                         "Key": file_name,
-                        "Size": len(file_data),
+                        "Size": file_size,
                         "LastModified": os.path.getmtime(file_full_path),
                     }
                     file_list_for_exp.append(new_file_element)
@@ -755,7 +765,7 @@ class LocalExperimentClient:
         return {"files": self._files_list.get(experiment_id, [])}
 
     def experiment_file_upload(
-        self, experiment_id: str, file_name: str, file_data: str
+        self, experiment_id: str, file_name: str, file_data: Union[str, bytes]
     ):
         """Uploads a data file to the DB
 
@@ -768,13 +778,15 @@ class LocalExperimentClient:
             self._files_list[experiment_id] = []
         if experiment_id not in self._files:
             self._files[experiment_id] = {}
+        if isinstance(file_data, bytes):
+            file_data = io.BytesIO(file_data)
         if isinstance(file_data, io.BytesIO):
-            size = len(file_data.getvalue())
+            file_size = len(file_data.getvalue())
         else:
-            size = len(file_data)
+            file_size = len(file_data)
         new_file_element = {
             "Key": file_name,
-            "Size": size,
+            "Size": file_size,
             "LastModified": str(datetime.now()),
         }
         self._files_list[experiment_id].append(new_file_element)
@@ -783,7 +795,7 @@ class LocalExperimentClient:
 
     def experiment_file_download(
         self, experiment_id: str, file_name: str, json_decoder: Type[json.JSONDecoder]
-    ) -> Dict:
+    ) -> Union[Dict, bytes]:
         """Downloads a data file from the DB
 
         Args:
@@ -792,7 +804,7 @@ class LocalExperimentClient:
             json_decoder: Custom decoder to use to decode the retrieved experiment.
 
         Returns:
-            The Dictionary of contents of the file
+            The Dictionary of contents of the file, or the file itself if it's a .zip file
 
         Raises:
             IBMExperimentEntryNotFound: if experiment or file not found
