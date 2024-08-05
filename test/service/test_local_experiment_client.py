@@ -26,7 +26,7 @@ from qiskit_ibm_experiment.exceptions import (
     IBMExperimentEntryNotFound,
     IBMExperimentEntryExists,
 )
-
+from tempfile import TemporaryDirectory
 
 class TestExperimentLocalClient(IBMTestCase):
     """Test experiment modules."""
@@ -35,8 +35,13 @@ class TestExperimentLocalClient(IBMTestCase):
     def setUpClass(cls):
         """Initial class level setup."""
         super().setUpClass()
-        cls.service = IBMExperimentService(local=True, local_save=False)
+        cls.temp_dir = TemporaryDirectory()
+        cls.service = IBMExperimentService(local=True, local_db_dir=cls.temp_dir.name)
         cls.service.options["prompt_for_delete"] = False
+    
+    @classmethod
+    def tearDownClass(cls):
+        cls.temp_dir.cleanup()
 
     def test_create_experiment(self):
         """Tests creating an experiment"""
