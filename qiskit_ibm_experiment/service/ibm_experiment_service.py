@@ -100,6 +100,7 @@ class IBMExperimentService:
         verify: Optional[bool] = True,
         local: Optional[bool] = False,
         local_save: Optional[bool] = True,
+        local_db_dir: Optional[str] = _DEFAULT_LOCAL_DB_DIR,
         **kwargs,
     ) -> None:
         """IBMExperimentService constructor.
@@ -143,7 +144,7 @@ class IBMExperimentService:
             )
         else:
             self._api_client = LocalExperimentClient(
-                main_dir=self._DEFAULT_LOCAL_DB_DIR, local_save=local_save
+                main_dir=local_db_dir, local_save=local_save
             )
 
     @property
@@ -256,16 +257,17 @@ class IBMExperimentService:
                     name,
                 )
             account = AccountManager.get(name=name)
-        if local:
-            return Account(local=True)
-
-        if token:
-            return Account(
-                token=token,
-                url=url,
-                proxies=proxies,
-                verify=verify_,
-            ).validate()
+        elif local or token:
+            return (
+                Account(local=True)
+                if local
+                else Account(
+                    token=token,
+                    url=url,
+                    proxies=proxies,
+                    verify=verify_,
+                ).validate()
+            )
 
         if account is None:
             account = AccountManager.get()
