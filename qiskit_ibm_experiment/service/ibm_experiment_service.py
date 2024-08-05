@@ -1688,7 +1688,8 @@ class IBMExperimentService:
         Args:
             experiment_id: The experiment the data file belongs to
             file_name: The expected filename of the data file
-            file_data: The data to save, which can be represented as: a dictionary, a JSON serialization, or the file content.
+            file_data: The data to save, which can be represented as: a dictionary, a JSON serialization,
+              or the file content.
             json_encoder: Custom encoder to use to encode the experiment.
 
         Additional info:
