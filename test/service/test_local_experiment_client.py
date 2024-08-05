@@ -17,6 +17,8 @@ import json
 from typing import Optional, Dict, Any
 from datetime import datetime, timedelta
 from test.service.ibm_test_case import IBMTestCase
+from tempfile import mkdtemp
+from shutil import rmtree
 from dateutil import tz
 import yaml
 from qiskit_ibm_experiment import IBMExperimentService
@@ -35,8 +37,13 @@ class TestExperimentLocalClient(IBMTestCase):
     def setUpClass(cls):
         """Initial class level setup."""
         super().setUpClass()
-        cls.service = IBMExperimentService(local=True, local_save=False)
+        cls.temp_path = mkdtemp()
+        cls.service = IBMExperimentService(local=True, local_db_dir=cls.temp_path)
         cls.service.options["prompt_for_delete"] = False
+
+    @classmethod
+    def tearDownClass(cls):
+        rmtree(cls.temp_path)
 
     def test_create_experiment(self):
         """Tests creating an experiment"""
