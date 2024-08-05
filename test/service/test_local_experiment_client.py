@@ -17,6 +17,8 @@ import json
 from typing import Optional, Dict, Any
 from datetime import datetime, timedelta
 from test.service.ibm_test_case import IBMTestCase
+from tempfile import mkdtemp
+from shutil import rmtree
 from dateutil import tz
 import yaml
 from qiskit_ibm_experiment import IBMExperimentService
@@ -26,7 +28,7 @@ from qiskit_ibm_experiment.exceptions import (
     IBMExperimentEntryNotFound,
     IBMExperimentEntryExists,
 )
-from tempfile import TemporaryDirectory
+
 
 class TestExperimentLocalClient(IBMTestCase):
     """Test experiment modules."""
@@ -35,13 +37,13 @@ class TestExperimentLocalClient(IBMTestCase):
     def setUpClass(cls):
         """Initial class level setup."""
         super().setUpClass()
-        cls.temp_dir = TemporaryDirectory()
-        cls.service = IBMExperimentService(local=True, local_db_dir=cls.temp_dir.name)
+        cls.temp_path = mkdtemp()
+        cls.service = IBMExperimentService(local=True, local_db_dir=cls.temp_path)
         cls.service.options["prompt_for_delete"] = False
-    
+
     @classmethod
     def tearDownClass(cls):
-        cls.temp_dir.cleanup()
+        rmtree(cls.temp_path)
 
     def test_create_experiment(self):
         """Tests creating an experiment"""
